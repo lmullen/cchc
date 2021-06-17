@@ -4,20 +4,20 @@ import "time"
 
 // ItemResult is an item returned from a LOC.gov collection results page
 type ItemResult struct {
-	AccessRestricted bool          `json:"access_restricted"`
-	Aka              []string      `json:"aka"`
-	Campaigns        []interface{} `json:"campaigns"`
-	Contributor      []string      `json:"contributor"`
-	Date             string        `json:"date"`
-	Dates            []time.Time   `json:"dates"`
-	Description      []string      `json:"description"`
-	Digitized        bool          `json:"digitized"`
-	ExtractTimestamp time.Time     `json:"extract_timestamp"`
-	Group            []string      `json:"group"`
-	Hassegments      bool          `json:"hassegments"`
-	ID               string        `json:"id"`
-	ImageURL         []string      `json:"image_url"`
-	Index            int           `json:"index"`
+	// AccessRestricted bool          `json:"access_restricted"`
+	// Aka              []string      `json:"aka"`
+	// Campaigns        []interface{} `json:"campaigns"`
+	Contributor []string `json:"contributor"`
+	Date        string   `json:"date"`
+	// Dates            []time.Time   `json:"dates"`
+	Description      []string  `json:"description"`
+	Digitized        bool      `json:"digitized"`
+	ExtractTimestamp time.Time `json:"extract_timestamp"`
+	Group            []string  `json:"group"`
+	Hassegments      bool      `json:"hassegments"`
+	ID               string    `json:"id"`
+	ImageURL         []string  `json:"image_url"`
+	Index            int       `json:"index"`
 	Item             struct {
 		CallNumber       []string `json:"call_number"`
 		Contributors     []string `json:"contributors"`
@@ -59,4 +59,8 @@ type ItemResult struct {
 	Timestamp time.Time `json:"timestamp"`
 	Title     string    `json:"title"`
 	URL       string    `json:"url"`
+}
+
+func (item ItemResult) String() string {
+	return item.Title
 }

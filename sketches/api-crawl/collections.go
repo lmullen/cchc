@@ -22,7 +22,7 @@ var removeFromResponse = []string{
 // apiOptions set various parameters for the requests to the API
 var apiOptions = url.Values{
 	"at!": []string{strings.Join(removeFromResponse, ",")},
-	"c":   []string{"250"},
+	"c":   []string{fmt.Sprint(itemsPerPage)},
 	"fa":  []string{"online-format:online text"},
 	"fo":  []string{"json"},
 	"st":  []string{"list"},
@@ -49,21 +49,21 @@ func CollectionURL(slug string, page int) (string, error) {
 // CollectionResult is an object returned by querying the collections endpoint of
 // of the LOC.gov API.
 type CollectionResult struct {
-	ContentIsPost bool `json:"content_is_post"`
-	Digitized     int  `json:"digitized"`
-	FormFacets    struct {
-	} `json:"form_facets"`
+	// ContentIsPost bool `json:"content_is_post"`
+	Digitized int `json:"digitized"`
+	// FormFacets    struct {
+	// } `json:"form_facets"`
 	Pagination struct {
-		Current  int    `json:"current"`
-		First    string `json:"first"`
-		From     int    `json:"from"`
-		Last     string `json:"last"`
-		Next     string `json:"next"`
-		Of       int    `json:"of"`
-		PageList []struct {
-			Number int    `json:"number"`
-			URL    string `json:"url"`
-		} `json:"page_list"`
+		Current int    `json:"current"`
+		First   string `json:"first"`
+		From    int    `json:"from"`
+		Last    string `json:"last"`
+		Next    string `json:"next"`
+		Of      int    `json:"of"`
+		// PageList []struct {
+		// 	Number int    `json:"number"`
+		// 	URL    string `json:"url"`
+		// } `json:"page_list"`
 		Perpage        int    `json:"perpage"`
 		PerpageOptions []int  `json:"perpage_options"`
 		Previous       string `json:"previous"`
@@ -89,4 +89,9 @@ type CollectionResult struct {
 	} `json:"search"`
 	Title string `json:"title"`
 	Total int    `json:"total"`
+}
+
+func (collection CollectionResult) String() string {
+	out := fmt.Sprintf("%s, page %v", collection.Title, collection.Pagination.Current)
+	return out
 }

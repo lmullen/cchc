@@ -3,6 +3,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -11,6 +12,7 @@ import (
 
 // Hard code a collection for now
 const collectionSlug = "african-american-perspectives-rare-books"
+const itemsPerPage = 10
 
 func main() {
 
@@ -27,6 +29,18 @@ func main() {
 	}
 
 	data, _ := ioutil.ReadAll(res.Body)
-	fmt.Println(string(data))
+
+	var result CollectionResult
+
+	err = json.Unmarshal(data, &result)
+	if err != nil {
+		log.Println(err)
+	}
+
+	fmt.Println(result)
+
+	for _, v := range result.Results {
+		fmt.Println(v)
+	}
 
 }
