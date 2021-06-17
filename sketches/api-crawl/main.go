@@ -13,12 +13,15 @@ import (
 const collectionSlug = "african-american-perspectives-rare-books"
 
 func main() {
+
+	client := &http.Client{}
+
 	u, err := CollectionURL(collectionSlug, 1)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	res, err := http.Get(u)
+	res, err := client.Get(u)
 	if err != nil {
 		log.Fatalln(err)
 	}
