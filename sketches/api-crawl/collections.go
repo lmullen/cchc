@@ -45,3 +45,48 @@ func CollectionURL(slug string, page int) (string, error) {
 
 	return u.String(), nil
 }
+
+// CollectionResult is an object returned by querying the collections endpoint of
+// of the LOC.gov API.
+type CollectionResult struct {
+	ContentIsPost bool `json:"content_is_post"`
+	Digitized     int  `json:"digitized"`
+	FormFacets    struct {
+	} `json:"form_facets"`
+	Pagination struct {
+		Current  int    `json:"current"`
+		First    string `json:"first"`
+		From     int    `json:"from"`
+		Last     string `json:"last"`
+		Next     string `json:"next"`
+		Of       int    `json:"of"`
+		PageList []struct {
+			Number int    `json:"number"`
+			URL    string `json:"url"`
+		} `json:"page_list"`
+		Perpage        int    `json:"perpage"`
+		PerpageOptions []int  `json:"perpage_options"`
+		Previous       string `json:"previous"`
+		Results        string `json:"results"`
+		To             int    `json:"to"`
+		Total          int    `json:"total"`
+	} `json:"pagination"`
+	Results []ItemResult `json:"results"`
+	Search  struct {
+		Dates       interface{} `json:"dates"`
+		FacetLimits string      `json:"facet_limits"`
+		Field       interface{} `json:"field"`
+		Hits        int         `json:"hits"`
+		In          string      `json:"in"`
+		Query       string      `json:"query"`
+		Recommended int         `json:"recommended"`
+		Site        struct {
+		} `json:"site"`
+		SortBy      string `json:"sort_by"`
+		Type        string `json:"type"`
+		UnionFacets string `json:"union_facets"`
+		URL         string `json:"url"`
+	} `json:"search"`
+	Title string `json:"title"`
+	Total int    `json:"total"`
+}
