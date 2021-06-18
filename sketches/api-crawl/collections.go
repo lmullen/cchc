@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -100,25 +101,35 @@ func (collection CollectionResult) String() string {
 	return out
 }
 
-func fetchCollectionResult(url string, client *http.Client) (CollectionResult, error) {
+func fetchCollectionResult(url string, client *http.Client, results chan<- CollectionResult) {
 
 	response, err := client.Get(url)
 	if err != nil {
-		return CollectionResult{}, err
+		log.Println(err)
 	}
 
 	data, err := io.ReadAll(response.Body)
 	if err != nil {
-		return CollectionResult{}, err
+		log.Println(err)
 	}
 
 	var result CollectionResult
 
 	err = json.Unmarshal(data, &result)
 	if err != nil {
-		return CollectionResult{}, err
+		log.Println(err)
 	}
 
-	return result, nil
+	results <- result
+
+	if result.Pagination.Next != "" {
+		url, err := CollectionURL(collectionSlug, result.Pagination.Current+1)
+		if err != nil {
+			log.Println(err)
+		}
+		go fetchCollectionResult(url, client, results)
+	} else {
+		close(results)
+	}
 
 }
