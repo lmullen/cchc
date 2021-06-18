@@ -1,7 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"strings"
 )
@@ -91,7 +94,31 @@ type CollectionResult struct {
 	Total int    `json:"total"`
 }
 
+// String prints the collection result
 func (collection CollectionResult) String() string {
 	out := fmt.Sprintf("%s, page %v", collection.Title, collection.Pagination.Current)
 	return out
+}
+
+func fetchCollectionResult(url string, client *http.Client) (CollectionResult, error) {
+
+	response, err := client.Get(url)
+	if err != nil {
+		return CollectionResult{}, err
+	}
+
+	data, err := io.ReadAll(response.Body)
+	if err != nil {
+		return CollectionResult{}, err
+	}
+
+	var result CollectionResult
+
+	err = json.Unmarshal(data, &result)
+	if err != nil {
+		return CollectionResult{}, err
+	}
+
+	return result, nil
+
 }

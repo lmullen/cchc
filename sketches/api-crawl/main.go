@@ -3,9 +3,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -22,24 +20,16 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+	fmt.Println(u)
 
-	res, err := client.Get(u)
+	page1, err := fetchCollectionResult(u, client)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	data, _ := ioutil.ReadAll(res.Body)
+	fmt.Println(page1)
 
-	var result CollectionResult
-
-	err = json.Unmarshal(data, &result)
-	if err != nil {
-		log.Println(err)
-	}
-
-	fmt.Println(result)
-
-	for _, v := range result.Results {
+	for _, v := range page1.Results {
 		fmt.Println(v)
 	}
 
