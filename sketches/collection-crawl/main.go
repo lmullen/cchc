@@ -5,7 +5,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http"
 )
 
 // Hard code a collection for now
@@ -14,7 +13,12 @@ const itemsPerPage = 10
 
 func main() {
 
-	client := &http.Client{}
+	app := &App{}
+	err := app.Init()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer app.Shutdown()
 
 	u, err := CollectionURL(collectionSlug, 1)
 	if err != nil {
@@ -24,7 +28,7 @@ func main() {
 
 	collectionResults := make(chan CollectionResult, 10)
 
-	go fetchCollectionResult(u, client, collectionResults)
+	go fetchCollectionResult(u, app.Client, collectionResults)
 
 	for r := range collectionResults {
 		fmt.Println(r)
