@@ -22,14 +22,19 @@ func main() {
 	}
 	fmt.Println(u)
 
-	page1, err := fetchCollectionResult(u, client)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	collectionResults := make(chan CollectionResult, 10)
 
-	fmt.Println(page1)
+	go func() {
+		page1, err := fetchCollectionResult(u, client)
+		if err != nil {
+			log.Println(err)
+		}
+		collectionResults <- page1
+	}()
 
-	for _, v := range page1.Results {
+	result := <-collectionResults
+
+	for _, v := range result.Results {
 		fmt.Println(v)
 	}
 
