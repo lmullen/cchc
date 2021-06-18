@@ -9,7 +9,7 @@ import (
 
 // Hard code a collection for now
 const collectionSlug = "african-american-perspectives-rare-books"
-const itemsPerPage = 10
+const itemsPerPage = 250
 
 func main() {
 
