@@ -3,7 +3,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 )
 
@@ -11,29 +10,33 @@ import (
 const collectionSlug = "african-american-perspectives-rare-books"
 const itemsPerPage = 250
 
+var app = &App{}
+
 func main() {
 
-	app := &App{}
+	// Initialize the application and create a connection to the database.
 	err := app.Init()
 	if err != nil {
 		log.Fatalln(err)
 	}
 	defer app.Shutdown()
 
-	u, err := CollectionURL(collectionSlug, 1)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	fmt.Println(u)
+	// A channel to hold each page of the collection results
+	collectionPages := make(chan CollectionAPIPage, 20)
 
-	collectionResults := make(chan CollectionResult, 10)
+	// Fetch the first page of the collection. As long as there are more pages,
+	// the function will continue to fetch those too and add them to the channel.
+	go fetchCollectionResult(CollectionURL(collectionSlug, 1), app.Client, collectionPages)
 
-	go fetchCollectionResult(u, app.Client, collectionResults)
-
-	for r := range collectionResults {
-		fmt.Println(r)
+	// Iterate over the pages in the collection API, and the items within each page.
+	// Store those results to the database.
+	for r := range collectionPages {
+		log.Println(r)
 		for _, v := range r.Results {
-			fmt.Println(v)
+			err = v.Save()
+			if err != nil {
+				log.Println(err)
+			}
 		}
 	}
 

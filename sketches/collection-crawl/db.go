@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 // DBInit creates the database schema
 func (app *App) DBInit() error {
 
@@ -9,17 +7,17 @@ func (app *App) DBInit() error {
 	if err != nil {
 		return err
 	}
-	temp, err := app.DB.Exec(`CREATE TABLE items (
+	_, err = app.DB.Exec(`CREATE TABLE items (
 		id    text PRIMARY KEY,
 		lccn  text,
 		date  integer,
 		title text,
 		api   jsonb
 	)`)
-	fmt.Println(temp)
 	if err != nil {
 		return err
 	}
+
 	return nil
 
 }

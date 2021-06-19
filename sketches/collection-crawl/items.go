@@ -1,5 +1,7 @@
 package main
 
+import "strconv"
+
 // ItemResult is an item returned from a LOC.gov collection results page
 type ItemResult struct {
 	// AccessRestricted bool          `json:"access_restricted"`
@@ -59,6 +61,25 @@ type ItemResult struct {
 	// URL       string    `json:"url"`
 }
 
+// Use the LCCN as a string representation of an item.
 func (item ItemResult) String() string {
 	return item.NumberLccn[0]
+}
+
+// Save serializes an item to the database.
+func (item ItemResult) Save() error {
+	query := `INSERT INTO items(id, lccn, date, title) VALUES ($1, $2, $3, $4)`
+	date, _ := strconv.Atoi(item.Date)
+	stmt, err := app.DB.Prepare(query)
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(item.ID, item.NumberLccn[0], date, item.Title)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
 }
