@@ -76,6 +76,7 @@ func (item ItemResult) Save() error {
 	query := `
 	INSERT INTO items(id, lccn, url, date, subjects, title, api) 
 	VALUES ($1, $2, $3, $4, $5, $6, $7)
+	ON CONFLICT DO NOTHING;
 	`
 
 	// If we can convert the date to an integer do that, otherwise keep NULL
