@@ -8,11 +8,13 @@ func (app *App) DBInit() error {
 		return err
 	}
 	_, err = app.DB.Exec(`CREATE TABLE items (
-		id    text PRIMARY KEY,
-		lccn  text,
-		date  integer,
-		title text,
-		api   jsonb
+		id       text PRIMARY KEY,
+		lccn     text,
+		url      text,
+		date     integer,
+		subjects text[],
+		title    text,
+		api      jsonb
 	)`)
 	if err != nil {
 		return err
