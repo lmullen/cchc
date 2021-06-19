@@ -17,15 +17,16 @@ func main() {
 	// Initialize the application and create a connection to the database.
 	err := app.Init()
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("Error initializing application: ", err)
 	}
 	defer app.Shutdown()
 
 	collections, err := FetchAllCollections(app.Client)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("Error fetching all digital colletions:", err)
 	}
 
+	// Save the collections metadata to the database
 	for _, c := range collections {
 		err = c.Save()
 		if err != nil {
