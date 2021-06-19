@@ -49,7 +49,6 @@ func FetchAllCollections(client *http.Client) ([]CollectionMetadata, error) {
 
 	return result.Results, nil
 
-	// https: //www.loc.gov/collections/?fa=subject_topic:american+history&fo=json&c=250
 }
 
 // CollectionsList contains an array of descriptions of Collection Metadata
@@ -138,18 +137,18 @@ type CollectionMetadata struct {
 	// ImageURL         []string      `json:"image_url"`
 	// Index            int           `json:"index"`
 	Item struct {
-		AccessAdvisory []string `json:"access_advisory"`
-		Contributors   []string `json:"contributors"`
-		Date           string   `json:"date"`
-		Format         []string `json:"format"`
-		Language       []string `json:"language"`
-		Location       []string `json:"location"`
-		Medium         []string `json:"medium"`
-		Notes          []string `json:"notes"`
-		Repository     []string `json:"repository"`
-		Subjects       []string `json:"subjects"`
-		Summary        []string `json:"summary"`
-		Title          string   `json:"title"`
+		AccessAdvisory []string    `json:"access_advisory"`
+		Contributors   []string    `json:"contributors"`
+		Date           string      `json:"date"`
+		Format         interface{} `json:"format"`
+		Language       []string    `json:"language"`
+		Location       []string    `json:"location"`
+		Medium         []string    `json:"medium"`
+		Notes          []string    `json:"notes"`
+		Repository     []string    `json:"repository"`
+		Subjects       []string    `json:"subjects"`
+		Summary        []string    `json:"summary"`
+		Title          string      `json:"title"`
 	} `json:"item"`
 	Items                string        `json:"items"`
 	Language             []string      `json:"language"`
