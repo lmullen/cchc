@@ -15,7 +15,7 @@ const apiBase = "https://www.loc.gov"
 
 // Stuff we don't want or need from the API, which reduces the response size
 var removeFromResponse = []string{
-	"aka", "breadcrumbs", "categories", "content", "content_is_post",
+	"aka", "breadcrumbs", "browse", "categories", "content", "content_is_post",
 	"expert_resources", "facet_trail", "facet_views", "facets", "featured_items",
 	"form_facets", "legacy-url", "next", "next_sibling", "options",
 	"original_formats", "pages", "partof", "previous", "previous_sibling",
@@ -24,7 +24,7 @@ var removeFromResponse = []string{
 }
 
 // apiOptions set various parameters for the requests to the API
-var apiOptions = url.Values{
+var apiCollectionOptions = url.Values{
 	"at!": []string{strings.Join(removeFromResponse, ",")},
 	"c":   []string{fmt.Sprint(itemsPerPage)},
 	"fa":  []string{"online-format:online text"},
@@ -39,7 +39,7 @@ func CollectionURL(slug string, page int) string {
 	u, _ := url.Parse(urlBase)
 
 	// Set the query to be the API options, then add the correct page of results
-	q := apiOptions
+	q := apiCollectionOptions
 	q.Set("sp", fmt.Sprint(page))
 	u.RawQuery = q.Encode()
 

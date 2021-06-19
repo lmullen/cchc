@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 )
 
@@ -20,6 +21,15 @@ func main() {
 		log.Fatalln(err)
 	}
 	defer app.Shutdown()
+
+	collections, err := FetchAllCollections(app.Client)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	for _, c := range collections {
+		fmt.Println(c)
+	}
 
 	// A channel to hold each page of the collection results
 	collectionPages := make(chan CollectionAPIPage, 20)
