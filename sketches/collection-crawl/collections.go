@@ -174,3 +174,28 @@ type CollectionMetadata struct {
 func (cm CollectionMetadata) String() string {
 	return cm.Title
 }
+
+// Save serializes collection metadata to the database.
+func (cm CollectionMetadata) Save() error {
+	query := `
+	INSERT INTO collections(id, url, items_url, count, title, subjects, api) 
+	VALUES ($1, $2, $3, $4, $5, $6, $7)
+	ON CONFLICT DO NOTHING;
+	`
+
+	// Convert the rest of the data back to JSON to stuff into a DB column
+	api, _ := json.Marshal(cm)
+
+	stmt, err := app.DB.Prepare(query)
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(cm.ID, cm.URL, cm.Items, cm.Count, cm.Title, cm.Item.Subjects, api)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}

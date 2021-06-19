@@ -3,7 +3,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 )
 
@@ -28,7 +27,10 @@ func main() {
 	}
 
 	for _, c := range collections {
-		fmt.Println(c)
+		err = c.Save()
+		if err != nil {
+			log.Println(err)
+		}
 	}
 
 	// A channel to hold each page of the collection results
