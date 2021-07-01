@@ -99,6 +99,9 @@ func (collection CollectionAPIPage) String() string {
 
 func fetchCollectionResult(url string, client *http.Client, results chan<- CollectionAPIPage) {
 
+	// Limit the rate
+	app.CollectionsLimiter.Take()
+
 	response, err := client.Get(url)
 	if err != nil {
 		log.Println(err)

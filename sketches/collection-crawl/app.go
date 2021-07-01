@@ -27,9 +27,9 @@ type App struct {
 	DB                 *sql.DB
 	Config             *Config
 	Client             *http.Client
-	NewspaperLimiter   *ratelimit.Limiter
-	ItemsLimiter       *ratelimit.Limiter
-	CollectionsLimiter *ratelimit.Limiter
+	NewspaperLimiter   ratelimit.Limiter
+	ItemsLimiter       ratelimit.Limiter
+	CollectionsLimiter ratelimit.Limiter
 }
 
 // getEnv either returns the value of an environment variable or, if that
@@ -76,13 +76,13 @@ func (app *App) Init() error {
 	// Create rate limiters for different endpoints. Rate limits documentation:
 	// https://www.loc.gov/apis/json-and-yaml/
 	il := ratelimit.New(200, ratelimit.Per(60*time.Second))
-	app.ItemsLimiter = &il
+	app.ItemsLimiter = il
 
 	cl := ratelimit.New(80, ratelimit.Per(60*time.Second))
-	app.CollectionsLimiter = &cl
+	app.CollectionsLimiter = cl
 
 	nl := ratelimit.New(20, ratelimit.Per(10*time.Second))
-	app.NewspaperLimiter = &nl
+	app.NewspaperLimiter = nl
 
 	return nil
 }

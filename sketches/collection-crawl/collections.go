@@ -21,6 +21,10 @@ var apiAllCollectionOptions = url.Values{
 // fewer digital collections that are available and that we care about than the
 // pagination limit.
 func FetchAllCollections(client *http.Client) ([]CollectionMetadata, error) {
+
+	// Rate limiter
+	app.CollectionsLimiter.Take()
+
 	urlBase := apiBase + "/collections/"
 	u, _ := url.Parse(urlBase)
 
