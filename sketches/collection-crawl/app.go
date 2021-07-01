@@ -6,8 +6,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
+	"go.uber.org/ratelimit"
 )
 
 // The Config type stores configuration which is read from environment variables.
@@ -20,11 +22,14 @@ type Config struct {
 	dbssl  string // SSL mode for the database connection
 }
 
-// The App type shares access to the database.
+// The App type shares access to the database and other resources.
 type App struct {
-	DB     *sql.DB
-	Config *Config
-	Client *http.Client
+	DB                 *sql.DB
+	Config             *Config
+	Client             *http.Client
+	NewspaperLimiter   *ratelimit.Limiter
+	ItemsLimiter       *ratelimit.Limiter
+	CollectionsLimiter *ratelimit.Limiter
 }
 
 // getEnv either returns the value of an environment variable or, if that
@@ -67,6 +72,17 @@ func (app *App) Init() error {
 	app.DBInit()
 
 	app.Client = &http.Client{}
+
+	// Create rate limiters for different endpoints. Rate limits documentation:
+	// https://www.loc.gov/apis/json-and-yaml/
+	il := ratelimit.New(200, ratelimit.Per(60*time.Second))
+	app.ItemsLimiter = &il
+
+	cl := ratelimit.New(80, ratelimit.Per(60*time.Second))
+	app.CollectionsLimiter = &cl
+
+	nl := ratelimit.New(20, ratelimit.Per(10*time.Second))
+	app.NewspaperLimiter = &nl
 
 	return nil
 }
