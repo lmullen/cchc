@@ -23,7 +23,7 @@ func main() {
 
 	collections, err := FetchAllCollections(app.Client)
 	if err != nil {
-		log.Fatalln("Error fetching all digital colletions:", err)
+		log.Fatalln("Error fetching all digital collections:", err)
 	}
 
 	// Save the collections metadata to the database
