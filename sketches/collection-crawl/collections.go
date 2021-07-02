@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -34,6 +35,7 @@ func FetchAllCollections(client *http.Client) ([]CollectionMetadata, error) {
 
 	url := u.String()
 
+	log.Println("Fetching all digital collections")
 	response, err := client.Get(url)
 	if err != nil {
 		return nil, err
@@ -187,6 +189,8 @@ func (cm CollectionMetadata) Save() error {
 	`
 
 	// Convert the rest of the data back to JSON to stuff into a DB column
+	//
+	// TODO Perhaps this step can be avoided by keeping the unparsed JSON in the struct
 	api, _ := json.Marshal(cm)
 
 	stmt, err := app.DB.Prepare(query)

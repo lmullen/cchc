@@ -35,7 +35,7 @@ func main() {
 	}
 
 	// A channel to hold each page of the collection results
-	collectionPages := make(chan CollectionAPIPage, 20)
+	collectionPages := make(chan CollectionAPIPage, 200)
 
 	// Fetch the first page of the collection. As long as there are more pages,
 	// the function will continue to fetch those too and add them to the channel.
@@ -44,7 +44,6 @@ func main() {
 	// Iterate over the pages in the collection API, and the items within each page.
 	// Store those results to the database.
 	for r := range collectionPages {
-		log.Println(r)
 		for _, v := range r.Results {
 			err = v.Save()
 			if err != nil {

@@ -119,6 +119,8 @@ func fetchCollectionResult(url string, client *http.Client, results chan<- Colle
 		log.Println(err)
 	}
 
+	log.Println("Fetched", result)
+
 	results <- result
 
 	// If there is another page of results, go fetch it in a goroutine. Otherwise,
