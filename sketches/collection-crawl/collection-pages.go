@@ -107,6 +107,11 @@ func fetchCollectionResult(url string, client *http.Client, results chan<- Colle
 		log.Println(err)
 	}
 
+	if response.StatusCode != http.StatusOK {
+		log.Printf("HTTP error: %s. URL fetched: %s\n", response.Status, url)
+		return
+	}
+
 	data, err := io.ReadAll(response.Body)
 	if err != nil {
 		log.Println(err)

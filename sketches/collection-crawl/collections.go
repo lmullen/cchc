@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -39,6 +40,10 @@ func FetchAllCollections(client *http.Client) ([]CollectionMetadata, error) {
 	response, err := client.Get(url)
 	if err != nil {
 		return nil, err
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("HTTP error: %s. URL fetched: %s", response.Status, url)
 	}
 
 	data, err := io.ReadAll(response.Body)
