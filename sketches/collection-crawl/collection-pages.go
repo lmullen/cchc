@@ -10,9 +10,6 @@ import (
 	"strings"
 )
 
-// Starting place for the API
-const apiBase = "https://www.loc.gov"
-
 // Stuff we don't want or need from the API, which reduces the response size
 var removeFromResponse = []string{
 	"aka", "breadcrumbs", "browse", "categories", "content", "content_is_post",
@@ -32,11 +29,11 @@ var apiCollectionOptions = url.Values{
 	"st":  []string{"list"},
 }
 
-// CollectionURL takes a slug for a particular collecction, plus the page in that
-// collections results to fetch, and returns the URL for that page of that collection.
-func CollectionURL(slug string, page int) string {
-	urlBase := apiBase + "/collections/" + slug + "/"
-	u, _ := url.Parse(urlBase)
+// CollectionURL takes the URL to the items for a particular collecction, plus
+// the page in that collections results to fetch, and returns the URL for that
+// page of that collection.
+func CollectionURL(itemsURL string, page int) string {
+	u, _ := url.Parse(itemsURL)
 
 	// Set the query to be the API options, then add the correct page of results
 	q := apiCollectionOptions
@@ -131,7 +128,7 @@ func fetchCollectionResult(url string, client *http.Client, results chan<- Colle
 	// If there is another page of results, go fetch it in a goroutine. Otherwise,
 	// close the channel so we know we are done with results.
 	if result.Pagination.Next != "" {
-		url := CollectionURL(collectionSlug, result.Pagination.Current+1)
+		url := CollectionURL(url, result.Pagination.Current+1)
 		go fetchCollectionResult(url, client, results)
 	} else {
 		close(results)

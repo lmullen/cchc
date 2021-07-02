@@ -6,8 +6,8 @@ import (
 	"log"
 )
 
-// Hard code a collection for now
-const collectionSlug = "african-american-perspectives-rare-books"
+const apiBase = "https://www.loc.gov"
+const sampleCollection = apiBase + "/collections/" + "african-american-perspectives-rare-books" + "/" // Hard code a collection for now
 const itemsPerPage = 250
 
 var app = &App{}
@@ -32,6 +32,13 @@ func main() {
 		if err != nil {
 			log.Println(err)
 		}
+
+		if c.Count < 100 {
+			// log.Println("Should fetch", c.Items)
+		} else {
+			// log.Println("Should skip", c)
+		}
+
 	}
 
 	// A channel to hold each page of the collection results
@@ -39,7 +46,7 @@ func main() {
 
 	// Fetch the first page of the collection. As long as there are more pages,
 	// the function will continue to fetch those too and add them to the channel.
-	go fetchCollectionResult(CollectionURL(collectionSlug, 1), app.Client, collectionPages)
+	go fetchCollectionResult(CollectionURL(sampleCollection, 1), app.Client, collectionPages)
 
 	// Iterate over the pages in the collection API, and the items within each page.
 	// Store those results to the database.
