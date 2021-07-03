@@ -93,12 +93,11 @@ func (app *App) Init() error {
 	return nil
 }
 
-// Shutdown closes the connection to the database and shutsdown the server.
-func (app *App) Shutdown() error {
+// Shutdown closes the connection to the database.
+func (app *App) Shutdown() {
 	log.Println("Closing the connection to the database.")
 	err := app.DB.Close()
 	if err != nil {
-		return err
+		log.Println(err)
 	}
-	return nil
 }
