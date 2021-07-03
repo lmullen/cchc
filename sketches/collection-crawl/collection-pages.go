@@ -147,7 +147,7 @@ func fetchCollectionResult(url string, collectionID string, client *http.Client,
 		return // Quit early in the hopes of not messing up other go routines
 	}
 
-	log.Info("Fetched", result)
+	log.Info("Fetched ", result)
 
 	// Save the collectionID for creating a relation in the database
 	result.CollectionID = collectionID
