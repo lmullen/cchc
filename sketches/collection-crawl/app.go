@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -30,6 +31,7 @@ type App struct {
 	NewspaperLimiter   ratelimit.Limiter
 	ItemsLimiter       ratelimit.Limiter
 	CollectionsLimiter ratelimit.Limiter
+	CollectionsWG      *sync.WaitGroup
 }
 
 // getEnv either returns the value of an environment variable or, if that

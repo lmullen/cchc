@@ -102,6 +102,7 @@ func (collection CollectionAPIPage) String() string {
 
 func fetchCollectionResult(url string, client *http.Client, results chan<- CollectionAPIPage) {
 
+	// Skip if it isn't a part of the LOC.gov API
 	if !HasAPI(url) {
 		return
 	}
