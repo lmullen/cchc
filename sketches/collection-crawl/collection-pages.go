@@ -116,6 +116,7 @@ func fetchCollectionResult(url string, collectionID string, client *http.Client,
 	response, err := client.Get(url)
 	if err != nil {
 		log.Println(err)
+		return
 	}
 
 	if response.StatusCode != http.StatusOK {
