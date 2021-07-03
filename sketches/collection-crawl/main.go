@@ -8,7 +8,7 @@ import (
 
 const apiBase = "https://www.loc.gov"
 const sampleCollection = apiBase + "/collections/" + "african-american-perspectives-rare-books" + "/" // Hard code a collection for now
-const itemsPerPage = 5
+const itemsPerPage = 250
 
 var app = &App{}
 
@@ -27,7 +27,7 @@ func main() {
 	}
 
 	// A channel to hold each page of the collection results
-	collectionPages := make(chan CollectionAPIPage, 200)
+	collectionPages := make(chan CollectionAPIPage, 1000)
 
 	// Save the collections metadata to the database
 	for _, c := range collections {
