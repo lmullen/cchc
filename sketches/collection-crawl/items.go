@@ -24,20 +24,20 @@ type ItemResult struct {
 	// ImageURL         []string  `json:"image_url"`
 	// Index            int       `json:"index"`
 	Item struct {
-		CallNumber       []string `json:"call_number"`
-		Contributors     []string `json:"contributors"`
-		CreatedPublished []string `json:"created_published"`
-		Date             string   `json:"date"`
-		Format           []string `json:"format"`
-		Language         []string `json:"language"`
-		Medium           []string `json:"medium"`
-		Notes            []string `json:"notes"`
-		OtherTitle       []string `json:"other_title"`
-		Subjects         []string `json:"subjects"`
-		Title            string   `json:"title"`
+		CallNumber       []string    `json:"call_number"`
+		Contributors     []string    `json:"contributors"`
+		CreatedPublished []string    `json:"created_published"`
+		Date             string      `json:"date"`
+		Format           interface{} `json:"format"`
+		Language         interface{} `json:"language"`
+		Medium           []string    `json:"medium"`
+		Notes            []string    `json:"notes"`
+		OtherTitle       []string    `json:"other_title"`
+		Subjects         []string    `json:"subjects"`
+		Title            string      `json:"title"`
 	} `json:"item"`
-	Language []string `json:"language"`
-	MimeType []string `json:"mime_type"`
+	Language interface{} `json:"language"`
+	MimeType []string    `json:"mime_type"`
 	// Number         []string `json:"number"`
 	NumberLccn     []string `json:"number_lccn"`
 	OnlineFormat   []string `json:"online_format"`
@@ -94,7 +94,13 @@ func (item ItemResult) Save() error {
 		return err
 	}
 
-	_, err = stmt.Exec(item.ID, item.NumberLccn[0], item.URL, date,
+	var lccn sql.NullString
+	// Make sure we don't panic with an out-of-bounds error
+	if len(item.NumberLccn) > 0 {
+		lccn.Scan(item.NumberLccn[0])
+	}
+
+	_, err = stmt.Exec(item.ID, lccn, item.URL, date,
 		item.Item.Subjects, item.Title, api)
 	if err != nil {
 		return err

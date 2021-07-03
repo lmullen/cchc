@@ -118,7 +118,8 @@ func fetchCollectionResult(url string, client *http.Client, results chan<- Colle
 
 	err = json.Unmarshal(data, &result)
 	if err != nil {
-		log.Println(err)
+		log.Printf("%s. URL attempted: %s", err, url)
+		return // Quit early in the hopes of not messing up other go routines
 	}
 
 	log.Println("Fetched", result)
@@ -131,7 +132,7 @@ func fetchCollectionResult(url string, client *http.Client, results chan<- Colle
 		url := CollectionURL(url, result.Pagination.Current+1)
 		go fetchCollectionResult(url, client, results)
 	} else {
-		close(results)
+		// close(results)
 	}
 
 }

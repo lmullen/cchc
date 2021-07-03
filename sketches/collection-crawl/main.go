@@ -8,7 +8,7 @@ import (
 
 const apiBase = "https://www.loc.gov"
 const sampleCollection = apiBase + "/collections/" + "african-american-perspectives-rare-books" + "/" // Hard code a collection for now
-const itemsPerPage = 250
+const itemsPerPage = 5
 
 var app = &App{}
 
@@ -26,6 +26,9 @@ func main() {
 		log.Fatalln("Error fetching all digital collections:", err)
 	}
 
+	// A channel to hold each page of the collection results
+	collectionPages := make(chan CollectionAPIPage, 200)
+
 	// Save the collections metadata to the database
 	for _, c := range collections {
 		err = c.Save()
@@ -33,20 +36,15 @@ func main() {
 			log.Println(err)
 		}
 
-		if c.Count < 100 {
-			// log.Println("Should fetch", c.Items)
+		if c.Count < 2000 {
+			// Fetch the first page of the collection. As long as there are more pages,
+			// the function will continue to fetch those too and add them to the channel.
+			go fetchCollectionResult(CollectionURL(c.ItemsURL, 1), app.Client, collectionPages)
 		} else {
 			// log.Println("Should skip", c)
 		}
 
 	}
-
-	// A channel to hold each page of the collection results
-	collectionPages := make(chan CollectionAPIPage, 200)
-
-	// Fetch the first page of the collection. As long as there are more pages,
-	// the function will continue to fetch those too and add them to the channel.
-	go fetchCollectionResult(CollectionURL(sampleCollection, 1), app.Client, collectionPages)
 
 	// Iterate over the pages in the collection API, and the items within each page.
 	// Store those results to the database.

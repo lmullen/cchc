@@ -161,7 +161,7 @@ type CollectionMetadata struct {
 		Summary        []string    `json:"summary"`
 		Title          string      `json:"title"`
 	} `json:"item"`
-	Items                string        `json:"items"`
+	ItemsURL             string        `json:"items"`
 	Language             []string      `json:"language"`
 	Location             []string      `json:"location"`
 	Number               []string      `json:"number"`
@@ -203,7 +203,7 @@ func (cm CollectionMetadata) Save() error {
 		return err
 	}
 
-	_, err = stmt.Exec(cm.ID, cm.URL, cm.Items, cm.Count, cm.Title, cm.Item.Subjects, api)
+	_, err = stmt.Exec(cm.ID, cm.URL, cm.ItemsURL, cm.Count, cm.Title, cm.Item.Subjects, api)
 	if err != nil {
 		return err
 	}
