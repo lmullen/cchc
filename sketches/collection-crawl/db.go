@@ -8,7 +8,7 @@ func (app *App) DBInit() error {
 		return err
 	}
 
-	_, err = app.DB.Exec(`CREATE TABLE collections (
+	_, err = app.DB.Exec(`CREATE TABLE IF NOT EXISTS collections (
 		id          text PRIMARY KEY,
 		title       text,
 		count       integer,
@@ -26,7 +26,7 @@ func (app *App) DBInit() error {
 		return err
 	}
 
-	_, err = app.DB.Exec(`CREATE TABLE items (
+	_, err = app.DB.Exec(`CREATE TABLE IF NOT EXISTS items (
 		id       text PRIMARY KEY,
 		lccn     text,
 		url      text,

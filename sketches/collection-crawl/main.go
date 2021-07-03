@@ -65,7 +65,7 @@ func main() {
 				}
 			}
 		}
-		wg.Done()
+		itemsWG.Done()
 	}()
 
 	app.CollectionsWG.Wait()
