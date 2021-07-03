@@ -4,6 +4,7 @@ package main
 
 import (
 	"log"
+	"sync"
 )
 
 const apiBase = "https://www.loc.gov"
@@ -39,7 +40,7 @@ func main() {
 
 		// Start fetching that collection's metadata
 		// TODO remove this limit which crawls only small collections
-		if c.Count < 100 {
+		if c.Count < 50 {
 			// Fetch the first page of the collection. As long as there are more pages,
 			// the function will continue to fetch those too and add them to the channel.
 			app.CollectionsWG.Add(1)
@@ -51,17 +52,24 @@ func main() {
 	}
 
 	// Iterate over the pages in the collection API, and the items within each page.
-	// Store those results to the database.
-	for r := range collectionPages {
-		for _, v := range r.Results {
-			err = v.Save()
-			if err != nil {
-				log.Println(err)
+	// Store those results to the database. The wait group makes sure that the
+	// program doesn't end before the data is written to the database.
+	itemsWG := sync.WaitGroup{}
+	itemsWG.Add(1)
+	go func() {
+		for r := range collectionPages {
+			for _, v := range r.Results {
+				err = v.Save()
+				if err != nil {
+					log.Println(err)
+				}
 			}
 		}
-	}
+		wg.Done()
+	}()
 
 	app.CollectionsWG.Wait()
 	close(collectionPages) // Make sure the program quits
+	itemsWG.Wait()
 
 }
