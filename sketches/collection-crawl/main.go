@@ -36,7 +36,8 @@ func main() {
 			log.Println(err)
 		}
 
-		if c.Count < 2000 {
+		// TODO remove this limit which crawls only small collections
+		if c.Count < 100 {
 			// Fetch the first page of the collection. As long as there are more pages,
 			// the function will continue to fetch those too and add them to the channel.
 			go fetchCollectionResult(CollectionURL(c.ItemsURL, 1), app.Client, collectionPages)

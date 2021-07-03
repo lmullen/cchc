@@ -43,6 +43,12 @@ func CollectionURL(itemsURL string, page int) string {
 	return u.String()
 }
 
+// HasAPI checks whether the URL is a part of the LOC.gov API, as opposed to
+// American Memory or some other digital collection.
+func HasAPI(url string) bool {
+	return strings.HasPrefix(url, apiBase)
+}
+
 // CollectionAPIPage is an object returned by querying a specific page of the
 // collections endpoint of the LOC.gov API.
 type CollectionAPIPage struct {
@@ -95,6 +101,10 @@ func (collection CollectionAPIPage) String() string {
 }
 
 func fetchCollectionResult(url string, client *http.Client, results chan<- CollectionAPIPage) {
+
+	if !HasAPI(url) {
+		return
+	}
 
 	// Limit the rate
 	app.CollectionsLimiter.Take()

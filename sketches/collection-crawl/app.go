@@ -75,13 +75,13 @@ func (app *App) Init() error {
 
 	// Create rate limiters for different endpoints. Rate limits documentation:
 	// https://www.loc.gov/apis/json-and-yaml/
-	il := ratelimit.New(200, ratelimit.Per(60*time.Second))
+	il := ratelimit.New(200, ratelimit.Per(60*time.Second)) // 200 requests/minute
 	app.ItemsLimiter = il
 
-	cl := ratelimit.New(80, ratelimit.Per(60*time.Second))
+	cl := ratelimit.New(80, ratelimit.Per(60*time.Second)) // 80 requests/minute
 	app.CollectionsLimiter = cl
 
-	nl := ratelimit.New(20, ratelimit.Per(10*time.Second))
+	nl := ratelimit.New(20, ratelimit.Per(10*time.Second)) // 120 requests/minute
 	app.NewspaperLimiter = nl
 
 	return nil

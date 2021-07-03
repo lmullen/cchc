@@ -98,7 +98,7 @@ func (item ItemResult) Save() error {
 	// Make sure we don't panic with an out-of-bounds error
 	if len(item.NumberLccn) > 0 {
 		lccn.Scan(item.NumberLccn[0])
-	}
+	} // Otherwise the lccn will be null
 
 	_, err = stmt.Exec(item.ID, lccn, item.URL, date,
 		item.Item.Subjects, item.Title, api)
