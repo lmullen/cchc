@@ -73,7 +73,9 @@ func (app *App) Init() error {
 	app.DB = db
 	app.DBInit()
 
-	app.Client = &http.Client{}
+	app.Client = &http.Client{
+		Timeout: 10 * time.Second,
+	}
 
 	// Create rate limiters for different endpoints. Rate limits documentation:
 	// https://www.loc.gov/apis/json-and-yaml/
