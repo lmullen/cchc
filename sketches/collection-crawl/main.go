@@ -44,7 +44,7 @@ func main() {
 			// Fetch the first page of the collection. As long as there are more pages,
 			// the function will continue to fetch those too and add them to the channel.
 			app.CollectionsWG.Add(1)
-			go fetchCollectionResult(CollectionURL(c.ItemsURL, 1), app.Client, collectionPages)
+			go fetchCollectionResult(CollectionURL(c.ItemsURL, 1), c.ID, app.Client, collectionPages)
 		} else {
 			// log.Println("Should skip", c)
 		}
@@ -58,8 +58,9 @@ func main() {
 	itemsWG.Add(1)
 	go func() {
 		for r := range collectionPages {
-			for _, v := range r.Results {
-				err = v.Save()
+			for _, item := range r.Results {
+				item.CollectionID = r.CollectionID
+				err = item.Save()
 				if err != nil {
 					log.Println(err)
 				}

@@ -9,6 +9,7 @@ import (
 
 // ItemResult is an item returned from a LOC.gov collection results page
 type ItemResult struct {
+	CollectionID string // This is the foreign key to the collection, not from API
 	// AccessRestricted bool          `json:"access_restricted"`
 	// Aka              []string      `json:"aka"`
 	// Campaigns        []interface{} `json:"campaigns"`
@@ -66,16 +67,22 @@ type ItemResult struct {
 	URL       string    `json:"url"`
 }
 
-// Use the LCCN as a string representation of an item.
+// Use the title as a string representation of an item.
 func (item ItemResult) String() string {
-	return item.NumberLccn[0]
+	return item.Title
 }
 
 // Save serializes an item to the database.
 func (item ItemResult) Save() error {
-	query := `
+	itemQuery := `
 	INSERT INTO items(id, lccn, url, date, subjects, title, api) 
 	VALUES ($1, $2, $3, $4, $5, $6, $7)
+	ON CONFLICT DO NOTHING;
+	`
+
+	relationQuery := `
+	INSERT INTO items_in_collections(item_id, collection_id)
+	VALUES ($1, $2)
 	ON CONFLICT DO NOTHING;
 	`
 
@@ -89,7 +96,12 @@ func (item ItemResult) Save() error {
 	// Convert the rest of the data back to JSON to stuff into a DB column
 	api, _ := json.Marshal(item)
 
-	stmt, err := app.DB.Prepare(query)
+	itemStmt, err := app.DB.Prepare(itemQuery)
+	if err != nil {
+		return err
+	}
+
+	relationStmt, err := app.DB.Prepare(relationQuery)
 	if err != nil {
 		return err
 	}
@@ -100,11 +112,26 @@ func (item ItemResult) Save() error {
 		lccn.Scan(item.NumberLccn[0])
 	} // Otherwise the lccn will be null
 
-	_, err = stmt.Exec(item.ID, lccn, item.URL, date,
-		item.Item.Subjects, item.Title, api)
+	// Use a transaction since we are writing to two tables
+	tx, err := app.DB.Begin()
 	if err != nil {
 		return err
 	}
+
+	_, err = tx.Stmt(itemStmt).Exec(item.ID, lccn, item.URL, date,
+		item.Item.Subjects, item.Title, api)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	_, err = tx.Stmt(relationStmt).Exec(item.ID, item.CollectionID)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	tx.Commit()
 
 	return nil
 

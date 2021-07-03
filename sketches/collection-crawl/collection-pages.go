@@ -52,6 +52,7 @@ func HasAPI(url string) bool {
 // CollectionAPIPage is an object returned by querying a specific page of the
 // collections endpoint of the LOC.gov API.
 type CollectionAPIPage struct {
+	CollectionID string // This is stored but is not returned as part of the API
 	// ContentIsPost bool `json:"content_is_post"`
 	// Digitized int `json:"digitized"`
 	// FormFacets    struct {
@@ -100,7 +101,7 @@ func (collection CollectionAPIPage) String() string {
 	return out
 }
 
-func fetchCollectionResult(url string, client *http.Client, results chan<- CollectionAPIPage) {
+func fetchCollectionResult(url string, collectionID string, client *http.Client, results chan<- CollectionAPIPage) {
 
 	defer app.CollectionsWG.Done()
 
@@ -137,13 +138,16 @@ func fetchCollectionResult(url string, client *http.Client, results chan<- Colle
 
 	log.Println("Fetched", result)
 
+	// Save the collectionID for creating a relation in the database
+	result.CollectionID = collectionID
+
 	results <- result
 
 	// If there is another page of results, go fetch it.
 	if result.Pagination.Next != "" {
 		app.CollectionsWG.Add(1)
 		url := CollectionURL(url, result.Pagination.Current+1)
-		fetchCollectionResult(url, client, results)
+		fetchCollectionResult(url, collectionID, client, results)
 	}
 
 }
