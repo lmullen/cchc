@@ -86,6 +86,8 @@ func (app *App) Init() error {
 	nl := ratelimit.New(20, ratelimit.Per(10*time.Second)) // 120 requests/minute
 	app.NewspaperLimiter = nl
 
+	app.CollectionsWG = &sync.WaitGroup{}
+
 	return nil
 }
 

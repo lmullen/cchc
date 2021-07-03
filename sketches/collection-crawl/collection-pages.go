@@ -102,6 +102,8 @@ func (collection CollectionAPIPage) String() string {
 
 func fetchCollectionResult(url string, client *http.Client, results chan<- CollectionAPIPage) {
 
+	defer app.CollectionsWG.Done()
+
 	// Skip if it isn't a part of the LOC.gov API
 	if !HasAPI(url) {
 		return
@@ -137,13 +139,11 @@ func fetchCollectionResult(url string, client *http.Client, results chan<- Colle
 
 	results <- result
 
-	// If there is another page of results, go fetch it in a goroutine. Otherwise,
-	// close the channel so we know we are done with results.
+	// If there is another page of results, go fetch it.
 	if result.Pagination.Next != "" {
+		app.CollectionsWG.Add(1)
 		url := CollectionURL(url, result.Pagination.Current+1)
-		go fetchCollectionResult(url, client, results)
-	} else {
-		// close(results)
+		fetchCollectionResult(url, client, results)
 	}
 
 }
