@@ -31,7 +31,7 @@ type ItemResult struct {
 		Date             string      `json:"date"`
 		Format           interface{} `json:"format"`
 		Language         interface{} `json:"language"`
-		Medium           []string    `json:"medium"`
+		Medium           interface{} `json:"medium"`
 		Notes            []string    `json:"notes"`
 		OtherTitle       []string    `json:"other_title"`
 		Subjects         []string    `json:"subjects"`

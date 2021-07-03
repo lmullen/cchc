@@ -156,7 +156,7 @@ type CollectionMetadata struct {
 		Format         interface{} `json:"format"`
 		Language       []string    `json:"language"`
 		Location       []string    `json:"location"`
-		Medium         []string    `json:"medium"`
+		Medium         interface{} `json:"medium"`
 		Notes          []string    `json:"notes"`
 		Repository     []string    `json:"repository"`
 		Subjects       []string    `json:"subjects"`
