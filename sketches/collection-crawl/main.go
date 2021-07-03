@@ -15,6 +15,15 @@ var app = &App{}
 
 func main() {
 
+	switch ll := getEnv("CCHC_LOGLEVEL", "warn"); ll {
+	case "warn":
+		log.SetLevel(log.WarnLevel)
+	case "info":
+		log.SetLevel(log.InfoLevel)
+	case "debug":
+		log.SetLevel(log.DebugLevel)
+	}
+
 	// Initialize the application and create a connection to the database.
 	err := app.Init()
 	if err != nil {
