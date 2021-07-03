@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var apiAllCollectionOptions = url.Values{
@@ -36,7 +37,7 @@ func FetchAllCollections(client *http.Client) ([]CollectionMetadata, error) {
 
 	url := u.String()
 
-	log.Println("Fetching all digital collections")
+	log.Info("Fetching all digital collections")
 	response, err := client.Get(url)
 	if err != nil {
 		return nil, err

@@ -3,12 +3,13 @@
 package main
 
 import (
-	"log"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const apiBase = "https://www.loc.gov"
-const itemsPerPage = 25 // TODO so far 250 seems like the best value
+const itemsPerPage = 250 // TODO so far 250 seems like the best value
 
 var app = &App{}
 
@@ -17,13 +18,13 @@ func main() {
 	// Initialize the application and create a connection to the database.
 	err := app.Init()
 	if err != nil {
-		log.Fatalln("Error initializing application: ", err)
+		log.Fatal("Error initializing application: ", err)
 	}
 	defer app.Shutdown()
 
 	collections, err := FetchAllCollections(app.Client)
 	if err != nil {
-		log.Fatalln("Error fetching all digital collections:", err)
+		log.Fatal("Error fetching all digital collections:", err)
 	}
 
 	// A channel to hold each page of the collection results
@@ -35,18 +36,16 @@ func main() {
 		// Save a collection's metadata to the database
 		err = c.Save()
 		if err != nil {
-			log.Println(err)
+			log.Error(err)
 		}
 
 		// Start fetching that collection's metadata
 		// TODO remove this limit which crawls only small collections
-		if c.Count < 50 {
+		if c.Count < 10000 {
 			// Fetch the first page of the collection. As long as there are more pages,
 			// the function will continue to fetch those too and add them to the channel.
 			app.CollectionsWG.Add(1)
 			go fetchCollectionResult(CollectionURL(c.ItemsURL, 1), c.ID, app.Client, collectionPages)
-		} else {
-			// log.Println("Should skip", c)
 		}
 
 	}
@@ -62,7 +61,10 @@ func main() {
 				item.CollectionID = r.CollectionID
 				err = item.Save()
 				if err != nil {
-					log.Println(err)
+					log.WithFields(log.Fields{
+						"item_id": item.ID,
+						"error":   err,
+					}).Error("Error saving item")
 				}
 			}
 		}

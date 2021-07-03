@@ -3,11 +3,12 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"sync"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"go.uber.org/ratelimit"
@@ -58,7 +59,7 @@ func (app *App) Init() error {
 	app.Config.dbpass = getEnv("CCHC_DBPASS", "")
 
 	// Connect to the database then store the database in the struct.
-	log.Printf("Connecting to the %v database.\n", app.Config.dbname)
+	log.Infof("Connecting to the %v database", app.Config.dbname)
 	constr := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=%s",
 		app.Config.dbhost, app.Config.dbport, app.Config.dbname, app.Config.dbuser,
 		app.Config.dbpass, app.Config.dbssl)
@@ -95,9 +96,9 @@ func (app *App) Init() error {
 
 // Shutdown closes the connection to the database.
 func (app *App) Shutdown() {
-	log.Println("Closing the connection to the database.")
+	log.Info("Closing the connection to the database")
 	err := app.DB.Close()
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 	}
 }

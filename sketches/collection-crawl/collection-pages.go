@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Stuff we don't want or need from the API, which reduces the response size
@@ -115,29 +116,37 @@ func fetchCollectionResult(url string, collectionID string, client *http.Client,
 
 	response, err := client.Get(url)
 	if err != nil {
-		log.Println(err)
+		log.Warn(err)
 		return
 	}
 
 	if response.StatusCode != http.StatusOK {
-		log.Printf("HTTP error: %s. URL fetched: %s\n", response.Status, url)
+		log.WithFields(log.Fields{
+			"http_error": response.Status,
+			"http_code":  response.StatusCode,
+			"url":        url,
+		}).Warn("HTTP error when fetching from API")
 		return
 	}
 
 	data, err := io.ReadAll(response.Body)
 	if err != nil {
-		log.Println(err)
+		log.Warn(err)
+		return
 	}
 
 	var result CollectionAPIPage
 
 	err = json.Unmarshal(data, &result)
 	if err != nil {
-		log.Printf("%s. URL attempted: %s", err, url)
+		log.WithFields(log.Fields{
+			"url":           url,
+			"parsing_error": err,
+		}).Warn("Error parsing JSON: %s", err)
 		return // Quit early in the hopes of not messing up other go routines
 	}
 
-	log.Println("Fetched", result)
+	log.Info("Fetched", result)
 
 	// Save the collectionID for creating a relation in the database
 	result.CollectionID = collectionID
