@@ -143,7 +143,7 @@ func fetchCollectionResult(url string, collectionID string, client *http.Client,
 		log.WithFields(log.Fields{
 			"url":           url,
 			"parsing_error": err,
-		}).Warn("Error parsing JSON: %s", err)
+		}).Warn("Error parsing JSON")
 		return // Quit early in the hopes of not messing up other go routines
 	}
 
