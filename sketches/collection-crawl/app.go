@@ -102,3 +102,12 @@ func (app *App) Shutdown() {
 		log.Error(err)
 	}
 }
+
+// Exit the entire program if we get an HTTP 429 error
+// TODO: Would be better to wait and try again, but this works for now
+func quitIfBlocked(code int) {
+	if code == http.StatusTooManyRequests {
+		app.Shutdown()
+		log.Fatal("Quiting because rate limit exceeded")
+	}
+}

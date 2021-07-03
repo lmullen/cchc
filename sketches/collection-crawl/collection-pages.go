@@ -126,6 +126,7 @@ func fetchCollectionResult(url string, collectionID string, client *http.Client,
 			"http_code":  response.StatusCode,
 			"url":        url,
 		}).Warn("HTTP error when fetching from API")
+		quitIfBlocked(response.StatusCode)
 		return
 	}
 

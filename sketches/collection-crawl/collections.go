@@ -44,6 +44,7 @@ func FetchAllCollections(client *http.Client) ([]CollectionMetadata, error) {
 	}
 
 	if response.StatusCode != http.StatusOK {
+		quitIfBlocked(response.StatusCode)
 		return nil, fmt.Errorf("HTTP error: %s. URL fetched: %s", response.Status, url)
 	}
 
