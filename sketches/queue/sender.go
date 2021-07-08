@@ -39,7 +39,7 @@ func main() {
 	// Only creates a queue if it doesn't already exist
 	q, err := ch.QueueDeclare("jobs", true, false, false, false, nil)
 	if err != nil {
-		log.Fatal("Failed to create a queue: ", err)
+		log.Fatal("Failed to declare a queue: ", err)
 	}
 
 	rand.Seed(time.Now().UnixNano())
