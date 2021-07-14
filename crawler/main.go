@@ -80,8 +80,10 @@ func main() {
 
 	}
 
-	// Iterate over the pages in the collection API, and the items within each page.
-	// Store those results to the database. The wait group makes sure that the
+	// Iterate over the pages in the collection API, and the items within each
+	// page. Store those results to the database. This means we know that an item
+	// exists, and also which collection it is a part of. But we will fetch that
+	// item from its item page separately. The wait group makes sure that the
 	// program doesn't end before the data is written to the database.
 	itemsWG := sync.WaitGroup{}
 	itemsWG.Add(1)
