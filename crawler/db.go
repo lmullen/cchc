@@ -5,7 +5,7 @@ package main
 func (app *App) DBCreateSchema() error {
 
 	// TODO: Delete the DROP TABLE statements, which are there for dev purposes
-	_, err := app.DB.Exec(`DROP TABLE IF EXISTS collections`)
+	_, err := app.DB.Exec(`DROP TABLE IF EXISTS collections CASCADE`)
 	if err != nil {
 		return err
 	}
@@ -23,7 +23,7 @@ func (app *App) DBCreateSchema() error {
 		return err
 	}
 
-	_, err = app.DB.Exec(`DROP TABLE IF EXISTS items`)
+	_, err = app.DB.Exec(`DROP TABLE IF EXISTS items CASCADE`)
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func (app *App) DBCreateSchema() error {
 		return err
 	}
 
-	_, err = app.DB.Exec(`DROP TABLE IF EXISTS items_in_collections`)
+	_, err = app.DB.Exec(`DROP TABLE IF EXISTS items_in_collections CASCADE`)
 	if err != nil {
 		return err
 	}
