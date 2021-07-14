@@ -11,48 +11,104 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Stuff we don't want or need from the API, which reduces the response size
-var removeFromResponse = []string{
-	"aka", "breadcrumbs", "browse", "categories", "content", "content_is_post",
-	"expert_resources", "facet_trail", "facet_views", "facets", "featured_items",
-	"form_facets", "legacy-url", "next", "next_sibling", "options",
-	"original_formats", "pages", "partof", "previous", "previous_sibling",
-	"research-centers", "shards", "site_type", "subjects", "timeline_1852_1880",
-	"timeline_1881_1900", "timeline_1901_1925", "timestamp", "topics", "views",
-}
-
-// apiOptions set various parameters for the requests to the API
-var apiCollectionOptions = url.Values{
-	"at!": []string{strings.Join(removeFromResponse, ",")},
-	"c":   []string{fmt.Sprint(apiItemsPerPage)},
-	"fa":  []string{"online-format:online text"},
-	"fo":  []string{"json"},
-	"st":  []string{"list"},
-}
-
-// CollectionURL takes the URL to the items for a particular collecction, plus
+// CollectionPageURL takes the URL to the items for a particular collecction, plus
 // the page in that collections results to fetch, and returns the URL for that
 // page of that collection.
-func CollectionURL(itemsURL string, page int) string {
+func collectionPageURL(itemsURL string, page int) string {
 	u, _ := url.Parse(itemsURL)
 
 	// Set the query to be the API options, then add the correct page of results
-	q := apiCollectionOptions
+	removeFromResponse := []string{
+		"aka", "breadcrumbs", "browse", "categories", "content", "content_is_post",
+		"expert_resources", "facet_trail", "facet_views", "facets", "featured_items",
+		"form_facets", "legacy-url", "next", "next_sibling", "options",
+		"original_formats", "pages", "partof", "previous", "previous_sibling",
+		"research-centers", "shards", "site_type", "subjects", "timeline_1852_1880",
+		"timeline_1881_1900", "timeline_1901_1925", "timestamp", "topics", "views",
+	}
+
+	q := url.Values{
+		"at!": []string{strings.Join(removeFromResponse, ",")},
+		"c":   []string{fmt.Sprint(apiItemsPerPage)},
+		"fa":  []string{"online-format:online text"},
+		"fo":  []string{"json"},
+		"st":  []string{"list"},
+	}
 	q.Set("sp", fmt.Sprint(page))
 	u.RawQuery = q.Encode()
 
 	return u.String()
 }
 
+// FetchCollectionItems gets the items associated with each collection
+func (c Collection) FetchCollectionItems(page int, results chan<- CollectionAPIPage) {
+
+	defer app.CollectionsWG.Done()
+
+	url := collectionPageURL(c.ItemsURL, page)
+
+	// Skip if it isn't a part of the LOC.gov API
+	if !hasAPI(url) {
+		return
+	}
+
+	// Limit the rate
+	app.Limiters.Collections.Take()
+
+	response, err := app.Client.Get(url)
+	if err != nil {
+		log.Warn(err)
+		return
+	}
+
+	if response.StatusCode != http.StatusOK {
+		log.WithFields(log.Fields{
+			"http_error": response.Status,
+			"http_code":  response.StatusCode,
+			"url":        url,
+		}).Warn("HTTP error when fetching from API")
+		quitIfBlocked(response.StatusCode)
+		return
+	}
+
+	data, err := io.ReadAll(response.Body)
+	if err != nil {
+		log.Warn("Error reading HTTP response body: ", err)
+		return
+	}
+
+	var result CollectionAPIPage
+
+	err = json.Unmarshal(data, &result)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"url":           url,
+			"parsing_error": err,
+		}).Warn("Error parsing JSON")
+		return // Quit early in the hopes of not messing up other go routines
+	}
+
+	log.Info("Fetched ", result)
+
+	// Save the collectionID for creating a relation in the database
+	result.CollectionID = c.ID
+
+	results <- result
+
+	// If there is another page of results, go fetch it.
+	if result.Pagination.Next != "" {
+		app.CollectionsWG.Add(1)
+		c.FetchCollectionItems(result.Pagination.Current+1, results)
+	}
+
+}
+
 // CollectionAPIPage is an object returned by querying a specific page of the
-// collections endpoint of the LOC.gov API.
+// collections endpoint of the LOC.gov API. Other fields are returned by the
+// API but are ignored when parsing.
 type CollectionAPIPage struct {
 	CollectionID string // This is stored but is not returned as part of the API
-	// ContentIsPost bool `json:"content_is_post"`
-	// Digitized int `json:"digitized"`
-	// FormFacets    struct {
-	// } `json:"form_facets"`
-	Pagination struct {
+	Pagination   struct {
 		Current int `json:"current"`
 		// First   string `json:"first"`
 		// From    int    `json:"from"`
@@ -71,88 +127,11 @@ type CollectionAPIPage struct {
 		// Total          int    `json:"total"`
 	} `json:"pagination"`
 	Results []ItemResult `json:"results"`
-	// Search  struct {
-	// 	Dates       interface{} `json:"dates"`
-	// 	FacetLimits string      `json:"facet_limits"`
-	// 	Field       interface{} `json:"field"`
-	// 	Hits        int         `json:"hits"`
-	// 	In          string      `json:"in"`
-	// 	Query       string      `json:"query"`
-	// 	Recommended int         `json:"recommended"`
-	// 	Site        struct {
-	// 	} `json:"site"`
-	// 	SortBy      string `json:"sort_by"`
-	// 	Type        string `json:"type"`
-	// 	UnionFacets string `json:"union_facets"`
-	// 	URL         string `json:"url"`
-	// } `json:"search"`
-	Title string `json:"title"`
-	Total int    `json:"total"`
+	Title   string       `json:"title"`
 }
 
 // String prints the collection result
-func (collection CollectionAPIPage) String() string {
-	out := fmt.Sprintf("%s, page %v", collection.Title, collection.Pagination.Current)
+func (c CollectionAPIPage) String() string {
+	out := fmt.Sprintf("%s, page %v", c.Title, c.Pagination.Current)
 	return out
-}
-
-func fetchCollectionResult(url string, collectionID string, client *http.Client, results chan<- CollectionAPIPage) {
-
-	defer app.CollectionsWG.Done()
-
-	// Skip if it isn't a part of the LOC.gov API
-	if !hasAPI(url) {
-		return
-	}
-
-	// Limit the rate
-	app.Limiters.Collections.Take()
-
-	response, err := client.Get(url)
-	if err != nil {
-		log.Warn(err)
-		return
-	}
-
-	if response.StatusCode != http.StatusOK {
-		log.WithFields(log.Fields{
-			"http_error": response.Status,
-			"http_code":  response.StatusCode,
-			"url":        url,
-		}).Warn("HTTP error when fetching from API")
-		quitIfBlocked(response.StatusCode)
-		return
-	}
-
-	data, err := io.ReadAll(response.Body)
-	if err != nil {
-		log.Warn(err)
-		return
-	}
-
-	var result CollectionAPIPage
-
-	err = json.Unmarshal(data, &result)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"url":           url,
-			"parsing_error": err,
-		}).Warn("Error parsing JSON")
-		return // Quit early in the hopes of not messing up other go routines
-	}
-
-	log.Info("Fetched ", result)
-
-	// Save the collectionID for creating a relation in the database
-	result.CollectionID = collectionID
-
-	results <- result
-
-	// If there is another page of results, go fetch it.
-	if result.Pagination.Next != "" {
-		app.CollectionsWG.Add(1)
-		url := CollectionURL(url, result.Pagination.Current+1)
-		fetchCollectionResult(url, collectionID, client, results)
-	}
-
 }

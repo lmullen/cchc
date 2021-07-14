@@ -65,7 +65,7 @@ func main() {
 			// Fetch the first page of the collection. As long as there are more pages,
 			// the function will continue to fetch those too and add them to the channel.
 			app.CollectionsWG.Add(1)
-			go fetchCollectionResult(CollectionURL(c.ItemsURL, 1), c.ID, app.Client, collectionPages)
+			go c.FetchCollectionItems(1, collectionPages)
 		}
 
 	}

@@ -42,8 +42,12 @@ func FetchAllCollections() ([]Collection, error) {
 	}
 
 	if response.StatusCode != http.StatusOK {
+		log.WithFields(log.Fields{
+			"http_error": response.Status,
+			"http_code":  response.StatusCode,
+			"url":        url,
+		}).Warn("HTTP error when fetching from API")
 		quitIfBlocked(response.StatusCode)
-		log.WithField("url", url).Debugf("HTTP error: %s", response.Status)
 		return nil, fmt.Errorf("HTTP error: %s", response.Status)
 	}
 
