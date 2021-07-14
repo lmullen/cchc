@@ -25,7 +25,14 @@ var app = &App{}
 
 func main() {
 
-	switch ll := getEnv("CCHC_LOGLEVEL", "warn"); ll {
+	// Initialize the application and create a connection to the database.
+	err := app.Init()
+	if err != nil {
+		log.Fatal("Error initializing application: ", err)
+	}
+	defer app.Shutdown()
+
+	switch app.Config.loglevel {
 	case "warn":
 		log.SetLevel(log.WarnLevel)
 	case "info":
@@ -33,13 +40,6 @@ func main() {
 	case "debug":
 		log.SetLevel(log.DebugLevel)
 	}
-
-	// Initialize the application and create a connection to the database.
-	err := app.Init()
-	if err != nil {
-		log.Fatal("Error initializing application: ", err)
-	}
-	defer app.Shutdown()
 
 	collections, err := FetchAllCollections()
 	if err != nil {

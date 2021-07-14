@@ -15,12 +15,13 @@ import (
 
 // The Config type stores configuration which is read from environment variables.
 type Config struct {
-	dbhost string
-	dbport string
-	dbname string
-	dbuser string
-	dbpass string
-	dbssl  string // SSL mode for the database connection
+	dbhost   string
+	dbport   string
+	dbname   string
+	dbuser   string
+	dbpass   string
+	dbssl    string // SSL mode for the database connection
+	loglevel string
 }
 
 // The App type shares access to the database and other resources.
@@ -48,6 +49,7 @@ func (app *App) Init() error {
 	app.Config.dbname = getEnv("CCHC_DBNAME", "cchc")
 	app.Config.dbuser = getEnv("CCHC_DBUSER", "lmullen")
 	app.Config.dbpass = getEnv("CCHC_DBPASS", "")
+	app.Config.dbpass = getEnv("CCHC_LOGLEVEL", "warn")
 
 	// Connect to the database and initialize it.
 	log.Infof("Connecting to the %v database", app.Config.dbname)
