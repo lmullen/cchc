@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"os"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -24,4 +25,10 @@ func quitIfBlocked(code int) {
 		app.Shutdown()
 		log.Fatal("Quiting because rate limit exceeded")
 	}
+}
+
+// hasAPI checks whether the URL is a part of the LOC.gov API, as opposed to
+// American Memory or some other digital collection.
+func hasAPI(url string) bool {
+	return strings.HasPrefix(url, apiBase)
 }

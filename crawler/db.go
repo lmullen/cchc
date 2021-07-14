@@ -11,13 +11,16 @@ func (app *App) DBCreateSchema() error {
 	}
 
 	_, err = app.DB.Exec(`CREATE TABLE IF NOT EXISTS collections (
-		id          text PRIMARY KEY,
-		title       text,
-		count       integer,
-		url         text, 
-		items_url   text,
-		subjects    text[],
-		api         jsonb
+		id            text PRIMARY KEY,
+		title         text,
+		description   text,
+		count         integer,
+		url           text, 
+		items_url     text,
+		subjects      text[],
+		subjects2     text[],
+		topics        text[],
+		api           jsonb
 	);`)
 	if err != nil {
 		return err

@@ -49,13 +49,14 @@ func main() {
 	// A channel to hold each page of the collection results
 	collectionPages := make(chan CollectionAPIPage, 1000)
 
-	// Save the collections metadata to the database, then start fetching each collection's items
+	// Save the collections metadata to the database, then start fetching each
+	// collection's items
 	for _, c := range collections {
 
 		// Save a collection's metadata to the database
 		err = c.Save()
 		if err != nil {
-			log.Error(err)
+			log.WithField("collection", c).Error("Error saving collection to database: err")
 		}
 
 		// Start fetching that collection's metadata
