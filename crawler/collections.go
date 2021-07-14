@@ -14,8 +14,8 @@ import (
 
 var apiAllCollectionOptions = url.Values{
 	"at!": []string{strings.Join(removeFromResponse, ",")},
-	"c":   []string{"250"},
-	"fa":  []string{"subject_topic:american history"},
+	"c":   []string{fmt.Sprint(itemsPerPage)},
+	"fa":  []string{"subject_topic:american history"}, // TODO: Consider removing subject limit
 	"fo":  []string{"json"},
 }
 

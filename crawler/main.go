@@ -8,8 +8,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// Configuration options that aren't worth exposing as environment variables
 const apiBase = "https://www.loc.gov"
-const itemsPerPage = 250 // TODO so far 250 seems like the best value
+const itemsPerPage = 1000
 
 var app = &App{}
 
