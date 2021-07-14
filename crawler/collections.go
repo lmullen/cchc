@@ -14,7 +14,7 @@ import (
 
 var apiAllCollectionOptions = url.Values{
 	"at!": []string{strings.Join(removeFromResponse, ",")},
-	"c":   []string{fmt.Sprint(itemsPerPage)},
+	"c":   []string{fmt.Sprint(apiItemsPerPage)},
 	"fa":  []string{"subject_topic:american history"}, // TODO: Consider removing subject limit
 	"fo":  []string{"json"},
 }
@@ -26,7 +26,7 @@ var apiAllCollectionOptions = url.Values{
 func FetchAllCollections(client *http.Client) ([]CollectionMetadata, error) {
 
 	// Rate limiter
-	app.CollectionsLimiter.Take()
+	app.Limiters.Collections.Take()
 
 	urlBase := apiBase + "/collections/"
 	u, _ := url.Parse(urlBase)

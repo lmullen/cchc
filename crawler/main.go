@@ -9,8 +9,11 @@ import (
 )
 
 // Configuration options that aren't worth exposing as environment variables
-const apiBase = "https://www.loc.gov"
-const itemsPerPage = 1000
+const (
+	apiBase         = "https://www.loc.gov"
+	apiItemsPerPage = 1000
+	apiTimeout      = 20 // The timeout limit for API requests in seconds
+)
 
 var app = &App{}
 

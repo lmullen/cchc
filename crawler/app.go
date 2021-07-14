@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
-	"os"
 	"sync"
 	"time"
 
@@ -26,23 +25,15 @@ type Config struct {
 
 // The App type shares access to the database and other resources.
 type App struct {
-	DB                 *sql.DB
-	Config             *Config
-	Client             *http.Client
-	NewspaperLimiter   ratelimit.Limiter
-	ItemsLimiter       ratelimit.Limiter
-	CollectionsLimiter ratelimit.Limiter
-	CollectionsWG      *sync.WaitGroup
-}
-
-// getEnv either returns the value of an environment variable or, if that
-// environment variables does not exist, returns the fallback value provided.
-func getEnv(key, fallback string) string {
-	value, exists := os.LookupEnv(key)
-	if !exists {
-		value = fallback
+	DB       *sql.DB
+	Config   *Config
+	Client   *http.Client
+	Limiters struct {
+		Newspapers  ratelimit.Limiter
+		Items       ratelimit.Limiter
+		Collections ratelimit.Limiter
 	}
-	return value
+	CollectionsWG *sync.WaitGroup
 }
 
 // Init creates a new App and connects to the database or returns an error
@@ -58,24 +49,28 @@ func (app *App) Init() error {
 	app.Config.dbuser = getEnv("CCHC_DBUSER", "lmullen")
 	app.Config.dbpass = getEnv("CCHC_DBPASS", "")
 
-	// Connect to the database then store the database in the struct.
+	// Connect to the database and initialize it.
 	log.Infof("Connecting to the %v database", app.Config.dbname)
 	constr := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=%s",
 		app.Config.dbhost, app.Config.dbport, app.Config.dbname, app.Config.dbuser,
 		app.Config.dbpass, app.Config.dbssl)
 	db, err := sql.Open("pgx", constr)
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to connect to database: %w", err)
 	}
 	if err := db.Ping(); err != nil {
-		return err
+		return fmt.Errorf("Failed to ping database: %w", err)
 	}
 
 	app.DB = db
-	app.DBInit()
+	err = app.DBCreateSchema()
+	if err != nil {
+		return fmt.Errorf("Failed to create database schema: %w", err)
+	}
 
+	// Set up a client to use for all HTTP requests
 	app.Client = &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: apiTimeout * time.Second,
 	}
 
 	// Create rate limiters for different endpoints. Rate limits documentation:
@@ -83,14 +78,15 @@ func (app *App) Init() error {
 	// TODO: The subtractions here represent a buffer from the officially presented
 	// rate limits.
 	il := ratelimit.New(200-20, ratelimit.Per(60*time.Second)) // 200 requests/minute
-	app.ItemsLimiter = il
+	app.Limiters.Items = il
 
 	cl := ratelimit.New(80-20, ratelimit.Per(60*time.Second)) // 80 requests/minute
-	app.CollectionsLimiter = cl
+	app.Limiters.Collections = cl
 
 	nl := ratelimit.New(20-4, ratelimit.Per(10*time.Second)) // 120 requests/minute
-	app.NewspaperLimiter = nl
+	app.Limiters.Newspapers = nl
 
+	//
 	app.CollectionsWG = &sync.WaitGroup{}
 
 	return nil
@@ -101,15 +97,6 @@ func (app *App) Shutdown() {
 	log.Info("Closing the connection to the database")
 	err := app.DB.Close()
 	if err != nil {
-		log.Error(err)
-	}
-}
-
-// Exit the entire program if we get an HTTP 429 error
-// TODO: Would be better to wait and try again, but this works for now
-func quitIfBlocked(code int) {
-	if code == http.StatusTooManyRequests {
-		app.Shutdown()
-		log.Fatal("Quiting because rate limit exceeded")
+		log.Error("Failed to close the connection to the database:", err)
 	}
 }

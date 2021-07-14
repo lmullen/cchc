@@ -1,8 +1,10 @@
 package main
 
-// DBInit creates the database schema
-func (app *App) DBInit() error {
+// DBCreateSchema creates the database tables and sets up the database or returns
+// an error.
+func (app *App) DBCreateSchema() error {
 
+	// TODO: Delete the DROP TABLE statements, which are there for dev purposes
 	_, err := app.DB.Exec(`DROP TABLE IF EXISTS collections`)
 	if err != nil {
 		return err

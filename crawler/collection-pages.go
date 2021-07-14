@@ -24,7 +24,7 @@ var removeFromResponse = []string{
 // apiOptions set various parameters for the requests to the API
 var apiCollectionOptions = url.Values{
 	"at!": []string{strings.Join(removeFromResponse, ",")},
-	"c":   []string{fmt.Sprint(itemsPerPage)},
+	"c":   []string{fmt.Sprint(apiItemsPerPage)},
 	"fa":  []string{"online-format:online text"},
 	"fo":  []string{"json"},
 	"st":  []string{"list"},
@@ -112,7 +112,7 @@ func fetchCollectionResult(url string, collectionID string, client *http.Client,
 	}
 
 	// Limit the rate
-	app.CollectionsLimiter.Take()
+	app.Limiters.Collections.Take()
 
 	response, err := client.Get(url)
 	if err != nil {
