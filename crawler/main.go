@@ -19,7 +19,17 @@ const (
 	apiBase         = "https://www.loc.gov"
 	apiItemsPerPage = 1000
 	apiTimeout      = 20 // The timeout limit for API requests in seconds
+
 )
+
+var removeFromResponse = []string{
+	"aka", "breadcrumbs", "browse", "categories", "content", "content_is_post",
+	"expert_resources", "facet_trail", "facet_views", "facets", "featured_items",
+	"form_facets", "legacy-url", "next", "next_sibling", "options",
+	"original_formats", "pages", "partof", "previous", "previous_sibling",
+	"research-centers", "shards", "site_type", "subjects", "timeline_1852_1880",
+	"timeline_1881_1900", "timeline_1901_1925", "timestamp", "topics", "views",
+}
 
 var app = &App{}
 
