@@ -18,7 +18,7 @@ import (
 const (
 	apiBase         = "https://www.loc.gov"
 	apiItemsPerPage = 1000
-	apiTimeout      = 20 // The timeout limit for API requests in seconds
+	apiTimeout      = 60 // The timeout limit for API requests in seconds
 
 )
 

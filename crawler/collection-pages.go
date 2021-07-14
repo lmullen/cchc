@@ -21,9 +21,9 @@ func collectionPageURL(itemsURL string, page int) string {
 	q := url.Values{
 		"at!": []string{strings.Join(removeFromResponse, ",")},
 		"c":   []string{fmt.Sprint(apiItemsPerPage)},
-		"fa":  []string{"online-format:online text"},
 		"fo":  []string{"json"},
 		"st":  []string{"list"},
+		// "fa":  []string{"online-format:online text"}, // Not sure if this is a good query
 	}
 	q.Set("sp", fmt.Sprint(page))
 	u.RawQuery = q.Encode()
