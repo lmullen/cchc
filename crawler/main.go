@@ -41,9 +41,9 @@ func main() {
 	}
 	defer app.Shutdown()
 
-	collections, err := FetchAllCollections(app.Client)
+	collections, err := FetchAllCollections()
 	if err != nil {
-		log.Fatal("Error fetching all digital collections:", err)
+		log.Error("Error fetching all digital collections:", err)
 	}
 
 	// A channel to hold each page of the collection results
