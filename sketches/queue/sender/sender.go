@@ -49,7 +49,7 @@ func main() {
 		i := rand.Intn(len(words))
 		word := words[i]
 		sendJob(word, ch, &q)
-		sleep := rand.Intn(5)*100 + 500
+		sleep := rand.Intn(10)*10 + 50
 		time.Sleep(time.Duration(sleep) * time.Millisecond)
 	}
 
