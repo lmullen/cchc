@@ -1,5 +1,11 @@
-// This program crawls the LOC.gov API for a single collection and outputs basic
-//  metadata about each item.
+// This program crawls the LOC.gov API and retrieves information about its
+// digital collections. It proceeds in this way.
+//   1. It fetches all digital collections (with some filtering)
+//   2. It fetches the items in those digital collections via the search (again
+//      with some filtering).
+//   3. It then fetches metadata about those items from the API.
+//
+// Everything gets stored in a database.
 package main
 
 import (
