@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  queue:
+    image: rabbitmq:3
+    container_name: "cchc-queue"
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - queue-data:/var/lib/rabbitmq/
+
+volumes:
+  queue-data:
