@@ -32,13 +32,16 @@ func (app *App) DBCreateSchema() error {
 	}
 
 	_, err = app.DB.Exec(`CREATE TABLE IF NOT EXISTS items (
-		id       text PRIMARY KEY,
-		lccn     text,
-		url      text,
-		date     integer,
-		subjects text[],
-		title    text,
-		api      jsonb
+		id                 text PRIMARY KEY,
+		url                text,
+		title              text,
+		date               date,
+		subjects           text[],
+		fulltext           text,
+		fulltext_service   text,
+		fulltext_file      text,
+		timestamp          int,
+		api                jsonb
 	);`)
 	if err != nil {
 		return err
