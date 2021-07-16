@@ -35,12 +35,12 @@ func (app *App) DBCreateSchema() error {
 		id                 text PRIMARY KEY,
 		url                text,
 		title              text,
-		date               date,
+		date               text,
 		subjects           text[],
 		fulltext           text,
 		fulltext_service   text,
 		fulltext_file      text,
-		timestamp          int,
+		timestamp          bigint,
 		api                jsonb
 	);`)
 	if err != nil {

@@ -31,7 +31,6 @@ func FetchAllCollections() ([]Collection, error) {
 		"fo":  []string{"json"},
 	}
 	u.RawQuery = apiAllCollectionOptions.Encode()
-
 	url := u.String()
 
 	log.Info("Fetching all digital collections")
