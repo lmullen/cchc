@@ -23,7 +23,7 @@ func collectionPageURL(itemsURL string, page int) string {
 		"c":   []string{fmt.Sprint(apiItemsPerPage)},
 		"fo":  []string{"json"},
 		"st":  []string{"list"},
-		// "fa":  []string{"online-format:online text"}, // Not sure if this is a good query
+		"fa":  []string{"online-format:online text"}, // Not sure if this is a good query
 	}
 	q.Set("sp", fmt.Sprint(page))
 	u.RawQuery = q.Encode()
