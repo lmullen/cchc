@@ -2,8 +2,11 @@ version: "3.9"
 
 services:
   queue:
-    image: rabbitmq:3
+    image: rabbitmq:3-management
     container_name: "cchc-queue"
+    environment:
+      - RABBITMQ_DEFAULT_USER=${CCHC_QUSER}
+      - RABBITMQ_DEFAULT_PASS=${CCHC_QPASS}
     ports:
       - 5672:5672
       - 15672:15672
