@@ -7,6 +7,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/streadway/amqp"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"go.uber.org/ratelimit"
@@ -20,18 +21,27 @@ type Config struct {
 	dbuser   string
 	dbpass   string
 	dbssl    string // SSL mode for the database connection
+	qhost    string
+	quser    string
+	qpass    string
+	qport    string
 	loglevel string
 }
 
 // The App type shares access to the database and other resources.
 type App struct {
-	DB       *sql.DB
-	Config   *Config
-	Client   *http.Client
-	Limiters struct {
+	DB        *sql.DB
+	Config    *Config
+	Client    *http.Client
+	MessageQ  *amqp.Connection
+	MessageCh *amqp.Channel
+	Limiters  struct {
 		Newspapers  ratelimit.Limiter
 		Items       ratelimit.Limiter
 		Collections ratelimit.Limiter
+	}
+	Queues struct {
+		ItemMetadata *amqp.Queue
 	}
 }
 
@@ -47,14 +57,18 @@ func (app *App) Init() error {
 	app.Config.dbname = getEnv("CCHC_DBNAME", "cchc")
 	app.Config.dbuser = getEnv("CCHC_DBUSER", "lmullen")
 	app.Config.dbpass = getEnv("CCHC_DBPASS", "")
-	app.Config.dbpass = getEnv("CCHC_LOGLEVEL", "warn")
+	app.Config.qhost = getEnv("CCHC_QHOST", "localhost")
+	app.Config.qport = getEnv("CCHC_QPORT", "5672")
+	app.Config.quser = getEnv("CCHC_QUSER", "cchc")
+	app.Config.qpass = getEnv("CCHC_QPASS", "")
+	app.Config.loglevel = getEnv("CCHC_LOGLEVEL", "warn")
 
 	// Connect to the database and initialize it.
 	log.Infof("Connecting to the %v database", app.Config.dbname)
-	constr := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=%s",
+	dbconstr := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=%s",
 		app.Config.dbhost, app.Config.dbport, app.Config.dbname, app.Config.dbuser,
 		app.Config.dbpass, app.Config.dbssl)
-	db, err := sql.Open("pgx", constr)
+	db, err := sql.Open("pgx", dbconstr)
 	if err != nil {
 		return fmt.Errorf("Failed to connect to database: %w", err)
 	}
@@ -67,6 +81,27 @@ func (app *App) Init() error {
 	if err != nil {
 		return fmt.Errorf("Failed to create database schema: %w", err)
 	}
+
+	// Connect to RabbitMQ and set up the queues
+	log.Info("Connecting to the message queue")
+	qconnstr := fmt.Sprintf("amqp://%s:%s@%s:%s/",
+		app.Config.quser, app.Config.qpass, app.Config.qhost, app.Config.qport)
+	rabbit, err := amqp.Dial(qconnstr)
+	if err != nil {
+		return fmt.Errorf("Failed to connect to message queue: %w", err)
+	}
+	app.MessageQ = rabbit
+	ch, err := rabbit.Channel()
+	if err != nil {
+		return fmt.Errorf("Failed to open a channel on message queue: %w", err)
+	}
+	app.MessageCh = ch
+	q, err := ch.QueueDeclare("items-metadata", true, false, false, false,
+		amqp.Table{"x-max-length": 10000000, "x-queue-mode": "lazy"})
+	if err != nil {
+		return fmt.Errorf("Failed to declare a queue: %w", err)
+	}
+	app.Queues.ItemMetadata = &q
 
 	// Set up a client to use for all HTTP requests
 	app.Client = &http.Client{
@@ -95,5 +130,10 @@ func (app *App) Shutdown() {
 	err := app.DB.Close()
 	if err != nil {
 		log.Error("Failed to close the connection to the database:", err)
+	}
+	log.Info("Closing the connection to the message queue")
+	err = app.MessageQ.Close()
+	if err != nil {
+		log.Error("Failed to close the connection to the message queue: ", err)
 	}
 }
