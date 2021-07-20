@@ -214,7 +214,8 @@ func (i Item) EnqueueMetadata() error {
 		Body:         json,
 	}
 
-	err = app.MessageCh.Publish("", app.Queues.ItemMetadata.Name, false, false, msg)
+	err = app.ItemMetadataQ.Channel.Publish("", app.ItemMetadataQ.Queue.Name,
+		false, false, msg)
 	if err != nil {
 		return fmt.Errorf("Failed to publish item metadata message: %w", err)
 	}

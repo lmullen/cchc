@@ -32,7 +32,7 @@ type Config struct {
 type Queue struct {
 	Channel  *amqp.Channel
 	Queue    *amqp.Queue
-	Consumer amqp.Delivery
+	Consumer <-chan amqp.Delivery
 }
 
 // The App type shares access to the database and other resources.
@@ -109,8 +109,9 @@ func (app *App) Init() error {
 	consumer, err := ch.Consume(q.Name, "item-metadata-consumer",
 		false, false, false, false, nil)
 	if err != nil {
-		log.Fatal("Failed to register a consumer", err)
+		return fmt.Errorf("Failed to register a channel consumer: %w", err)
 	}
+	app.ItemMetadataQ.Consumer = consumer
 
 	// Set up a client to use for all HTTP requests
 	app.Client = &http.Client{
