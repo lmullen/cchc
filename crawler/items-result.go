@@ -1,6 +1,8 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // ItemResult is an item returned from a LOC.gov collection results page. There
 // are many more fields that are returned in a collections result page, but we
@@ -64,4 +66,12 @@ func (item ItemResult) Save() error {
 
 	return nil
 
+}
+
+// ToItem converts an ItemResult to an Item.
+func (item ItemResult) ToItem() Item {
+	return Item{
+		ID:  item.ID,
+		URL: item.URL,
+	}
 }

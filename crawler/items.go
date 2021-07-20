@@ -8,8 +8,10 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/streadway/amqp"
 )
 
 // Item is a representation of an item in the LOC collection returned from the API.
@@ -166,4 +168,43 @@ func (i *Item) Fetch() error {
 
 	return nil
 
+}
+
+// ItemMetadataMsg is a minimal representation of an item for sending to the
+// message broker.
+type ItemMetadataMsg struct {
+	ID  string `json:"id"`
+	URL string `json:"url"`
+}
+
+// Msg returns a minimal representation for sending to the message broker.
+func (i Item) Msg() ItemMetadataMsg {
+	return ItemMetadataMsg{
+		ID:  i.ID,
+		URL: i.URL,
+	}
+}
+
+// EnqueueMetadata sends a message to the message queue to so that the item's
+// metadata will put into a queue to be fetched.
+func (i Item) EnqueueMetadata() error {
+
+	json, err := json.Marshal(i.Msg())
+	if err != nil {
+		return fmt.Errorf("Error marshalling item to JSON: %w", err)
+	}
+
+	msg := amqp.Publishing{
+		DeliveryMode: amqp.Persistent,
+		ContentType:  "text/jsosn",
+		Timestamp:    time.Now(),
+		Body:         json,
+	}
+
+	err = app.MessageCh.Publish("", app.Queues.ItemMetadata.Name, false, false, msg)
+	if err != nil {
+		return fmt.Errorf("Failed to publish item metadata message: %w", err)
+	}
+
+	return nil
 }

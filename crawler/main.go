@@ -121,6 +121,14 @@ func main() {
 							"error":   err,
 						}).Error("Error saving item")
 					}
+					// TODO: Check that item has not already been fetched
+					err = item.ToItem().EnqueueMetadata()
+					if err != nil {
+						log.WithFields(log.Fields{
+							"item_id": item.ID,
+							"error":   err,
+						}).Error("Error putting item in queue for metadata processing")
+					}
 				}
 			}(r)
 		}
