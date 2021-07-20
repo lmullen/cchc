@@ -68,6 +68,19 @@ func (i Item) Exists() (bool, error) {
 	return exists, nil
 }
 
+// Fetched checks whether an item's metadata has already been fetched
+// from the API. This will also return false if the item has not been saved at
+// all.
+func (i Item) Fetched() (bool, error) {
+	var fetched bool
+	query := `SELECT EXISTS (SELECT 1 FROM items WHERE id=$1 AND api IS NOT NULL)`
+	err := app.DB.QueryRow(query, i.ID).Scan(&fetched)
+	if err != nil && err != sql.ErrNoRows {
+		return fetched, fmt.Errorf("Error checking if item %s has been fetched: %w", i.ID, err)
+	}
+	return fetched, nil
+}
+
 // Save serializes an item to the database
 func (i Item) Save() error {
 	query := `

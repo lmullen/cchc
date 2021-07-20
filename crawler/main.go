@@ -121,8 +121,17 @@ func main() {
 							"error":   err,
 						}).Error("Error saving item")
 					}
-					// TODO: Check that item has not already been fetched
-					err = item.ToItem().EnqueueMetadata()
+
+					item := item.ToItem()
+					fetched, err := item.Fetched()
+					if err != nil {
+						log.Error("Error checking if item has been fetched: ", err)
+					}
+					if fetched {
+						// Don't put the message in the queue if we've already fetched it
+						return
+					}
+					err = item.EnqueueMetadata()
 					if err != nil {
 						log.WithFields(log.Fields{
 							"item_id": item.ID,
