@@ -34,8 +34,6 @@ func collectionPageURL(itemsURL string, page int) string {
 // FetchCollectionItems gets the items associated with each collection
 func (c Collection) FetchCollectionItems(page int, results chan<- CollectionAPIPage) {
 
-	defer app.CollectionsWG.Done()
-
 	url := collectionPageURL(c.ItemsURL, page)
 
 	// Skip if it isn't a part of the LOC.gov API
@@ -88,7 +86,6 @@ func (c Collection) FetchCollectionItems(page int, results chan<- CollectionAPIP
 
 	// If there is another page of results, go fetch it.
 	if result.Pagination.Next != "" {
-		app.CollectionsWG.Add(1)
 		c.FetchCollectionItems(result.Pagination.Current+1, results)
 	}
 

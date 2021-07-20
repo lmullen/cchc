@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
-	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -34,7 +33,6 @@ type App struct {
 		Items       ratelimit.Limiter
 		Collections ratelimit.Limiter
 	}
-	CollectionsWG *sync.WaitGroup
 }
 
 // Init creates a new App and connects to the database or returns an error
@@ -87,9 +85,6 @@ func (app *App) Init() error {
 
 	nl := ratelimit.New(20-4, ratelimit.Per(10*time.Second)) // 120 requests/minute
 	app.Limiters.Newspapers = nl
-
-	//
-	app.CollectionsWG = &sync.WaitGroup{}
 
 	return nil
 }
