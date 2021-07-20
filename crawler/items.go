@@ -19,9 +19,9 @@ type Item struct {
 	Title           string
 	Date            string
 	Subjects        []string
-	Fulltext        string
-	FulltextService string
-	FulltextFile    string
+	Fulltext        sql.NullString
+	FulltextService sql.NullString
+	FulltextFile    sql.NullString
 	Timestamp       int64
 	API             []byte // The entire API response stored as JSONB
 }
@@ -156,13 +156,13 @@ func (i *Item) Fetch() error {
 	// the API is.
 	for _, v := range result.Resources[0].Files[0] {
 		if v.Fulltext != "" {
-			i.Fulltext = v.Fulltext
+			i.Fulltext.Scan(v.Fulltext)
 		}
 		if v.FulltextService != "" {
-			i.FulltextService = v.FulltextService
+			i.FulltextService.Scan(v.FulltextService)
 		}
 	}
-	i.FulltextFile = result.Resources[0].FulltextFile
+	i.FulltextFile.Scan(result.Resources[0].FulltextFile)
 
 	return nil
 
