@@ -196,7 +196,7 @@ func (i Item) EnqueueMetadata() error {
 
 	msg := amqp.Publishing{
 		DeliveryMode: amqp.Persistent,
-		ContentType:  "text/jsosn",
+		ContentType:  "text/json",
 		Timestamp:    time.Now(),
 		Body:         json,
 	}
