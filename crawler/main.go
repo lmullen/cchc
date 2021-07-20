@@ -143,6 +143,8 @@ func main() {
 		}
 	}()
 
+	// Process the items from the queue
+
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit

@@ -28,21 +28,25 @@ type Config struct {
 	loglevel string
 }
 
+// Queue holds all the items related to sending/receiving on a message queue
+type Queue struct {
+	Channel  *amqp.Channel
+	Queue    *amqp.Queue
+	Consumer amqp.Delivery
+}
+
 // The App type shares access to the database and other resources.
 type App struct {
-	DB        *sql.DB
-	Config    *Config
-	Client    *http.Client
-	MessageQ  *amqp.Connection
-	MessageCh *amqp.Channel
-	Limiters  struct {
+	DB       *sql.DB
+	Config   *Config
+	Client   *http.Client
+	MessageQ *amqp.Connection
+	Limiters struct {
 		Newspapers  ratelimit.Limiter
 		Items       ratelimit.Limiter
 		Collections ratelimit.Limiter
 	}
-	Queues struct {
-		ItemMetadata *amqp.Queue
-	}
+	ItemMetadataQ Queue
 }
 
 // Init creates a new App and connects to the database or returns an error
@@ -95,13 +99,18 @@ func (app *App) Init() error {
 	if err != nil {
 		return fmt.Errorf("Failed to open a channel on message queue: %w", err)
 	}
-	app.MessageCh = ch
+	app.ItemMetadataQ.Channel = ch
 	q, err := ch.QueueDeclare("items-metadata", true, false, false, false,
 		amqp.Table{"x-max-length": 10000000, "x-queue-mode": "lazy"})
 	if err != nil {
 		return fmt.Errorf("Failed to declare a queue: %w", err)
 	}
-	app.Queues.ItemMetadata = &q
+	app.ItemMetadataQ.Queue = &q
+	consumer, err := ch.Consume(q.Name, "item-metadata-consumer",
+		false, false, false, false, nil)
+	if err != nil {
+		log.Fatal("Failed to register a consumer", err)
+	}
 
 	// Set up a client to use for all HTTP requests
 	app.Client = &http.Client{
