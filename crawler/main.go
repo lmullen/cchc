@@ -144,6 +144,14 @@ func main() {
 	}()
 
 	// Process the items from the queue
+	go func() {
+		for msg := range app.ItemMetadataQ.Consumer {
+			err = ProcessItemMetadata(msg)
+			if err != nil {
+				log.Error("Error processing item from queue: ", err)
+			}
+		}
+	}()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
