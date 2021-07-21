@@ -229,18 +229,19 @@ func ProcessItemMetadata(msg amqp.Delivery) error {
 	var item Item
 	err := json.Unmarshal(msg.Body, &item)
 	if err != nil {
-		return fmt.Errorf("Failed to read body of message: %w", err)
 		msg.Reject(true)
+		return fmt.Errorf("Failed to read body of message: %w", err)
 	}
 	err = item.Fetch()
 	if err != nil {
-		return fmt.Errorf("Error fetching item: %w", err)
 		msg.Reject(true)
+		return fmt.Errorf("Error fetching item: %w", err)
 	}
+	log.Info("Fetched item at ", item.URL)
 	err = item.Save()
 	if err != nil {
-		return fmt.Errorf("Error saving item to database: %w", err)
 		msg.Reject(true)
+		return fmt.Errorf("Error saving item to database: %w", err)
 	}
 	msg.Ack(false)
 	return nil
