@@ -103,7 +103,6 @@ func (i Item) Save() error {
 
 	_, err := app.DB.Exec(query, i.ID, i.URL, i.Title, i.Date, i.Subjects,
 		i.Fulltext, i.FulltextService, i.FulltextFile, i.Timestamp, i.API)
-	fmt.Println(err)
 	if err != nil {
 		return fmt.Errorf("Error saving item %s to database: %w", i, err)
 	}
@@ -237,7 +236,6 @@ func ProcessItemMetadata(msg amqp.Delivery) error {
 		msg.Reject(true)
 		return fmt.Errorf("Error fetching item: %w", err)
 	}
-	log.Info("Fetched item at ", item.URL)
 	err = item.Save()
 	if err != nil {
 		msg.Reject(true)
