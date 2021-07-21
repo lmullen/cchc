@@ -24,6 +24,12 @@ func main() {
 	}
 	defer ch.Close()
 
+	// Only allow so many messages from the queue at once
+	err = ch.Qos(40, 0, true)
+	if err != nil {
+		log.Fatal("Failed to set prefetch on the message queue: ", err)
+	}
+
 	// Only creates a queue if it doesn't already exist
 	q, err := ch.QueueDeclare("jobs", true, false, false, false, nil)
 	if err != nil {
