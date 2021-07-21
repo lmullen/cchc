@@ -15,6 +15,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/streadway/amqp"
 )
 
 // Configuration options that aren't worth exposing as environment variables
@@ -82,7 +83,7 @@ func main() {
 
 				// Start fetching the items in that collection.
 				// TODO remove this limit which crawls only small collections
-				if c.Count < 10000 {
+				if c.Count < 50 {
 					// Fetch the first page of the collection. As long as there are more pages,
 					// the function will continue to fetch those too and add them to the channel.
 					go c.FetchCollectionItems(1, collectionPages)
@@ -93,7 +94,6 @@ func main() {
 			// Goroutines have been started for fetching each collections items. We
 			// want to wait a decent interval, and then start the crawl over again
 			// from the beginning.
-
 			// TODO: Set this to some reasonable default, like a week
 			time.Sleep(2 * time.Minute)
 			// Now the loop starts over again by fetching all the digital collections
@@ -146,10 +146,13 @@ func main() {
 	// Process the items from the queue
 	go func() {
 		for msg := range app.ItemMetadataQ.Consumer {
-			err = ProcessItemMetadata(msg)
-			if err != nil {
-				log.Error("Error processing item from queue: ", err)
-			}
+			// Give each item its own goroutine
+			go func(msg amqp.Delivery) {
+				err = ProcessItemMetadata(msg)
+				if err != nil {
+					log.Error("Error processing item from queue: ", err)
+				}
+			}(msg)
 		}
 	}()
 
