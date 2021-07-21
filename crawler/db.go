@@ -35,6 +35,7 @@ func (app *App) DBCreateSchema() error {
 		id                 text PRIMARY KEY,
 		url                text,
 		title              text,
+		year               int,
 		date               text,
 		subjects           text[],
 		fulltext           text,

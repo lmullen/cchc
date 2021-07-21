@@ -19,6 +19,7 @@ type Item struct {
 	ID              string
 	URL             string
 	Title           string
+	Year            sql.NullInt32
 	Date            string
 	Subjects        []string
 	Fulltext        sql.NullString
@@ -84,24 +85,25 @@ func (i Item) Fetched() (bool, error) {
 // Save serializes an item to the database
 func (i Item) Save() error {
 	query := `
-	INSERT INTO items (id, url, title, date, subjects, 
+	INSERT INTO items (id, url, title, year, date, subjects, 
 		                fulltext, fulltext_service, fulltext_file,
 										timestamp, api)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 	ON CONFLICT (id) DO UPDATE
 	SET
 	  url              = $2,
 		title            = $3,
-		date             = $4,
-		subjects         = $5,
-		fulltext         = $6,
-		fulltext_service = $7,
-		fulltext_file    = $8,
-		timestamp        = $9,
-		api              = $10;
+		year             = $4,
+		date             = $5,
+		subjects         = $6,
+		fulltext         = $7,
+		fulltext_service = $8,
+		fulltext_file    = $9,
+		timestamp        = $10,
+		api              = $11;
 	`
 
-	_, err := app.DB.Exec(query, i.ID, i.URL, i.Title, i.Date, i.Subjects,
+	_, err := app.DB.Exec(query, i.ID, i.URL, i.Title, i.Year, i.Date, i.Subjects,
 		i.Fulltext, i.FulltextService, i.FulltextFile, i.Timestamp, i.API)
 	if err != nil {
 		return fmt.Errorf("Error saving item %s to database: %w", i, err)
@@ -161,6 +163,7 @@ func (i *Item) Fetch() error {
 	i.ID = result.ItemDetails.ID
 	i.URL = result.ItemDetails.URL
 	i.Title = result.ItemDetails.Title
+	i.Year = year(result.ItemDetails.Date)
 	i.Date = result.ItemDetails.Date
 	i.Subjects = result.ItemDetails.Subjects
 	i.Timestamp = result.Timestamp

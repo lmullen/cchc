@@ -1,8 +1,10 @@
 package main
 
 import (
+	"database/sql"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -31,4 +33,17 @@ func quitIfBlocked(code int) {
 // American Memory or some other digital collection.
 func hasAPI(url string) bool {
 	return strings.HasPrefix(url, apiBase)
+}
+
+// year takes an ISO8601 date string and figures out the year
+func year(date string) sql.NullInt32 {
+	var year sql.NullInt32
+	if len(date) >= 4 {
+		s := date[0:4]
+		y, err := strconv.Atoi(s)
+		if err == nil {
+			year.Scan(y)
+		}
+	}
+	return year
 }
