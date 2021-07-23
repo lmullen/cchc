@@ -132,6 +132,7 @@ func (app *App) Init() error {
 	// Set up a client to use for all HTTP requests. It will automatically retry.
 	rc := retryablehttp.NewClient()
 	rc.RetryWaitMin = 10 * time.Second
+	rc.RetryWaitMax = 10 * time.Minute
 	rc.RetryMax = 6
 	rc.HTTPClient.Timeout = apiTimeout * time.Second
 	rc.Logger = nil
