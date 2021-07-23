@@ -45,16 +45,6 @@ func main() {
 	}
 	defer app.Shutdown()
 
-	// Set the logging level
-	switch app.Config.loglevel {
-	case "warn":
-		log.SetLevel(log.WarnLevel)
-	case "info":
-		log.SetLevel(log.InfoLevel)
-	case "debug":
-		log.SetLevel(log.DebugLevel)
-	}
-
 	// A channel to hold each page of the collection results
 	collectionPages := make(chan CollectionAPIPage, 1000)
 

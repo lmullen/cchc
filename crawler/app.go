@@ -67,6 +67,16 @@ func (app *App) Init() error {
 	app.Config.qpass = getEnv("CCHC_QPASS", "")
 	app.Config.loglevel = getEnv("CCHC_LOGLEVEL", "warn")
 
+	// Set the logging level
+	switch app.Config.loglevel {
+	case "warn":
+		log.SetLevel(log.WarnLevel)
+	case "info":
+		log.SetLevel(log.InfoLevel)
+	case "debug":
+		log.SetLevel(log.DebugLevel)
+	}
+
 	// Connect to the database and initialize it.
 	dbconstr := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=%s",
 		app.Config.dbhost, app.Config.dbport, app.Config.dbname, app.Config.dbuser,
