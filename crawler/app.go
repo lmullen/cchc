@@ -37,11 +37,11 @@ type Queue struct {
 
 // The App type shares access to the database and other resources.
 type App struct {
-	DB       *sql.DB
-	Config   *Config
-	Client   *http.Client
-	MessageQ *amqp.Connection
-	Limiters struct {
+	DB            *sql.DB
+	Config        *Config
+	Client        *http.Client
+	MessageBroker *amqp.Connection
+	Limiters      struct {
 		Newspapers  ratelimit.Limiter
 		Items       ratelimit.Limiter
 		Collections ratelimit.Limiter
@@ -68,7 +68,6 @@ func (app *App) Init() error {
 	app.Config.loglevel = getEnv("CCHC_LOGLEVEL", "warn")
 
 	// Connect to the database and initialize it.
-	log.Infof("Connecting to the %v database", app.Config.dbname)
 	dbconstr := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=%s",
 		app.Config.dbhost, app.Config.dbport, app.Config.dbname, app.Config.dbuser,
 		app.Config.dbpass, app.Config.dbssl)
@@ -85,16 +84,16 @@ func (app *App) Init() error {
 	if err != nil {
 		return fmt.Errorf("Failed to create database schema: %w", err)
 	}
+	log.Info("Connected to the database successfully")
 
 	// Connect to RabbitMQ and set up the queues
-	log.Info("Connecting to the message queue")
 	qconnstr := fmt.Sprintf("amqp://%s:%s@%s:%s/",
 		app.Config.quser, app.Config.qpass, app.Config.qhost, app.Config.qport)
 	rabbit, err := amqp.Dial(qconnstr)
 	if err != nil {
 		return fmt.Errorf("Failed to connect to message queue: %w", err)
 	}
-	app.MessageQ = rabbit
+	app.MessageBroker = rabbit
 	ch, err := rabbit.Channel()
 	if err != nil {
 		return fmt.Errorf("Failed to open a channel on message queue: %w", err)
@@ -116,6 +115,7 @@ func (app *App) Init() error {
 		return fmt.Errorf("Failed to register a channel consumer: %w", err)
 	}
 	app.ItemMetadataQ.Consumer = consumer
+	log.Info("Connected to the message broker successfully")
 
 	// Set up a client to use for all HTTP requests
 	app.Client = &http.Client{
@@ -140,14 +140,16 @@ func (app *App) Init() error {
 
 // Shutdown closes the connection to the database.
 func (app *App) Shutdown() {
-	log.Info("Closing the connection to the database")
 	err := app.DB.Close()
 	if err != nil {
 		log.Error("Failed to close the connection to the database:", err)
+	} else {
+		log.Info("Closed the connection to the database successfully")
 	}
-	log.Info("Closing the connection to the message queue")
-	err = app.MessageQ.Close()
+	err = app.MessageBroker.Close()
 	if err != nil {
 		log.Error("Failed to close the connection to the message queue: ", err)
+	} else {
+		log.Info("Closed the connection to the message broker successfully")
 	}
 }

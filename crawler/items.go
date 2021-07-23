@@ -131,7 +131,7 @@ func (i *Item) Fetch() error {
 	u.RawQuery = options.Encode()
 	url := u.String()
 
-	log.WithField("url", url).Info("Fetching item metadata")
+	log.WithField("url", url).Debug("Fetching item metadata")
 
 	response, err := app.Client.Get(url)
 	if err != nil {

@@ -33,8 +33,7 @@ func FetchAllCollections() ([]Collection, error) {
 	u.RawQuery = apiAllCollectionOptions.Encode()
 	url := u.String()
 
-	log.Info("Fetching all digital collections")
-	log.WithField("url", url).Debug("URL for digital collections")
+	log.WithField("url", url).Debug("Fetching all digital collections")
 	response, err := app.Client.Get(url)
 	if err != nil {
 		return nil, err
