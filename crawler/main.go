@@ -25,6 +25,9 @@ const (
 	apiTimeout      = 60 // The timeout limit for API requests in seconds
 )
 
+// How long to wait between starting new crawls at the entry points
+var crawlInterval time.Duration = 2 * time.Minute
+
 var removeFromResponse = []string{
 	"aka", "breadcrumbs", "browse", "categories", "content", "content_is_post",
 	"expert_resources", "facet_trail", "facet_views", "facets", "featured_items",
@@ -84,8 +87,7 @@ func main() {
 			// Goroutines have been started for fetching each collections items. We
 			// want to wait a decent interval, and then start the crawl over again
 			// from the beginning.
-			// TODO: Set this to some reasonable default, like a week
-			time.Sleep(2 * time.Minute)
+			time.Sleep(crawlInterval)
 			// Now the loop starts over again by fetching all the digital collections
 		}
 
