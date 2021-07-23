@@ -9,6 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
 
+	"github.com/hashicorp/go-retryablehttp"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"go.uber.org/ratelimit"
 )
@@ -51,6 +52,7 @@ type App struct {
 
 // Init creates a new App and connects to the database or returns an error
 func (app *App) Init() error {
+	log.Info("Starting the LOC.gov API crawler")
 
 	app.Config = &Config{}
 
@@ -127,10 +129,20 @@ func (app *App) Init() error {
 	app.ItemMetadataQ.Consumer = consumer
 	log.Info("Connected to the message broker successfully")
 
-	// Set up a client to use for all HTTP requests
-	app.Client = &http.Client{
-		Timeout: apiTimeout * time.Second,
-	}
+	// Set up a client to use for all HTTP requests. It will automatically retry.
+	rc := retryablehttp.NewClient()
+	rc.RetryWaitMin = 10 * time.Second
+	rc.RetryMax = 6
+	rc.HTTPClient.Timeout = apiTimeout * time.Second
+	rc.Logger = nil
+	// This will log all HTTP requests made, which is not desirable.
+	// rc.RequestLogHook = func(_ retryablehttp.Logger, req *http.Request, attempt int) {
+	// 	log.WithFields(logrus.Fields{
+	// 		"attempt": attempt,
+	// 		"url":    req.URL,
+	// 	}).Debug("Fetching URL")
+	// }
+	app.Client = rc.StandardClient()
 
 	// Create rate limiters for different endpoints. Rate limits documentation:
 	// https://www.loc.gov/apis/json-and-yaml/
@@ -162,4 +174,5 @@ func (app *App) Shutdown() {
 	} else {
 		log.Info("Closed the connection to the message broker successfully")
 	}
+	log.Info("Shutdown the LOC.gov API crawler")
 }
