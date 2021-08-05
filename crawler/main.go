@@ -26,7 +26,7 @@ const (
 )
 
 // How long to wait between starting new crawls at the entry points
-var crawlInterval time.Duration = 2 * time.Minute
+var crawlInterval time.Duration = 7 * 24 * time.Hour
 
 var removeFromResponse = []string{
 	"aka", "breadcrumbs", "browse", "categories", "content", "content_is_post",
