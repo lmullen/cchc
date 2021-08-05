@@ -77,7 +77,11 @@ func (c Collection) FetchCollectionItems(page int, results chan<- CollectionAPIP
 		return // Quit early in the hopes of not messing up other go routines
 	}
 
-	log.Debug("Fetched ", result)
+	log.WithFields(log.Fields{
+		"collection": result.Title,
+		"page":       result.Pagination.Current,
+		"url":        url,
+	}).Debug("Fetched page of items from collection")
 
 	// Save the collectionID for creating a relation in the database
 	result.CollectionID = c.ID
