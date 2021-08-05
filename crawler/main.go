@@ -15,7 +15,6 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/streadway/amqp"
 )
 
 // Configuration options that aren't worth exposing as environment variables
@@ -63,17 +62,7 @@ func main() {
 	go StartProcessingCollections(collectionPages)
 
 	// Process the items from the queue
-	go func() {
-		for msg := range app.ItemMetadataQ.Consumer {
-			// Give each item its own goroutine
-			go func(msg amqp.Delivery) {
-				err = ProcessItemMetadata(msg)
-				if err != nil {
-					log.Error("Error processing item from queue: ", err)
-				}
-			}(msg)
-		}
-	}()
+	go StartProcessingItems()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
