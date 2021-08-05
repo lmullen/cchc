@@ -44,3 +44,48 @@ func StartFetchingCollections(cp chan CollectionAPIPage) {
 	}
 
 }
+
+// StartProcessingCollections uses a channel of pages from the collections and
+// processes each page, saving the items to the database and passing them to the
+// message queue.
+func StartProcessingCollections(cp chan CollectionAPIPage) {
+
+	// This will effectively iterate forever, because the channel will not be
+	// closed. But it will also not do work unless there are pages in the
+	// channel.
+	for r := range cp {
+		// Start a new goroutine to deal with each page
+		go func(r CollectionAPIPage) {
+			for _, item := range r.Results {
+				item.CollectionID = r.CollectionID
+				err := item.Save()
+				if err != nil {
+					log.WithFields(log.Fields{
+						"item_id": item.ID,
+						"error":   err,
+					}).Error("Error saving item")
+				}
+
+				item := item.ToItem()
+				fetched, err := item.Fetched()
+				if err != nil {
+					log.WithFields(log.Fields{
+						"item_id": item.ID,
+						"error":   err,
+					}).Error("Error checking if item has been fetched")
+				}
+				if fetched {
+					// Don't put the message in the queue if we've already fetched it
+					return
+				}
+				err = item.EnqueueMetadata()
+				if err != nil {
+					log.WithFields(log.Fields{
+						"item_id": item.ID,
+						"error":   err,
+					}).Error("Error putting item in queue for metadata processing")
+				}
+			}
+		}(r)
+	}
+}

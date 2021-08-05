@@ -60,43 +60,7 @@ func main() {
 	// page. Store those results to the database. This means we know that an item
 	// exists, and also which collection it is a part of. But we will fetch that
 	// item from its item page separately.
-	go func() {
-		// This will effectively iterate forever, because the channel will not be
-		// closed. But it will also not do work unless there are pages in the
-		// channel.
-		for r := range collectionPages {
-			// Start a new goroutine to deal with each page
-			go func(r CollectionAPIPage) {
-				for _, item := range r.Results {
-					item.CollectionID = r.CollectionID
-					err = item.Save()
-					if err != nil {
-						log.WithFields(log.Fields{
-							"item_id": item.ID,
-							"error":   err,
-						}).Error("Error saving item")
-					}
-
-					item := item.ToItem()
-					fetched, err := item.Fetched()
-					if err != nil {
-						log.Error("Error checking if item has been fetched: ", err)
-					}
-					if fetched {
-						// Don't put the message in the queue if we've already fetched it
-						return
-					}
-					err = item.EnqueueMetadata()
-					if err != nil {
-						log.WithFields(log.Fields{
-							"item_id": item.ID,
-							"error":   err,
-						}).Error("Error putting item in queue for metadata processing")
-					}
-				}
-			}(r)
-		}
-	}()
+	go StartProcessingCollections(collectionPages)
 
 	// Process the items from the queue
 	go func() {
