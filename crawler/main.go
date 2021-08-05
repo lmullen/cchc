@@ -54,44 +54,7 @@ func main() {
 	// In a goroutine, fetch all the digital collections periodically. This is the
 	// entry point: all the collections will be detected, and then all the items
 	// in those collections.
-	go func() {
-
-		for { // This will happen forever in a goroutine until the program is quit
-			collections, err := FetchAllCollections()
-			if err != nil {
-				log.Error("Error fetching all digital collections:", err)
-				time.Sleep(1 * time.Hour) // Don't wait forever, but don't try again right away
-				break                     // Start over trying to fetch all collections
-			}
-
-			// Save the metadata for each collection to the database, then start fetching each
-			// collection's items
-			for _, c := range collections {
-
-				// Save a collection's metadata to the database
-				err = c.Save()
-				if err != nil {
-					log.WithField("collection", c).Error("Error saving collection to database:", err)
-				}
-
-				// Start fetching the items in that collection.
-				// TODO remove this limit which crawls only small collections
-				if c.Count < 50 {
-					// Fetch the first page of the collection. As long as there are more pages,
-					// the function will continue to fetch those too and add them to the channel.
-					go c.FetchCollectionItems(1, collectionPages)
-				}
-
-			}
-
-			// Goroutines have been started for fetching each collections items. We
-			// want to wait a decent interval, and then start the crawl over again
-			// from the beginning.
-			time.Sleep(crawlInterval)
-			// Now the loop starts over again by fetching all the digital collections
-		}
-
-	}()
+	go StartFetchingCollections(collectionPages)
 
 	// Iterate over the pages in the collection API, and the items within each
 	// page. Store those results to the database. This means we know that an item
