@@ -171,15 +171,19 @@ func (i *Item) Fetch() error {
 
 	// TODO Getting the full text fields here is janky. Not sure how consistent
 	// the API is.
-	for _, v := range result.Resources[0].Files[0] {
-		if v.Fulltext != "" {
-			i.Fulltext.Scan(v.Fulltext)
-		}
-		if v.FulltextService != "" {
-			i.FulltextService.Scan(v.FulltextService)
+	if len(result.Resources) > 0 {
+		i.FulltextFile.Scan(result.Resources[0].FulltextFile)
+		if len(result.Resources[0].Files) > 0 {
+			for _, v := range result.Resources[0].Files[0] {
+				if v.Fulltext != "" {
+					i.Fulltext.Scan(v.Fulltext)
+				}
+				if v.FulltextService != "" {
+					i.FulltextService.Scan(v.FulltextService)
+				}
+			}
 		}
 	}
-	i.FulltextFile.Scan(result.Resources[0].FulltextFile)
 
 	return nil
 
