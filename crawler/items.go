@@ -231,23 +231,22 @@ func (i Item) EnqueueMetadata() error {
 
 // ProcessItemMetadata reads an item from the queue, fetches its metadata, and
 // saves it to the database.
-func ProcessItemMetadata(msg amqp.Delivery) error {
+func ProcessItemMetadata(msg amqp.Delivery) {
 	var item Item
 	err := json.Unmarshal(msg.Body, &item)
 	if err != nil {
 		msg.Reject(true)
-		return fmt.Errorf("Failed to read body of message: %w", err)
+		log.WithError(err).WithField("msg", msg).Error("Failed to read body of message from queue")
 	}
 	err = item.Fetch()
 	if err != nil {
 		msg.Reject(true)
-		return fmt.Errorf("Error fetching item: %w", err)
+		log.WithError(err).WithField("url", item.URL).WithField("id", item.ID).Error("Error fetching item")
 	}
 	err = item.Save()
 	if err != nil {
 		msg.Reject(true)
-		return fmt.Errorf("Error saving item to database: %w", err)
+		log.WithError(err).WithField("id", item.ID).Error("Error saving item to database")
 	}
 	msg.Ack(false)
-	return nil
 }
