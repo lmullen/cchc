@@ -135,7 +135,7 @@ func (i *Item) Fetch() error {
 
 	response, err := app.Client.Get(url)
 	if err != nil {
-		return fmt.Errorf("Error fetching item %s: %w", url, err)
+		return fmt.Errorf("Error getting item over HTTP: %w", err)
 	}
 
 	if response.StatusCode != http.StatusOK {
