@@ -32,10 +32,6 @@ type Item struct {
 // ItemResponse represents an item-level object returned from the API. Many more fields
 // are returned and will be stored in the database as a JSONB field, but these
 // are the ones that will be serialized to regular database fields.
-//
-// TODO: For now we are keeping track of only information we are sure we are
-// going to use. Some of the fields are commented out because they may prove
-// useful in the future.
 type ItemResponse struct {
 	ItemDetails struct {
 		ID       string   `json:"id"`

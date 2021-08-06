@@ -4,13 +4,12 @@ package main
 // an error.
 func (app *App) DBCreateSchema() error {
 
-	// TODO: Delete the DROP TABLE statements, which are there for dev purposes
-	_, err := app.DB.Exec(`DROP TABLE IF EXISTS collections CASCADE`)
-	if err != nil {
-		return err
-	}
+	// _, err := app.DB.Exec(`DROP TABLE IF EXISTS collections CASCADE`)
+	// if err != nil {
+	// 	return err
+	// }
 
-	_, err = app.DB.Exec(`CREATE TABLE IF NOT EXISTS collections (
+	_, err := app.DB.Exec(`CREATE TABLE IF NOT EXISTS collections (
 		id            text PRIMARY KEY,
 		title         text,
 		description   text,
@@ -26,10 +25,10 @@ func (app *App) DBCreateSchema() error {
 		return err
 	}
 
-	_, err = app.DB.Exec(`DROP TABLE IF EXISTS items CASCADE`)
-	if err != nil {
-		return err
-	}
+	// _, err = app.DB.Exec(`DROP TABLE IF EXISTS items CASCADE`)
+	// if err != nil {
+	// 	return err
+	// }
 
 	_, err = app.DB.Exec(`CREATE TABLE IF NOT EXISTS items (
 		id                 text PRIMARY KEY,
@@ -48,10 +47,10 @@ func (app *App) DBCreateSchema() error {
 		return err
 	}
 
-	_, err = app.DB.Exec(`DROP TABLE IF EXISTS items_in_collections CASCADE`)
-	if err != nil {
-		return err
-	}
+	// _, err = app.DB.Exec(`DROP TABLE IF EXISTS items_in_collections CASCADE`)
+	// if err != nil {
+	// 	return err
+	// }
 
 	_, err = app.DB.Exec(`CREATE TABLE IF NOT EXISTS items_in_collections (
 		item_id  text REFERENCES items(id),
