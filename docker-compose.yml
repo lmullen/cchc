@@ -12,6 +12,22 @@ services:
       - 15672:15672
     volumes:
       - queue-data:/var/lib/rabbitmq/
+    network_mode: "host"
+
+  crawler:
+    build:
+      dockerfile: crawler.Dockerfile
+    container_name: "cchc-crawler"
+    environment:
+      - CCHC_DBHOST=host.docker.internal
+      - CCHC_DBPORT
+      - CCHC_DBUSER
+      - CCHC_DBPASS
+      - CCHC_DBNAME
+      - CCHC_LOGLEVEL
+    depends_on:
+      - "queue"
+    network_mode: "host"
 
 volumes:
   queue-data:
