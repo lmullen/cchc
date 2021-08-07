@@ -83,7 +83,7 @@ func StartProcessingCollections(cp chan CollectionAPIPage) {
 					log.WithFields(log.Fields{
 						"item_id": item.ID,
 						"error":   err,
-					}).Error("Error putting item in queue for metadata processing")
+					}).Fatal("Error putting item in queue for metadata processing")
 				}
 			}
 		}(r)
