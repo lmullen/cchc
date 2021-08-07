@@ -5,6 +5,6 @@ package main
 func StartProcessingItems() {
 	for msg := range app.ItemMetadataQ.Consumer {
 		// Give each item its own goroutine
-		go ProcessItemMetadata(msg)
+		ProcessItemMetadata(msg)
 	}
 }
