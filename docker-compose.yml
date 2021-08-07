@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  queue:
+    image: rabbitmq:3-management
+    container_name: "cchc-queue"
+    environment:
+      - RABBITMQ_DEFAULT_USER=${CCHC_QUSER}
+      - RABBITMQ_DEFAULT_PASS=${CCHC_QPASS}
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - queue-data:/var/lib/rabbitmq/
+    # network_mode: "host"
+
+  crawler:
+    build:
+      dockerfile: crawler.Dockerfile
+    container_name: "cchc-crawler"
+    environment:
+      - CCHC_DBHOST=host.docker.internal
+      - CCHC_DBPORT
+      - CCHC_DBUSER
+      - CCHC_DBPASS
+      - CCHC_DBNAME
+      - CCHC_LOGLEVEL
+      - CCHC_QHOST=host.docker.internal
+      - CCHC_QPORT
+      - CCHC_QUSER
+      - CCHC_QPASS
+    depends_on:
+      - "queue"
+    network_mode: "host"
+
+volumes:
+  queue-data:

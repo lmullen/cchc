@@ -10,13 +10,13 @@ COPY go.mod go.sum /app/
 RUN go mod download
 
 # Copy the source from the current directory to the Working Directory inside the container
-COPY sketches/collection-crawl /app
+COPY crawler /app
 
 # Build the Go app, making sure it is a static binary with no debugging symbols
 RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags="-w -s" -o app
 
 # Create non-root user information
-RUN echo "cchc:x:65534:65534:Data API:/:" > /etc_passwd
+RUN echo "cchc:x:65534:65534:CCHC:/:" > /etc_passwd
 
 # Start over with a completely empty image
 FROM scratch

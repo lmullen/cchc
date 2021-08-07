@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"os"
 	"strings"
@@ -23,8 +24,10 @@ func main() {
 
 	words := strings.Split(string(b), "\n")
 
+	pswd, _ := os.LookupEnv("CCHC_QPASS")
+
 	log.Info("Connecting to RabbitMQ")
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	conn, err := amqp.Dial(fmt.Sprintf("amqp://cchc:%s@localhost:5672/", pswd))
 	if err != nil {
 		log.Fatal("Failed to connect to RabbitMQ: ", err)
 	}
@@ -37,7 +40,8 @@ func main() {
 	defer ch.Close()
 
 	// Only creates a queue if it doesn't already exist
-	q, err := ch.QueueDeclare("jobs", true, false, false, false, nil)
+	q, err := ch.QueueDeclare("test-queue", true, false, false, false,
+		amqp.Table{"x-max-length": 1000000, "x-queue-mode": "lazy"})
 	if err != nil {
 		log.Fatal("Failed to declare a queue: ", err)
 	}
@@ -49,8 +53,8 @@ func main() {
 		i := rand.Intn(len(words))
 		word := words[i]
 		sendJob(word, ch, &q)
-		sleep := rand.Intn(5)*100 + 500
-		time.Sleep(time.Duration(sleep) * time.Millisecond)
+		// sleep := rand.Intn(10)*10 + 50
+		// time.Sleep(time.Duration(sleep) * time.Millisecond)
 	}
 
 }

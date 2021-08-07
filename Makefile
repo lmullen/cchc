@@ -1,14 +1,15 @@
-.PHONY : collection-crawler
-collection-crawler : 
-	docker build -f collection-crawler.Dockerfile --tag collection-crawler:test .
+.PHONY : crawler
+crawler : 
+	docker build -f crawler.Dockerfile --tag crawler:test .
 
-.PHONY : test-collection-crawer
-test-collection-crawler : collection-crawler
+.PHONY : test-crawer
+test-crawler : crawler
 	docker run --rm \
 		--env CCHC_DBHOST="host.docker.internal" \
+		--env CCHC_LOGLEVEL="info" \
 		-e CCHC_DBPORT \
 		-e CCHC_DBUSER \
 		-e CCHC_DBPASS \
 		-e CCHC_DBNAME \
-		--name collection-crawler \
-		collection-crawler:test
+		--name crawler \
+		crawler:test
