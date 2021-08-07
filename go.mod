@@ -3,6 +3,7 @@ module github.com/lmullen/cchc
 go 1.16
 
 require (
+	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	github.com/jackc/pgx/v4 v4.11.0
 	github.com/sirupsen/logrus v1.8.1

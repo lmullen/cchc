@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
 
@@ -79,16 +80,29 @@ func (app *App) Init() error {
 		log.SetLevel(log.DebugLevel)
 	}
 
+	// Set a policy for backoffs
+	policy := backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 10)
+
 	// Connect to the database and initialize it.
 	dbconstr := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=%s",
 		app.Config.dbhost, app.Config.dbport, app.Config.dbname, app.Config.dbuser,
 		app.Config.dbpass, app.Config.dbssl)
-	db, err := sql.Open("pgx", dbconstr)
-	if err != nil {
-		return fmt.Errorf("Failed to connect to database: %w", err)
+	var db *sql.DB
+	dbConnect := func() error {
+		d, err := sql.Open("pgx", dbconstr)
+		if err != nil {
+			return fmt.Errorf("Failed to dial the database: %w", err)
+		}
+		if err := d.Ping(); err != nil {
+			return fmt.Errorf("Failed to ping the database: %w", err)
+		}
+		db = d
+		return nil
 	}
-	if err := db.Ping(); err != nil {
-		return fmt.Errorf("Failed to ping database: %w", err)
+	log.Info("Attempting to connect to the database")
+	err := backoff.Retry(dbConnect, policy)
+	if err != nil {
+		return fmt.Errorf("Failed to connect to the database: %w", err)
 	}
 
 	app.DB = db
@@ -98,21 +112,32 @@ func (app *App) Init() error {
 	}
 	log.Info("Connected to the database successfully")
 
-	// Connect to RabbitMQ and set up the queues
+	// Connect to RabbitMQ and set up the queues. Try to connect multiple times
 	qconnstr := fmt.Sprintf("amqp://%s:%s@%s:%s/",
 		app.Config.quser, app.Config.qpass, app.Config.qhost, app.Config.qport)
-	rabbit, err := amqp.Dial(qconnstr)
+	var rabbit *amqp.Connection
+	mqConnect := func() error {
+		r, err := amqp.Dial(qconnstr)
+		if err != nil {
+			return err
+		}
+		rabbit = r
+		return nil
+	}
+
+	log.Info("Attempting to connect to the message broker")
+	err = backoff.Retry(mqConnect, policy)
 	if err != nil {
-		return fmt.Errorf("Failed to connect to message queue: %w", err)
+		return fmt.Errorf("Failed to connect to message broker: %w", err)
 	}
 	app.MessageBroker = rabbit
 	ch, err := rabbit.Channel()
 	if err != nil {
-		return fmt.Errorf("Failed to open a channel on message queue: %w", err)
+		return fmt.Errorf("Failed to open a channel on message broker: %w", err)
 	}
 	err = ch.Qos(40, 0, true)
 	if err != nil {
-		log.Fatal("Failed to set prefetch on the message queue: ", err)
+		log.Fatal("Failed to set prefetch on the message broker: ", err)
 	}
 	app.ItemMetadataQ.Channel = ch
 	q, err := ch.QueueDeclare("items-metadata", true, false, false, false,
