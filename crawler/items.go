@@ -146,7 +146,7 @@ func (i *Item) Fetch() error {
 
 	data, err := io.ReadAll(response.Body)
 	if err != nil {
-		return fmt.Errorf("Error reading HTTP response body: %w", err)
+		return fmt.Errorf("Error reading HTTP response body while fetching item: %w", err)
 	}
 
 	var result ItemResponse
@@ -231,17 +231,17 @@ func ProcessItemMetadata(msg amqp.Delivery) {
 	var item Item
 	err := json.Unmarshal(msg.Body, &item)
 	if err != nil {
-		msg.Reject(true)
+		msg.Reject(false)
 		log.WithError(err).WithField("msg", msg).Error("Failed to read body of message from queue")
 	}
 	err = item.Fetch()
 	if err != nil {
-		msg.Reject(true)
+		msg.Reject(false)
 		log.WithError(err).WithField("url", item.URL).WithField("id", item.ID).Error("Error fetching item")
 	}
 	err = item.Save()
 	if err != nil {
-		msg.Reject(true)
+		msg.Reject(false)
 		log.WithError(err).WithField("id", item.ID).Error("Error saving item to database")
 	}
 	msg.Ack(false)

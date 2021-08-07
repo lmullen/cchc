@@ -141,7 +141,11 @@ func (app *App) Init() error {
 	}
 	app.ItemMetadataQ.Channel = ch
 	q, err := ch.QueueDeclare("items-metadata", true, false, false, false,
-		amqp.Table{"x-max-length": 10000000, "x-queue-mode": "lazy"})
+		amqp.Table{
+			"x-max-length":           10000000,
+			"x-queue-mode":           "lazy",
+			"x-dead-letter-exchange": "failed-items-metadata",
+		})
 	if err != nil {
 		return fmt.Errorf("Failed to declare a queue: %w", err)
 	}
