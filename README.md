@@ -2,7 +2,14 @@
 
 ## America's Public Bible: Machine-Learning Detection of Biblical Quotations across Library of Congress Collections via Cloud Computing
 
-[Lincoln Mullen](https://lincolnmullen.com), Director of Computational History, [Roy Rosenzweig Center for History and New Media](https://rrchnm.org), George Mason University
+[Lincoln Mullen](https://lincolnmullen.com), Director of Computational History,
+[Roy Rosenzweig Center for History and New Media](https://rrchnm.org), George
+Mason University
+
+### Project status
+
+[![Go](https://github.com/lmullen/cchc/actions/workflows/go.yml/badge.svg)](https://github.com/lmullen/cchc/actions/workflows/go.yml)
+[![Docker](https://github.com/lmullen/cchc/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/lmullen/cchc/actions/workflows/docker-publish.yml)
 
 ### About this repository
 
