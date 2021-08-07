@@ -4,9 +4,7 @@ services:
   queue:
     image: rabbitmq:3-management
     container_name: "cchc-queue"
-    # environment:
-    #   - RABBITMQ_DEFAULT_USER=${CCHC_QUSER}
-    #   - RABBITMQ_DEFAULT_PASS=${CCHC_QPASS}
+    restart: unless-stopped
     ports:
       - 5672:5672
       - 15672:15672
@@ -19,6 +17,7 @@ services:
     build:
       dockerfile: crawler.Dockerfile
     container_name: "cchc-crawler"
+    restart: unless-stopped
     environment:
       - CCHC_DBHOST=host.docker.internal
       - CCHC_DBPORT
