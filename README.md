@@ -18,5 +18,6 @@ This repository contains code for one of the projects that are part of the [Comp
 
 ### License
 
-All code is copyrighted &copy; 2021 Lincoln A. Mullen. Open source license to be determined.
+All code is copyrighted &copy; 2021 Lincoln A. Mullen. Code is licensed [CC0 1.0
+Universal](https://github.com/lmullen/cchc/blob/main/LICENSE).
 
