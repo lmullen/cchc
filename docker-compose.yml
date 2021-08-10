@@ -32,6 +32,9 @@ services:
     depends_on:
       - "queue"
     network_mode: "host"
+    volumes:
+      - crawler-build-cache:/root/.cache/go-build
 
 volumes:
   queue-data:
+  crawler-build-cache:
