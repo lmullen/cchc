@@ -233,16 +233,20 @@ func ProcessItemMetadata(msg amqp.Delivery) {
 	if err != nil {
 		msg.Reject(false)
 		log.WithError(err).WithField("msg", msg).Error("Failed to read body of message from queue")
+		return
 	}
 	err = item.Fetch()
 	if err != nil {
 		msg.Reject(false)
 		log.WithError(err).WithField("url", item.URL).WithField("id", item.ID).Error("Error fetching item")
+		return
 	}
 	err = item.Save()
 	if err != nil {
 		msg.Reject(false)
 		log.WithError(err).WithField("id", item.ID).Error("Error saving item to database")
+		return
 	}
 	msg.Ack(false)
+	return
 }
