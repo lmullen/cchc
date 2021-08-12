@@ -106,10 +106,6 @@ func (app *App) Init() error {
 	}
 
 	app.DB = db
-	err = app.DBCreateSchema()
-	if err != nil {
-		return fmt.Errorf("Failed to create database schema: %w", err)
-	}
 	log.Info("Connected to the database successfully")
 
 	// Connect to RabbitMQ and set up the queues. Try to connect multiple times
