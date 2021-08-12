@@ -7,6 +7,9 @@
 run : 
 	docker compose up -d --build --force-recreate --detach
 
+stop :
+	docker compose down
+
 .PHONY : logs
 logs :
 	docker compose logs -f crawler

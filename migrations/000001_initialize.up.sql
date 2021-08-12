@@ -32,6 +32,12 @@ CREATE TABLE IF NOT EXISTS items_in_collections (
   PRIMARY KEY (item_id, collection_id)
 );
 
+CREATE INDEX ON items (year);
+
+CREATE INDEX ON items (timestamp);
+
+CREATE INDEX ON items (subjects);
+
 CREATE INDEX ON items (api)
 WHERE
   api IS NULL;

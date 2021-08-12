@@ -1,0 +1,13 @@
+ALTER TABLE items
+  ADD COLUMN IF NOT EXISTS fulltext text;
+
+ALTER TABLE items
+  ADD COLUMN IF NOT EXISTS fulltext_service text;
+
+ALTER TABLE items
+  ADD COLUMN IF NOT EXISTS fulltext_file text;
+
+DROP TABLE IF EXISTS files CASCADE;
+
+DROP TABLE IF EXISTS resources CASCADE;
+
