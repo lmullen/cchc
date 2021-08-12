@@ -16,17 +16,44 @@ import (
 
 // Item is a representation of an item in the LOC collection returned from the API.
 type Item struct {
-	ID              string
-	URL             string
-	Title           string
-	Year            sql.NullInt32
-	Date            string
-	Subjects        []string
-	Fulltext        sql.NullString
-	FulltextService sql.NullString
-	FulltextFile    sql.NullString
-	Timestamp       int64
-	API             []byte // The entire API response stored as JSONB
+	ID        string
+	URL       string
+	Title     string
+	Year      sql.NullInt32
+	Date      string
+	Subjects  []string
+	Timestamp int64
+	Resources []ItemResource
+	Files     []ItemFile
+	API       []byte // The entire API response stored as JSONB
+}
+
+// ItemResource contains a description of some kind of source.
+type ItemResource struct {
+	ItemID       string
+	ResourceSeq  int
+	FullTextFile sql.NullString
+	DJVUTextFile sql.NullString
+	Image        sql.NullString
+	PDF          sql.NullString
+	URL          sql.NullString
+	Caption      sql.NullString
+}
+
+// ItemFile contains a file pointing to some kind of resource. Unlike the
+// LOC.gov API, it does not make a firm distinction between a file and format.
+type ItemFile struct {
+	ItemID          string
+	ResourceSeq     int
+	FileSeq         int
+	FormatSeq       int
+	Mimetype        sql.NullString
+	FullText        sql.NullString
+	FullTextService sql.NullString
+	WordCoordinates sql.NullString
+	URL             sql.NullString
+	Info            sql.NullString
+	Use             sql.NullString
 }
 
 // ItemResponse represents an item-level object returned from the API. Many more fields
@@ -46,11 +73,21 @@ type ItemResponse struct {
 		// Timestamp time.Time `json:"timestamp"`
 	} `json:"item"`
 	Resources []struct {
-		Files [][]struct {
+		FulltextFile string `json:"fulltext_file,omitempty"`
+		DJVUTextFile string `json:"djvu_text_file,omitempty"`
+		Image        string `json:"image,omitempty"`
+		PDF          string `json:"pdf,omitempty"`
+		URL          string `json:"url,omitempty"`
+		Caption      string `json:"caption,omitempty"`
+		Files        [][]struct {
+			Mimetype        string `json:"mimetype,omitempty"`
 			Fulltext        string `json:"fulltext,omitempty"`
 			FulltextService string `json:"fulltext_service,omitempty"`
+			WordCoordinates string `json:"word_coordinates,omitempty"`
+			URL             string `json:"url,omitempty"`
+			Info            string `json:"info,omitempty"`
+			Use             string `json:"use,omitempty"`
 		} `json:"files"`
-		FulltextFile string `json:"fulltext_file"`
 	} `json:"resources"`
 	Timestamp int64 `json:"timestamp"`
 }
@@ -80,11 +117,9 @@ func (i Item) Fetched() (bool, error) {
 
 // Save serializes an item to the database
 func (i Item) Save() error {
-	query := `
-	INSERT INTO items (id, url, title, year, date, subjects, 
-		                fulltext, fulltext_service, fulltext_file,
-										timestamp, api)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+	itemQuery := `
+	INSERT INTO items (id, url, title, year, date, subjects, timestamp, api)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	ON CONFLICT (id) DO UPDATE
 	SET
 	  url              = $2,
@@ -92,17 +127,58 @@ func (i Item) Save() error {
 		year             = $4,
 		date             = $5,
 		subjects         = $6,
-		fulltext         = $7,
-		fulltext_service = $8,
-		fulltext_file    = $9,
-		timestamp        = $10,
-		api              = $11;
+		timestamp        = $7,
+		api              = $8;
 	`
 
-	_, err := app.DB.Exec(query, i.ID, i.URL, i.Title, i.Year, i.Date, i.Subjects,
-		i.Fulltext, i.FulltextService, i.FulltextFile, i.Timestamp, i.API)
+	resourceQuery := `
+	INSERT INTO resources (item_id, resource_seq, fulltext_file, djvu_text_file,
+		image, pdf, url, caption)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+	`
+
+	fileQuery := `
+	INSERT INTO files (item_id, resource_seq, file_seq, format_seq,
+	                   mimetype, fulltext, fulltext_service, word_coordinates,
+										 url, info, use)
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+	`
+
+	// Use a transaction since we are writing to three tables
+	tx, err := app.DB.Begin()
 	if err != nil {
+		return fmt.Errorf("Error creating transaction in database: %w", err)
+	}
+
+	_, err = tx.Exec(itemQuery, i.ID, i.URL, i.Title, i.Year, i.Date, i.Subjects,
+		i.Timestamp, i.API)
+	if err != nil {
+		tx.Rollback()
 		return fmt.Errorf("Error saving item %s to database: %w", i, err)
+	}
+
+	for _, r := range i.Resources {
+		_, err = tx.Exec(resourceQuery, r.ItemID, r.ResourceSeq, r.FullTextFile,
+			r.DJVUTextFile, r.Image, r.PDF, r.URL, r.Caption)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("Error saving item %s to database: %w", i, err)
+		}
+	}
+
+	for _, f := range i.Files {
+		_, err = tx.Exec(fileQuery, f.ItemID, f.ResourceSeq, f.FileSeq, f.FormatSeq,
+			f.Mimetype, f.FullText, f.FullTextService, f.WordCoordinates, f.URL,
+			f.Info, f.Use)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("Error saving item %s to database: %w", i, err)
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("Error committing item to database: %w", err)
 	}
 
 	return nil
@@ -165,18 +241,69 @@ func (i *Item) Fetch() error {
 	i.Timestamp = result.Timestamp
 	i.API = data
 
-	// TODO Getting the full text fields here is janky. Not sure how consistent
-	// the API is.
-	if len(result.Resources) > 0 {
-		i.FulltextFile.Scan(result.Resources[0].FulltextFile)
-		if len(result.Resources[0].Files) > 0 {
-			for _, v := range result.Resources[0].Files[0] {
-				if v.Fulltext != "" {
-					i.Fulltext.Scan(v.Fulltext)
+	var temp [][]string
+
+	for i, v := range temp {
+		for j, w := range v {
+			fmt.Println(i, v, j, w)
+
+		}
+
+	}
+
+	// Iterate through all the files and formats to get the full text representations
+	for resourceSeq, resource := range result.Resources {
+		var r ItemResource
+		r.ItemID = i.ID
+		r.ResourceSeq = resourceSeq
+		if resource.FulltextFile != "" {
+			r.FullTextFile.Scan(resource.FulltextFile)
+		}
+		if resource.DJVUTextFile != "" {
+			r.DJVUTextFile.Scan(resource.DJVUTextFile)
+		}
+		if resource.Image != "" {
+			r.Image.Scan(resource.Image)
+		}
+		if resource.PDF != "" {
+			r.PDF.Scan(resource.PDF)
+		}
+		if resource.URL != "" {
+			r.URL.Scan(resource.URL)
+		}
+		if resource.Caption != "" {
+			r.Caption.Scan(resource.Caption)
+		}
+		i.Resources = append(i.Resources, r)
+		for fileSeq, file := range resource.Files {
+			for formatSeq, format := range file {
+				var f ItemFile
+				f.ItemID = i.ID
+				f.ResourceSeq = resourceSeq
+				f.FileSeq = fileSeq
+				f.FormatSeq = formatSeq
+				if format.Mimetype != "" {
+					f.Mimetype.Scan(format.Mimetype)
 				}
-				if v.FulltextService != "" {
-					i.FulltextService.Scan(v.FulltextService)
+				if format.Fulltext != "" {
+					f.FullText.Scan(format.Fulltext)
 				}
+				if format.FulltextService != "" {
+					f.FullTextService.Scan(format.FulltextService)
+				}
+				if format.WordCoordinates != "" {
+					f.WordCoordinates.Scan(format.WordCoordinates)
+				}
+				if format.URL != "" {
+					f.URL.Scan(format.URL)
+				}
+				if format.Info != "" {
+					f.Info.Scan(format.Info)
+				}
+				if format.Use != "" {
+					f.Use.Scan(format.Use)
+				}
+				i.Files = append(i.Files, f)
 			}
 		}
 	}
