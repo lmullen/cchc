@@ -19,18 +19,26 @@ This repository contains code for one of the projects that are part of the [Comp
 
 This application assumes that configuration is passed in as environment
 variables. You should set the following environment variables, though most will
-have reasonable defaults
+have reasonable defaults.
 
-- CCHC_DBHOST
-- CCHC_DBPORT
-- CCHC_DBUSER
-- CCHC_DBPASS
-- CCHC_DBNAME
-- CCHC_LOGLEVEL
-- CCHC_QUSER
-- CCHC_QPORT
-- CCHC_QHOST
-- CCHC_QPASS
+Database (PostgreSQL) configuration:
+
+- `CCHC_DBHOST`
+- `CCHC_DBPORT`
+- `CCHC_DBUSER`
+- `CCHC_DBPASS`
+- `CCHC_DBNAME`
+
+Message broker (RabbitMQ) configuration:
+
+- `CCHC_QUSER`
+- `CCHC_QPORT`
+- `CCHC_QHOST`
+- `CCHC_QPASS`
+
+Application configuration:
+
+- `CCHC_LOGLEVEL`
 
 The `Makefile` controls most of the application. You can create the database
 with `make db-create` and run migrations with `make db-up` and `make db-down`.
