@@ -99,7 +99,8 @@ func (app *App) Init() error {
 		db = d
 		return nil
 	}
-	log.Info("Attempting to connect to the database")
+	log.Infof("Attempting to connect to the database: %s on %s",
+		app.Config.dbname, app.Config.dbhost)
 	err := backoff.Retry(dbConnect, policy)
 	if err != nil {
 		return fmt.Errorf("Failed to connect to the database: %w", err)
