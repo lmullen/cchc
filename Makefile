@@ -4,9 +4,16 @@
 # --------------------------------------------------
 
 # Rebuild and run all services detached
-.PHONY : run
-run : 
-	docker compose up -d --build --force-recreate --detach
+.PHONY : up
+up : 
+	docker compose up --build --force-recreate --detach
+
+restart :
+	@echo "Restarting just the crawler"
+	docker compose stop crawler
+	@mkdir -p logs
+	docker compose logs crawer > logs/crawler-$(date +%FT%T).log
+	docker compose up --build --detach crawler
 
 .PHONY : stop
 stop :
@@ -20,9 +27,11 @@ down :
 debug :
 	docker compose logs -f crawler
 
+.PHONY : logs
 logs :
 	docker compose logs -f crawler | grep -v "level=debug"
 
+.PHONY : collection-logs
 collection-logs :
 	docker compose logs -f crawler | grep "Fetched page of items from collection"
 
