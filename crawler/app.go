@@ -99,17 +99,14 @@ func (app *App) Init() error {
 		db = d
 		return nil
 	}
-	log.Info("Attempting to connect to the database")
+	log.Infof("Attempting to connect to the database: %s on %s",
+		app.Config.dbname, app.Config.dbhost)
 	err := backoff.Retry(dbConnect, policy)
 	if err != nil {
 		return fmt.Errorf("Failed to connect to the database: %w", err)
 	}
 
 	app.DB = db
-	err = app.DBCreateSchema()
-	if err != nil {
-		return fmt.Errorf("Failed to create database schema: %w", err)
-	}
 	log.Info("Connected to the database successfully")
 
 	// Connect to RabbitMQ and set up the queues. Try to connect multiple times

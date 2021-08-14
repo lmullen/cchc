@@ -19,13 +19,13 @@ services:
     container_name: "cchc-crawler"
     restart: unless-stopped
     environment:
-      - CCHC_DBHOST=host.docker.internal
+      - CCHC_DBHOST
       - CCHC_DBPORT
       - CCHC_DBUSER
       - CCHC_DBPASS
       - CCHC_DBNAME
       - CCHC_LOGLEVEL
-      - CCHC_QHOST=host.docker.internal
+      - CCHC_QHOST
       - CCHC_QPORT
       - CCHC_QUSER
       - CCHC_QPASS
