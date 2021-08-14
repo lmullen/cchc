@@ -235,6 +235,10 @@ func ProcessItemMetadata(msg amqp.Delivery) {
 		log.WithError(err).WithField("msg", msg).Error("Failed to read body of message from queue")
 		return
 	}
+	if fetched, err := item.Fetched(); fetched && err == nil {
+		log.WithField("id", item.ID).Debug("Skipping item which was queued but already fetched")
+		return
+	}
 	err = item.Fetch()
 	if err != nil {
 		msg.Reject(false)
