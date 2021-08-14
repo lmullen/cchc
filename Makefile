@@ -12,7 +12,7 @@ restart :
 	@echo "Restarting just the crawler"
 	docker compose stop crawler
 	@mkdir -p logs
-	docker compose logs crawer > logs/crawler-$(date +%FT%T).log
+	docker compose logs crawer > logs/crawler-$(shell date +%FT%T).log
 	docker compose up --build --detach crawler
 
 .PHONY : stop
@@ -21,6 +21,9 @@ stop :
 
 .PHONY : down
 down :
+	docker compose stop
+	docker compose logs crawler > logs/crawler-$(shell date +%FT%T).log
+	docker compose logs queue > logs/queue-$(shell date +%FT%T).log
 	docker compose down
 
 .PHONY : debug
