@@ -30,6 +30,7 @@ func processItemMetadata(msg amqp.Delivery) {
 	// Check if fetched already
 	fetched, _ := item.Fetched()
 	if fetched {
+		msg.Ack(false)
 		log.WithField("id", item.ID).Debug("Skipping item which was queued but already fetched")
 		return
 	}
