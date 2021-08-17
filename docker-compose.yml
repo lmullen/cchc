@@ -4,6 +4,7 @@ services:
   queue:
     image: rabbitmq:3-management
     container_name: "cchc-queue"
+    hostname: "cchc-rabbitmq"
     restart: unless-stopped
     ports:
       - 5672:5672
