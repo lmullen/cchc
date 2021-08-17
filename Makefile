@@ -30,7 +30,12 @@ down :
 
 # DATABASE
 # --------------------------------------------------
-DBCONN="postgres://$(CCHC_DBUSER):$(CCHC_DBPASS)@$(CCHC_DBHOST):$(CCHC_DBPORT)/$(CCHC_DBNAME)?sslmode=disable"
+DBHOST=$(CCHC_DBHOST)
+# If using Docker on a Mac, set DBHOST to localhost
+ifeq ($(DBHOST), host.docker.internal)
+DBHOST=localhost
+endif
+DBCONN="postgres://$(CCHC_DBUSER):$(CCHC_DBPASS)@$(DBHOST):$(CCHC_DBPORT)/$(CCHC_DBNAME)?sslmode=disable"
 .PHONY : db-create, db-up, db-down
 
 db-create:
