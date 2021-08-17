@@ -114,7 +114,7 @@ func (i *Item) Fetch() error {
 	app.Limiters.Items.Take()
 
 	u, _ := url.Parse(i.URL)
-	remove := []string{"more_like_this", "related_items", "cite_this"}
+	remove := []string{"more_like_this", "related_items", "cite_this", "options"}
 	options := url.Values{
 		"at!": []string{strings.Join(remove, ",")},
 		"fo":  []string{"json"},
