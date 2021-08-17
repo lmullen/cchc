@@ -30,11 +30,10 @@ type Config struct {
 	loglevel string
 }
 
-// Queue holds all the items related to sending/receiving on a message queue
+// Queue holds all the items related to sending on a message queue
 type Queue struct {
-	Channel  *amqp.Channel
-	Queue    *amqp.Queue
-	Consumer <-chan amqp.Delivery
+	Channel *amqp.Channel
+	Queue   *amqp.Queue
 }
 
 // The App type shares access to the database and other resources.
@@ -147,12 +146,6 @@ func (app *App) Init() error {
 		return fmt.Errorf("Failed to declare a queue: %w", err)
 	}
 	app.ItemMetadataQ.Queue = &q
-	consumer, err := ch.Consume(q.Name, "item-metadata-consumer",
-		false, false, false, false, nil)
-	if err != nil {
-		return fmt.Errorf("Failed to register a channel consumer: %w", err)
-	}
-	app.ItemMetadataQ.Consumer = consumer
 	log.Info("Connected to the message broker successfully")
 
 	// Set up a client to use for all HTTP requests. It will automatically retry.
