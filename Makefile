@@ -1,5 +1,3 @@
-.PHONY : run
-
 # APPLICATION
 # --------------------------------------------------
 
@@ -9,11 +7,14 @@ up :
 	docker compose up --build --force-recreate --detach
 
 restart :
-	@echo "Restarting just the crawler"
+	@echo "Restarting the crawler and the item metadata fetcher"
 	docker compose stop crawler
+	docker compose stop itemmd
 	@mkdir -p logs
 	docker compose logs crawer > logs/crawler-$(shell date +%FT%T).log
+	docker compose logs itemmd > logs/itemmd-$(shell date +%FT%T).log
 	docker compose up --build --detach crawler
+	docker compose up --build --detach itemmd
 
 .PHONY : stop
 stop :
@@ -23,24 +24,9 @@ stop :
 down :
 	docker compose stop
 	docker compose logs crawler > logs/crawler-$(shell date +%FT%T).log
+	docker compose logs itemmd > logs/itemmd-$(shell date +%FT%T).log
 	docker compose logs queue > logs/queue-$(shell date +%FT%T).log
 	docker compose down
-
-.PHONY : debug
-debug :
-	docker compose logs -f crawler
-
-.PHONY : logs
-logs :
-	docker compose logs -f crawler | grep -v "level=debug"
-
-.PHONY : collection-logs
-collection-logs :
-	docker compose logs -f crawler | grep "Fetched page of items from collection"
-
-.PHONY : crawler
-crawler : 
-	docker compose build crawler
 
 # DATABASE
 # --------------------------------------------------
