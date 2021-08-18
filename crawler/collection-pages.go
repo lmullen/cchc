@@ -62,7 +62,7 @@ func (c Collection) FetchCollectionItems(page int, results chan<- CollectionAPIP
 
 	data, err := io.ReadAll(response.Body)
 	if err != nil {
-		log.Warn("Error reading HTTP response body: ", err)
+		log.WithField("url", url).Warn("Error reading HTTP response body: ", err)
 		return
 	}
 
