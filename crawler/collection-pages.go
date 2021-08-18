@@ -67,9 +67,9 @@ fetch:
 	if err != nil {
 		log.WithField("url", url).Warn("Error reading HTTP response body: ", err)
 		if attempt <= 10 {
+			attempt++
 			log.WithField("url", url).WithField("attempt", attempt).
 				Warn("Retrying this page of results because of error: ", err)
-			attempt++
 			goto fetch
 		} else {
 			return
