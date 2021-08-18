@@ -142,22 +142,18 @@ func (app *App) Init() error {
 		log.Fatal("Failed to set prefetch on the message broker: ", err)
 	}
 	app.ItemMetadataQ.Channel = ch
+	deadLetter := "failed-items-metadata" // Declare a dead letter exchange
+	ch.ExchangeDeclare(deadLetter, "direct", true, false, false, false, amqp.Table{})
 	q, err := ch.QueueDeclare("items-metadata", true, false, false, false,
 		amqp.Table{
 			"x-max-length":           10000000,
 			"x-queue-mode":           "lazy",
-			"x-dead-letter-exchange": "failed-items-metadata",
+			"x-dead-letter-exchange": deadLetter,
 		})
 	if err != nil {
 		return fmt.Errorf("Failed to declare a queue: %w", err)
 	}
 	app.ItemMetadataQ.Queue = &q
-	consumer, err := ch.Consume(q.Name, "item-metadata-consumer",
-		false, false, false, false, nil)
-	if err != nil {
-		return fmt.Errorf("Failed to register a channel consumer: %w", err)
-	}
-	app.ItemMetadataQ.Consumer = consumer
 	log.Info("Connected to the message broker successfully")
 
 	// Set up a client to use for all HTTP requests. It will automatically retry.
