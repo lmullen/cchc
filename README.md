@@ -8,8 +8,11 @@ Mason University
 
 ### Project status
 
-[![Go](https://github.com/lmullen/cchc/actions/workflows/go.yml/badge.svg)](https://github.com/lmullen/cchc/actions/workflows/go.yml)
-[![Docker](https://github.com/lmullen/cchc/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/lmullen/cchc/actions/workflows/docker-publish.yml)
+[![cchc-crawler container](https://github.com/lmullen/cchc/actions/workflows/docker-publish-crawler.yml/badge.svg)](https://github.com/lmullen/cchc/actions/workflows/docker-publish-crawler.yml)
+
+[![cchc-itemmd container](https://github.com/lmullen/cchc/actions/workflows/docker-publish-itemmd.yml/badge.svg)](https://github.com/lmullen/cchc/actions/workflows/docker-publish-itemmd.yml)
+
+[![Go tests](https://github.com/lmullen/cchc/actions/workflows/go.yml/badge.svg)](https://github.com/lmullen/cchc/actions/workflows/go.yml) 
 
 ### About this repository
 
@@ -43,9 +46,10 @@ Application configuration:
 The `Makefile` controls most of the application. You can create the database
 with `make db-create` and run migrations with `make db-up` and `make db-down`.
 
-You can run the application with `make run`.
+You can run the application with `make up`.
 
-Note that the application is containerized, except for the database.
+Note that the application is containerized, except for the database. You will
+need to provide your own PostgreSQL database.
 
 ### License
 
