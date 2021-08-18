@@ -65,8 +65,6 @@ func StartProcessingCollections(cp chan CollectionAPIPage) {
 						"error":   err,
 					}).Error("Error saving item")
 				}
-
-				item := item.ToItem()
 				fetched, err := item.Fetched()
 				if err != nil {
 					log.WithFields(log.Fields{
