@@ -42,7 +42,7 @@ db-create:
 	./scripts/create-database.sh
 
 db-up :
-	migrate -database $(DBCONN) -path migrations up
+	migrate -database $(DBCONN) -path db/migrations up
 
 db-down :
-	migrate -database $(DBCONN) -path migrations down
+	migrate -database $(DBCONN) -path db/migrations down
