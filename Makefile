@@ -6,15 +6,24 @@
 up : 
 	docker compose up --build --force-recreate --detach
 
-restart :
-	@echo "Restarting the crawler and the item metadata fetcher"
+.PHONY: restart-crawler
+restart-crawler :
+	@echo "Restarting the crawler"
 	docker compose stop crawler
-	docker compose stop itemmd
 	@mkdir -p logs
 	docker compose logs crawler > logs/crawler-$(shell date +%FT%T).log
-	docker compose logs itemmd > logs/itemmd-$(shell date +%FT%T).log
 	docker compose up --build --detach crawler
+
+.PHONY: restart-itemmd
+restart-itemmd :
+	@echo "Restarting the item metadata fetcher"
+	docker compose stop itemmd
+	@mkdir -p logs
+	docker compose logs itemmd > logs/itemmd-$(shell date +%FT%T).log
 	docker compose up --build --detach itemmd
+
+.PHONY: restart
+restart : restart-itemmd restart-crawler
 
 .PHONY : stop
 stop :
