@@ -38,7 +38,9 @@ UNION (
   FROM
     items
   WHERE
-    api IS NULL);
+    api IS NULL)
+ORDER BY
+  n DESC;
 
 ALTER VIEW items_status SET SCHEMA stats;
 
