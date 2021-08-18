@@ -12,6 +12,7 @@ import (
 // own goroutine.
 func StartFetchingCollections(cp chan CollectionAPIPage) {
 	for { // This will happen forever until the program is quit
+		log.Info("Starting a crawl of all collections")
 		collections, err := FetchAllCollections()
 		if err != nil {
 			log.Error("Error fetching all digital collections:", err)
@@ -39,6 +40,7 @@ func StartFetchingCollections(cp chan CollectionAPIPage) {
 		// Goroutines have been started for fetching each collections items. We
 		// want to wait a decent interval, and then start the crawl over again
 		// from the beginning.
+		log.Info("Waiting to start a crawl of all collections for %s", crawlInterval)
 		time.Sleep(crawlInterval)
 		// Now the loop starts over again by fetching all the digital collections
 	}
