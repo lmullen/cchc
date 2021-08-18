@@ -4,8 +4,10 @@
 package main
 
 import (
+	"context"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	log "github.com/sirupsen/logrus"
@@ -21,11 +23,19 @@ func main() {
 	}
 	defer app.Shutdown()
 
+	ctx, cancel := context.WithCancel(context.Background())
+	wg := &sync.WaitGroup{}
+
 	// Process the items from the queue
-	go startProcessingItems()
+	wg.Add(1)
+	go startProcessingItems(ctx, wg)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
+
+	log.Info("Shutdown signal received; waiting for ongoing work to finish")
+	cancel()
+	wg.Wait()
 
 }

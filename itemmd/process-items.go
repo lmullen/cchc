@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"sync"
 
 	"github.com/streadway/amqp"
 
@@ -10,16 +12,24 @@ import (
 
 // StartProcessingItems begins reading items from the message queue in order to
 // process each of them.
-func startProcessingItems() {
+func startProcessingItems(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
 	for msg := range app.ItemMetadataQ.Consumer {
-		// Give each item its own goroutine
-		go processItemMetadata(msg)
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			// Give each item its own goroutine
+			wg.Add(1)
+			go processItemMetadata(ctx, wg, msg)
+		}
 	}
 }
 
 // ProcessItemMetadata reads an item from the queue, fetches its metadata, and
 // saves it to the database.
-func processItemMetadata(msg amqp.Delivery) {
+func processItemMetadata(ctx context.Context, wg *sync.WaitGroup, msg amqp.Delivery) {
+	defer wg.Done()
 	var item Item
 	err := json.Unmarshal(msg.Body, &item)
 	if err != nil {
