@@ -17,6 +17,7 @@ services:
   crawler:
     build:
       dockerfile: crawler.Dockerfile
+    image: ghcr.io/lmullen/cchc-crawler:main
     container_name: "cchc-crawler"
     restart: unless-stopped
     environment:
@@ -39,6 +40,7 @@ services:
   itemmd:
     build:
       dockerfile: itemmd.Dockerfile
+    image: ghcr.io/lmullen/cchc-itemmd:main
     container_name: "cchc-itemmd"
     restart: unless-stopped
     environment:
