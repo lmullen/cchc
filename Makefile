@@ -23,6 +23,7 @@ stop :
 .PHONY : down
 down :
 	docker compose stop
+	@mkdir -p logs
 	docker compose logs crawler > logs/crawler-$(shell date +%FT%T).log
 	docker compose logs itemmd > logs/itemmd-$(shell date +%FT%T).log
 	docker compose logs queue > logs/queue-$(shell date +%FT%T).log
