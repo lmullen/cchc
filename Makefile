@@ -11,7 +11,7 @@ restart :
 	docker compose stop crawler
 	docker compose stop itemmd
 	@mkdir -p logs
-	docker compose logs crawer > logs/crawler-$(shell date +%FT%T).log
+	docker compose logs crawler > logs/crawler-$(shell date +%FT%T).log
 	docker compose logs itemmd > logs/itemmd-$(shell date +%FT%T).log
 	docker compose up --build --detach crawler
 	docker compose up --build --detach itemmd
