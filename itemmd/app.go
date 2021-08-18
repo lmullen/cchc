@@ -142,18 +142,35 @@ func (app *App) Init() error {
 		log.Fatal("Failed to set prefetch on the message broker: ", err)
 	}
 	app.ItemMetadataQ.Channel = ch
-	deadLetter := "failed-items-metadata" // Declare a dead letter exchange
-	ch.ExchangeDeclare(deadLetter, "direct", true, false, false, false, amqp.Table{})
+	dle, dlq, dlk := "failed-items-metadata", "dead-letter-queue", "dead-letter-key"
+	err = ch.ExchangeDeclare(dle, "fanout", true, false, false, false, amqp.Table{})
+	if err != nil {
+		return fmt.Errorf("Failed to declare the dead letter exchange: %w", err)
+	}
+	_, err = ch.QueueDeclare(dlq, true, false, false, false, amqp.Table{})
+	if err != nil {
+		return fmt.Errorf("Failed to declare the dead letter exchange: %w", err)
+	}
+	err = ch.QueueBind(dlq, dlk, dle, false, amqp.Table{})
+	if err != nil {
+		return fmt.Errorf("Failed to bind dead letter queue and exchange: %w", err)
+	}
 	q, err := ch.QueueDeclare("items-metadata", true, false, false, false,
 		amqp.Table{
 			"x-max-length":           10000000,
 			"x-queue-mode":           "lazy",
-			"x-dead-letter-exchange": deadLetter,
+			"x-dead-letter-exchange": dle,
 		})
 	if err != nil {
 		return fmt.Errorf("Failed to declare a queue: %w", err)
 	}
 	app.ItemMetadataQ.Queue = &q
+	consumer, err := ch.Consume(q.Name, "item-metadata-consumer",
+		false, false, false, false, nil)
+	if err != nil {
+		return fmt.Errorf("Failed to register a channel consumer: %w", err)
+	}
+	app.ItemMetadataQ.Consumer = consumer
 	log.Info("Connected to the message broker successfully")
 
 	// Set up a client to use for all HTTP requests. It will automatically retry.
