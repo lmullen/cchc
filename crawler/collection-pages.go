@@ -60,14 +60,7 @@ fetch:
 			"url":        url,
 		}).Warn("HTTP error when fetching from API")
 		quitIfBlocked(response.StatusCode)
-		if attempt <= 6 {
-			log.WithField("url", url).WithField("attempt", attempt).
-				Warn("Retrying this page of results because of error: ", err)
-			attempt++
-			goto fetch
-		} else {
-			return
-		}
+		return
 	}
 
 	data, err := io.ReadAll(response.Body)
