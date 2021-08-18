@@ -25,7 +25,7 @@ FROM scratch
 COPY --from=compiler /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 # Copy over just the static binary to root
-COPY --from=compiler /app/app /app
+COPY --from=compiler /app/app /cchc-crawler
 
 # Copy over non-root user information
 COPY --from=0 /etc_passwd /etc/passwd
@@ -34,4 +34,4 @@ COPY --from=0 /etc_passwd /etc/passwd
 USER cchc
 
 # Command to run the executable
-CMD ["/app"]
+CMD ["/cchc-crawler"]
