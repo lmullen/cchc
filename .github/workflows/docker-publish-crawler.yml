@@ -1,4 +1,4 @@
-name: Create cchc-crawler container on GHCR
+name: cchc-crawler container
 
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
