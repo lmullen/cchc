@@ -41,6 +41,9 @@ func (c Collection) FetchCollectionItems(page int, results chan<- CollectionAPIP
 		return
 	}
 
+	attempt := 1
+
+fetch:
 	// Limit the rate
 	app.Limiters.Collections.Take()
 
@@ -57,13 +60,27 @@ func (c Collection) FetchCollectionItems(page int, results chan<- CollectionAPIP
 			"url":        url,
 		}).Warn("HTTP error when fetching from API")
 		quitIfBlocked(response.StatusCode)
-		return
+		if attempt <= 6 {
+			log.WithField("url", url).WithField("attempt", attempt).
+				Warn("Retrying this page of results because of error: ", err)
+			attempt++
+			goto fetch
+		} else {
+			return
+		}
 	}
 
 	data, err := io.ReadAll(response.Body)
 	if err != nil {
 		log.WithField("url", url).Warn("Error reading HTTP response body: ", err)
-		return
+		if attempt <= 10 {
+			log.WithField("url", url).WithField("attempt", attempt).
+				Warn("Retrying this page of results because of error: ", err)
+			attempt++
+			goto fetch
+		} else {
+			return
+		}
 	}
 
 	var result CollectionAPIPage
