@@ -15,6 +15,11 @@ import (
 	"go.uber.org/ratelimit"
 )
 
+// Configuration options that aren't worth exposing as environment variables
+const (
+	apiTimeout = 60 // The timeout limit for API requests in seconds
+)
+
 // The Config type stores configuration which is read from environment variables.
 type Config struct {
 	dbhost   string
@@ -30,10 +35,11 @@ type Config struct {
 	loglevel string
 }
 
-// Queue holds all the items related to sending on a message queue
+// Queue holds all the items related to sending/receiving on a message queue
 type Queue struct {
-	Channel *amqp.Channel
-	Queue   *amqp.Queue
+	Channel  *amqp.Channel
+	Queue    *amqp.Queue
+	Consumer <-chan amqp.Delivery
 }
 
 // The App type shares access to the database and other resources.
@@ -50,9 +56,9 @@ type App struct {
 	ItemMetadataQ Queue
 }
 
-// Init creates a new App and connects to the database or returns an error
+// Init creates a new app and connects to the database or returns an error
 func (app *App) Init() error {
-	log.Info("Starting the LOC.gov API crawler")
+	log.Info("Starting the item metadata fetcher")
 
 	app.Config = &Config{}
 
@@ -146,6 +152,12 @@ func (app *App) Init() error {
 		return fmt.Errorf("Failed to declare a queue: %w", err)
 	}
 	app.ItemMetadataQ.Queue = &q
+	consumer, err := ch.Consume(q.Name, "item-metadata-consumer",
+		false, false, false, false, nil)
+	if err != nil {
+		return fmt.Errorf("Failed to register a channel consumer: %w", err)
+	}
+	app.ItemMetadataQ.Consumer = consumer
 	log.Info("Connected to the message broker successfully")
 
 	// Set up a client to use for all HTTP requests. It will automatically retry.
@@ -194,5 +206,5 @@ func (app *App) Shutdown() {
 	} else {
 		log.Info("Closed the connection to the message broker successfully")
 	}
-	log.Info("Shutdown the LOC.gov API crawler")
+	log.Info("Shutdown the item metadata fetcher")
 }

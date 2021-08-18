@@ -36,6 +36,29 @@ services:
     volumes:
       - crawler-build-cache:/root/.cache/go-build
 
+  itemmd:
+    build:
+      dockerfile: itemmd.Dockerfile
+    container_name: "cchc-itemmd"
+    restart: unless-stopped
+    environment:
+      - CCHC_DBHOST
+      - CCHC_DBPORT
+      - CCHC_DBUSER
+      - CCHC_DBPASS
+      - CCHC_DBNAME
+      - CCHC_LOGLEVEL
+      - CCHC_QHOST
+      - CCHC_QPORT
+      - CCHC_QUSER
+      - CCHC_QPASS
+    depends_on:
+      - "queue"
+    network_mode: "host"
+    volumes:
+      - itemmd-build-cache:/root/.cache/go-build
+
 volumes:
   queue-data:
   crawler-build-cache:
+  itemmd-build-cache:

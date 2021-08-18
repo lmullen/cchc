@@ -61,9 +61,6 @@ func main() {
 	// item from its item page separately.
 	go StartProcessingCollections(collectionPages)
 
-	// Process the items from the queue
-	go StartProcessingItems()
-
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
