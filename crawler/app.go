@@ -131,7 +131,7 @@ func (app *App) Init() error {
 	if err != nil {
 		return fmt.Errorf("Failed to open a channel on message broker: %w", err)
 	}
-	err = ch.Qos(40, 0, true)
+	err = ch.Qos(12, 0, true)
 	if err != nil {
 		log.Fatal("Failed to set prefetch on the message broker: ", err)
 	}
