@@ -37,11 +37,17 @@ func processItemMetadata(ctx context.Context, wg *sync.WaitGroup, msg amqp.Deliv
 		log.WithError(err).WithField("msg", msg).Error("Failed to read body of message from queue")
 		return
 	}
+	// Skip fetching items which are actually resources
+	if isResourceNotItem(item.URL) {
+		msg.Reject(false)
+		log.WithField("url", item.URL).WithField("id", item.ID).Warn("Skipping item which is actually a resource")
+		return
+	}
 	// Check if fetched already
 	fetched, _ := item.Fetched()
 	if fetched {
 		msg.Ack(false)
-		log.WithField("id", item.ID).Debug("Skipping item which was queued but already fetched")
+		log.WithField("id", item.ID).Warn("Skipping item which was queued but already fetched")
 		return
 	}
 	err = item.Fetch()
