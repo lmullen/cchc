@@ -40,7 +40,7 @@ func StartFetchingCollections(cp chan CollectionAPIPage) {
 		// Goroutines have been started for fetching each collections items. We
 		// want to wait a decent interval, and then start the crawl over again
 		// from the beginning.
-		log.Info("Waiting to start a crawl of all collections for %s", crawlInterval)
+		log.Infof("Waiting to start a crawl of all collections for %s", crawlInterval)
 		time.Sleep(crawlInterval)
 		// Now the loop starts over again by fetching all the digital collections
 	}
