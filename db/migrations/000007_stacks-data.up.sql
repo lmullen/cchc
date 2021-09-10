@@ -3,14 +3,15 @@ CREATE TABLE IF NOT EXISTS stacks_books (
   isbn text[],
   title text,
   publisher text,
-  date date,
   year int,
   subject_full text[],
   subject text[],
   person text[],
   lang text[],
   original_metadata jsonb,
-  text text
+  text text,
+  created timestamp DEFAULT NOW(),
+  updated timestamp DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS stacks_books_year_idx ON stacks_books USING btree (year);
