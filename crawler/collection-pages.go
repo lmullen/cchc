@@ -65,11 +65,11 @@ fetch:
 
 	data, err := io.ReadAll(response.Body)
 	if err != nil {
-		log.WithField("url", url).Warn("Error reading HTTP response body: ", err)
+		log.WithField("url", url).WithError(err).Warn("Error reading HTTP response body")
 		if attempt <= 10 {
 			attempt++
-			log.WithField("url", url).WithField("attempt", attempt).
-				Warn("Retrying this page of results because of error: ", err)
+			log.WithField("url", url).WithField("attempt", attempt).WithError(err).
+				Warn("Retrying this page of results because of error")
 			goto fetch
 		} else {
 			return
