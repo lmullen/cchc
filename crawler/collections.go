@@ -77,7 +77,13 @@ func (c Collection) Save() error {
 		return err
 	}
 
-	_, err = stmt.Exec(c.ID, c.Title, c.Description[0], c.Count, c.URL, c.ItemsURL, c.Item.Subjects, c.Subject, c.SubjectTopic, api)
+	// Avoid panicking if the collection does not have a description
+	description := ""
+	if len(c.Description) > 0 {
+		description = c.Description[0]
+	}
+
+	_, err = stmt.Exec(c.ID, c.Title, description, c.Count, c.URL, c.ItemsURL, c.Item.Subjects, c.Subject, c.SubjectTopic, api)
 	if err != nil {
 		return err
 	}
