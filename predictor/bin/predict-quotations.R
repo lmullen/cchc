@@ -26,8 +26,8 @@ if (!interactive()) {
   # For testing
   flog.warn("Using the testing command line arguments since session is interactive.")
   args <- parse_args(parser,
-                     args = c("./data/wvu_lincoln_ver01-quotations.csv",
-                              "--out=temp/predicted-quotations-test.csv",
+                     args = c("./test/sermons-quotations-test.csv",
+                              "--out=test/sermons-predicted-test.csv",
                               "--model=bin/prediction-payload.rda"),
                      positional_arguments = 1)
 }
@@ -63,17 +63,16 @@ raw <- read_csv(in_file, col_types = "ccidd",
 load(model_file)
 
 # Center and scale the measurements as we did the training data
-measurements <- bake(data_recipe, new_data = raw %>% select(-verse_id, -doc_id)) %>% select(-match)
+measurements <- bake(data_recipe, new_data = raw %>% select(-verse_id, -doc_id))
 
 # Do the predictions
-predictions <-  raw %>%
-  select(verse_id, doc_id) %>%
-  bind_cols(
-    predict(model, measurements, type = "prob") %>%
-      select(probability = .pred_quotation)
-  )
+probs <- predict(model$fit, measurements, type = "response")
+names(probs) <- NULL
+raw$probability <- probs
+predictions <- raw %>%
+  select(verse_id, doc_id, probability)
 
-quotations <- predictions %>% filter(probability >= 0.5)
+quotations <- predictions %>% filter(probability >= 0.57)
 
 write_csv(quotations, out_file, col_names = FALSE)
 flog.info("Successfully predicted the quotations.")
