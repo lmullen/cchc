@@ -1,2 +1,6 @@
 sketches/collection-crawl/collection-crawl
 logs/
+.Rproj.user
+predictor/test/sermons-predicted-test.csv
+.gitignore
+predictor/test/sermons-quotations-test.csv
