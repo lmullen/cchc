@@ -13,6 +13,7 @@ suppressPackageStartupMessages(library(readr))
 suppressPackageStartupMessages(library(recipes))
 suppressPackageStartupMessages(library(text2vec))
 suppressPackageStartupMessages(library(tokenizers))
+suppressPackageStartupMessages(library(stringr))
 
 parser <- OptionParser(
   description = "Identify biblical quotations in a batch of texts.",
@@ -183,7 +184,16 @@ potential_matches$probability <- probs
 predictions <- potential_matches %>%
   select(verse_id, doc_id, probability)
 
-quotations <- predictions %>% filter(probability >= 0.57)
+# Keep only one version per verse/document, and give the KJV a slight boost
+quotations <- predictions %>%
+  filter(probability >= 0.57) %>%
+  mutate(reference_id = str_remove(verse_id, " \\(.+\\)")) %>%
+  mutate(prob_adj = if_else(str_detect(verse_id, "(KJV)"), probability + 0.05, probability)) %>%
+  group_by(doc_id, reference_id) %>%
+  slice_max(prob_adj, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  select(reference_id, verse_id, doc_id, probability)
 
 write_csv(quotations, out_path)
-flog.info("Successfully predicted the quotations.")
+flog.info("Successfully identified %s quotations.", pnum(nrow(quotations)))
+
