@@ -100,7 +100,7 @@ load(bible_path, envir = bible)
 
 flog.info("Reading batch of texts: %s.", batch_path)
 texts <- read_csv(batch_path,
-                  # col_names = c("doc_id", "text"),
+                  col_names = c("doc_id", "text"),
                   col_types = "cc")
 flog.debug("Number of texts: %s.", nrow(texts))
 
