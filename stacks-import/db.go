@@ -20,6 +20,13 @@ func DBConnect() (*pgxpool.Pool, error) {
 	}
 
 	db, err := pgxpool.Connect(ctx, connstr)
+	if err != nil {
+		return nil, err
+	}
+	err = db.Ping(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	return db, err
 }
