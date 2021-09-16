@@ -46,10 +46,10 @@ if (!interactive()) {
   # For testing
   flog.warn("Using the testing command line arguments since session is interactive.")
   args <- parse_args(parser,
-                     args = c("./test/sermons.csv",
-                              "--out=test/sermons-quotations-test.csv",
-                              "--bible=bin/bible-payload.rda",
-                              "--model=bin/prediction-payload.rda",
+                     args = c("../test/sermons.csv",
+                              "--out=../test/sermons-quotations-test.csv",
+                              "--bible=bible-payload.rda",
+                              "--model=prediction-payload.rda",
                               "--verbose=2",
                               "--tokens=2",
                               "--tfidf=1.0"),
@@ -111,7 +111,6 @@ load(model_file)
 
 flog.debug("Reading batch of texts: %s.", batch_path)
 texts <- read_csv(batch_path,
-                  col_names = c("doc_id", "text"),
                   col_types = "cc")
 flog.debug("Number of texts: %s.", nrow(texts))
 
@@ -174,22 +173,17 @@ prop_keepers <- n_keepers / n_potential
 flog.debug("Kept %s potential matches out of %s total (%s%%).",
           pnum(n_keepers), pnum(n_potential), round(prop_keepers * 100, 1))
 
-# Read in the data and the model file
-raw <- read_csv(in_file, col_types = "ccidd",
-                col_names = c("verse_id", "doc_id", "tokens", "tfidf", "proportion"))
-load(model_file)
-
 # Center and scale the measurements as we did the training data
-measurements <- bake(data_recipe, new_data = raw %>% select(-verse_id, -doc_id))
+measurements <- bake(data_recipe, new_data = potential_matches %>% select(-verse_id, -doc_id))
 
 # Do the predictions
 probs <- predict(model$fit, measurements, type = "response")
 names(probs) <- NULL
-raw$probability <- probs
-predictions <- raw %>%
+potential_matches$probability <- probs
+predictions <- potential_matches %>%
   select(verse_id, doc_id, probability)
 
 quotations <- predictions %>% filter(probability >= 0.57)
 
-write_csv(quotations, out_file, col_names = FALSE)
+write_csv(quotations, out_path)
 flog.info("Successfully predicted the quotations.")
