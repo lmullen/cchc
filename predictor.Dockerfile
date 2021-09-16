@@ -11,19 +11,7 @@ RUN echo "cchc:x:65534:65534:CCHC:/:" > /etc_passwd
 RUN apt-get update && apt-get install zlib1g-dev
 
 # Install R packages
-RUN install2.r --error --skipinstalled Matrix
-RUN install2.r --error --skipinstalled broom
-RUN install2.r --error --skipinstalled dplyr
-RUN install2.r --error --skipinstalled fs
-RUN install2.r --error --skipinstalled futile.logger
-RUN install2.r --error --skipinstalled optparse
-RUN install2.r --error --skipinstalled parsnip
-RUN install2.r --error --skipinstalled readr
-RUN install2.r --error --skipinstalled recipes
-RUN install2.r --error --skipinstalled sessioninfo
-RUN install2.r --error --skipinstalled data.table
-RUN install2.r --error --skipinstalled text2vec
-RUN install2.r --error --skipinstalled tokenizers
+RUN install2.r --ncpus=-1 --error --skipinstalled Matrix broom dplyr fs futile.logger optparse parsnip readr recipes sessioninfo data.table text2vec tokenizers
 
 # Copy R scripts
 COPY predictor/bin /predictor
