@@ -190,7 +190,8 @@ quotations <- predictions %>%
   mutate(reference_id = str_remove(verse_id, " \\(.+\\)")) %>%
   mutate(prob_adj = if_else(str_detect(verse_id, "(KJV)"), probability + 0.05, probability)) %>%
   group_by(doc_id, reference_id) %>%
-  slice_max(prob_adj, n = 1, with_ties = FALSE) %>%
+  filter(prob_adj == max(prob_adj)) %>%
+  slice(1) %>%
   ungroup() %>%
   select(reference_id, verse_id, doc_id, probability)
 
