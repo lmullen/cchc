@@ -1,5 +1,5 @@
-# Start from the latest golang base image
-FROM rocker/r-ver:3.6.1
+# Start from the same R version used for APB on Argo HPC
+FROM rocker/r-ver:3.5.2
 
 # Set the working directory inside the container
 WORKDIR /predictor
