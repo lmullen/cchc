@@ -71,6 +71,8 @@ func (app *App) Init() error {
 
 	// Set the logging level
 	switch app.Config.loglevel {
+	case "error":
+		log.SetLevel(log.ErrorLevel)
 	case "warn":
 		log.SetLevel(log.WarnLevel)
 	case "info":
