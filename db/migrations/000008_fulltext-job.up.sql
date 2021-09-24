@@ -1,0 +1,33 @@
+CREATE SCHEMA IF NOT EXISTS jobs;
+
+CREATE TYPE text_level AS ENUM (
+  'file',
+  'resource'
+);
+
+CREATE TABLE IF NOT EXISTS jobs.fulltext_predict (
+  id bigserial PRIMARY KEY,
+  item_id text REFERENCES items (id) NOT NULL,
+  level text_level,
+  source text,
+  has_ft_method boolean NOT NULL,
+  started timestamp,
+  finished timestamp
+);
+
+CREATE INDEX ON jobs.fulltext_predict (item_id);
+
+CREATE VIEW jobs.fulltext_unqueued AS
+SELECT
+  i.id
+FROM
+  items i
+WHERE
+  i.api IS NOT NULL
+  AND NOT EXISTS (
+    SELECT
+    FROM
+      jobs.fulltext_predict
+    WHERE
+      fulltext_predict.item_id = i.id);
+
