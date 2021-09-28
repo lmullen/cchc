@@ -1,6 +1,7 @@
 package items
 
 import (
+	"context"
 	"database/sql"
 )
 
@@ -19,9 +20,9 @@ type Item struct {
 	API       sql.NullString // The entire API response stored as JSONB
 }
 
-// ItemRepository is an interface describing a data store for items.
-type ItemRepository interface {
-	Get(ID string) (*Item, error)
+// Repository is an interface describing a data store for items.
+type Repository interface {
+	Get(ctx context.Context, ID string) (*Item, error)
 	// Save(item *Item) error
 }
 

@@ -7,12 +7,16 @@ import (
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lmullen/cchc/common/db"
+	"github.com/lmullen/cchc/common/items"
+	"github.com/lmullen/cchc/common/jobs"
 	log "github.com/sirupsen/logrus"
 )
 
 // App holds resources and config
 type App struct {
 	DB *pgxpool.Pool
+	IR items.Repository
+	JR jobs.Repository
 }
 
 // Init connects to all the app's resources and sets the config
@@ -20,7 +24,7 @@ func (app *App) Init() error {
 	log.Info("Starting the process to enqueue jobs for predicting from full text")
 
 	// Set the logging level
-	ll, exists := os.LookupEnv("CCHC_DBSTR")
+	ll, exists := os.LookupEnv("CCHC_LOGLEVEL")
 	if !exists {
 		ll = "info"
 	}
@@ -45,6 +49,9 @@ func (app *App) Init() error {
 	}
 	app.DB = db
 	log.Info("Successfully connected to the database")
+
+	app.IR = items.NewItemRepo(app.DB)
+	app.JR = jobs.NewJobsRepo(app.DB)
 
 	return nil
 }

@@ -6,7 +6,7 @@ CREATE TYPE text_level AS ENUM (
 );
 
 CREATE TABLE IF NOT EXISTS jobs.fulltext_predict (
-  id bigserial PRIMARY KEY,
+  id uuid PRIMARY KEY,
   item_id text REFERENCES items (id) NOT NULL,
   level text_level,
   source text,

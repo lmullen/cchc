@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/cenkalti/backoff/v4 v4.1.1
+	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	github.com/jackc/pgx/v4 v4.13.0
 	github.com/sirupsen/logrus v1.8.1

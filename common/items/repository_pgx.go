@@ -6,20 +6,20 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-// ItemRepo is a data store using PostgreSQL with the pgx native interface.
-type ItemRepo struct {
+// Repo is a data store using PostgreSQL with the pgx native interface.
+type Repo struct {
 	db *pgxpool.Pool
 }
 
 // NewItemRepo returns an item repo using PostgreSQL with the pgx native interface.
-func NewItemRepo(db *pgxpool.Pool) *ItemRepo {
-	return &ItemRepo{
+func NewItemRepo(db *pgxpool.Pool) *Repo {
+	return &Repo{
 		db: db,
 	}
 }
 
 // Get fetches an item from the database by its ID.
-func (r *ItemRepo) Get(ctx context.Context, ID string) (*Item, error) {
+func (r *Repo) Get(ctx context.Context, ID string) (*Item, error) {
 	item := Item{}
 	itemQuery := `
 	SELECT id, url, title, year, date, subjects, timestamp, api
@@ -80,6 +80,6 @@ func (r *ItemRepo) Get(ctx context.Context, ID string) (*Item, error) {
 
 // Save serializes an item to the database, either creating it in the database
 // or updating the fields.
-// func (r *ItemRepo) Save(ctx context.Context, item *Item) error {
+// func (r *Repo) Save(ctx context.Context, item *Item) error {
 // 	return nil
 // }
