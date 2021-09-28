@@ -31,3 +31,29 @@ WHERE
     WHERE
       fulltext_predict.item_id = i.id);
 
+CREATE VIEW jobs.fulltext_job_1_skipped AS
+SELECT
+  *
+FROM
+  jobs.fulltext_predict
+WHERE
+  NOT has_ft_method;
+
+CREATE VIEW jobs.fulltext_job_2_started AS
+SELECT
+  *
+FROM
+  jobs.fulltext_predict
+WHERE
+  started IS NOT NULL
+  AND finished IS NULL;
+
+CREATE VIEW jobs.fulltext_job_3_finished AS
+SELECT
+  *
+FROM
+  jobs.fulltext_predict
+WHERE
+  started IS NOT NULL
+  AND finished IS NOT NULL;
+
