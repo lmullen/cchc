@@ -19,14 +19,14 @@ func NewJobsRepo(db *pgxpool.Pool) *Repo {
 }
 
 // Save serializes a job to the database
-func (r *Repo) Save(ctx context.Context, job *JobFulltextPredict) error {
+func (r *Repo) Save(ctx context.Context, job *FulltextPredict) error {
 	query := `
 	INSERT INTO jobs.fulltext_predict
-	VALUES ($1, $2, $3, $4, $5, $6, $7);
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
 	`
 
-	_, err := r.db.Exec(ctx, query, job.ID, job.ItemID, job.Level, job.Source,
-		job.HasFTMethod, job.Started, job.Finished)
+	_, err := r.db.Exec(ctx, query, job.ID, job.ItemID, job.ResourceSeq, job.FileSeq,
+		job.FormatSeq, job.Level, job.Source, job.HasFTMethod, job.Started, job.Finished)
 	if err != nil {
 		return err
 	}

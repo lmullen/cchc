@@ -21,7 +21,7 @@ type App struct {
 
 // Init connects to all the app's resources and sets the config
 func (app *App) Init() error {
-	log.Info("Starting the process to enqueue jobs for predicting from full text")
+	log.Info("Creating jobs for the prediction model from items with full text")
 
 	// Set the logging level
 	ll, exists := os.LookupEnv("CCHC_LOGLEVEL")
@@ -60,5 +60,5 @@ func (app *App) Init() error {
 func (app *App) Shutdown() {
 	app.DB.Close()
 	log.Info("Closed the connection to the database")
-	log.Info("Shut down the process to enqueue jobs for predicting from full text")
+	log.Info("Stopped process to create jobs for predictions from full text")
 }

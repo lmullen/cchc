@@ -7,11 +7,14 @@ import (
 	"github.com/google/uuid"
 )
 
-// JobFulltextPredict is a record of how full text was passed on to the
+// FulltextPredict is a record of how full text was passed on to the
 // prediction model for each item.
-type JobFulltextPredict struct {
+type FulltextPredict struct {
 	ID          uuid.UUID
 	ItemID      string
+	ResourceSeq sql.NullInt64
+	FileSeq     sql.NullInt64
+	FormatSeq   sql.NullInt64
 	Level       sql.NullString
 	Source      sql.NullString
 	HasFTMethod bool
@@ -21,5 +24,5 @@ type JobFulltextPredict struct {
 
 // Repository is an interface describing a data store for jobs.
 type Repository interface {
-	Save(ctx context.Context, job *JobFulltextPredict) error
+	Save(ctx context.Context, job *FulltextPredict) error
 }
