@@ -3,9 +3,10 @@ package messages
 import "github.com/google/uuid"
 
 // NewFullTextMsg creates a pointer to a new FullTextPredict message
-func NewFullTextMsg(JobID uuid.UUID, text string) *FullTextPredict {
+func NewFullTextMsg(job uuid.UUID, item string, text string) *FullTextPredict {
 	return &FullTextPredict{
-		JobID:    JobID,
+		JobID:    job,
+		ItemID:   item,
 		FullText: text,
 	}
 }

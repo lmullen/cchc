@@ -29,7 +29,7 @@ func NewMessageRepo(channel *amqp.Channel, queue *amqp.Queue, consumer <-chan am
 func (r *Repo) Send(ctx context.Context, text *FullTextPredict) error {
 	json, err := json.Marshal(text)
 	if err != nil {
-		return fmt.Errorf("Error marshalling full text to JSON: %w", err)
+		return fmt.Errorf("Error marshalling full text message to JSON: %w", err)
 	}
 
 	msg := amqp.Publishing{

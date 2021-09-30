@@ -74,10 +74,12 @@ func ProcessItem(ctx context.Context, itemID string) error {
 				job.Create(item.ID, true)
 				fulltext := job.PlainTextFullText(file)
 				fulltext = app.stripXML.Sanitize(fulltext)
-				msg := messages.NewFullTextMsg(job.ID, fulltext)
+				msg := messages.NewFullTextMsg(job.ID, job.ItemID, fulltext)
 
-				// SEND MESSAGE HERE
-				log.Println("Plain text", msg.JobID)
+				err := app.MR.Send(ctx, msg)
+				if err != nil {
+					return fmt.Errorf("Error sending job to message queue: %w", err)
+				}
 				err = app.JR.Save(ctx, job)
 				if err != nil {
 					return fmt.Errorf("Error saving job: %w", err)
@@ -95,10 +97,13 @@ func ProcessItem(ctx context.Context, itemID string) error {
 				job.Create(item.ID, true)
 				fulltext := job.XMLFullText(file)
 				fulltext = app.stripXML.Sanitize(fulltext)
-				msg := messages.NewFullTextMsg(job.ID, fulltext)
+				msg := messages.NewFullTextMsg(job.ID, job.ItemID, fulltext)
 
 				// SEND MESSAGE HERE
-				log.Println("XML", msg.JobID)
+				err := app.MR.Send(ctx, msg)
+				if err != nil {
+					return fmt.Errorf("Error sending job to message queue: %w", err)
+				}
 				err = app.JR.Save(ctx, job)
 				if err != nil {
 					return fmt.Errorf("Error saving job: %w", err)

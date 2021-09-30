@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os"
 	"time"
 
@@ -9,8 +11,10 @@ import (
 	"github.com/lmullen/cchc/common/db"
 	"github.com/lmullen/cchc/common/items"
 	"github.com/lmullen/cchc/common/jobs"
+	"github.com/lmullen/cchc/common/messages"
 	"github.com/microcosm-cc/bluemonday"
 	log "github.com/sirupsen/logrus"
+	"github.com/streadway/amqp"
 )
 
 // App holds resources and config
@@ -18,6 +22,7 @@ type App struct {
 	DB       *pgxpool.Pool
 	IR       items.Repository
 	JR       jobs.Repository
+	MR       messages.Repository
 	stripXML *bluemonday.Policy
 }
 
@@ -55,7 +60,54 @@ func (app *App) Init() error {
 	app.IR = items.NewItemRepo(app.DB)
 	app.JR = jobs.NewJobsRepo(app.DB)
 
+	// Function to strip HTML/XML
 	app.stripXML = bluemonday.StrictPolicy()
+
+	// Connect to RabbitMQ and set up the queue
+
+	mqstr, exists := os.LookupEnv("CCHC_MQSTR")
+	if !exists {
+		return errors.New("Message broker connection string not set; use CCHC_MQSTR environment variable")
+	}
+	log.Info("Attempting to connect to the message broker")
+	rabbit, err := amqp.Dial(mqstr)
+	if err != nil {
+		return fmt.Errorf("Error connecting to message broker: %w", err)
+	}
+
+	ch, err := rabbit.Channel()
+	if err != nil {
+		return fmt.Errorf("Failed to open a channel on message broker: %w", err)
+	}
+	err = ch.Qos(8, 0, true)
+	if err != nil {
+		return fmt.Errorf("Failed to set prefetch on the message broker: %w", err)
+	}
+	dle, dlq, dlk := "failed-fulltext", "dead-letter-queue", "dead-letter-key"
+	err = ch.ExchangeDeclare(dle, "fanout", true, false, false, false, amqp.Table{})
+	if err != nil {
+		return fmt.Errorf("Failed to declare the dead letter exchange: %w", err)
+	}
+	_, err = ch.QueueDeclare(dlq, true, false, false, false, amqp.Table{})
+	if err != nil {
+		return fmt.Errorf("Failed to declare the dead letter exchange: %w", err)
+	}
+	err = ch.QueueBind(dlq, dlk, dle, false, amqp.Table{})
+	if err != nil {
+		return fmt.Errorf("Failed to bind dead letter queue and exchange: %w", err)
+	}
+	q, err := ch.QueueDeclare("fulltext-predict", true, false, false, false,
+		amqp.Table{
+			// "x-max-length":           10000000,
+			"x-queue-mode":           "lazy",
+			"x-dead-letter-exchange": dle,
+		})
+	if err != nil {
+		return fmt.Errorf("Failed to declare a queue: %w", err)
+	}
+
+	app.MR = messages.NewMessageRepo(ch, &q, nil)
+	log.Info("Successfully connected to the message broker")
 
 	return nil
 }
