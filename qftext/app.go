@@ -9,14 +9,16 @@ import (
 	"github.com/lmullen/cchc/common/db"
 	"github.com/lmullen/cchc/common/items"
 	"github.com/lmullen/cchc/common/jobs"
+	"github.com/microcosm-cc/bluemonday"
 	log "github.com/sirupsen/logrus"
 )
 
 // App holds resources and config
 type App struct {
-	DB *pgxpool.Pool
-	IR items.Repository
-	JR jobs.Repository
+	DB       *pgxpool.Pool
+	IR       items.Repository
+	JR       jobs.Repository
+	stripXML *bluemonday.Policy
 }
 
 // Init connects to all the app's resources and sets the config
@@ -52,6 +54,8 @@ func (app *App) Init() error {
 
 	app.IR = items.NewItemRepo(app.DB)
 	app.JR = jobs.NewJobsRepo(app.DB)
+
+	app.stripXML = bluemonday.StrictPolicy()
 
 	return nil
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v4"
 	"github.com/lmullen/cchc/common/jobs"
+	"github.com/lmullen/cchc/common/messages"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -65,41 +66,57 @@ func ProcessItem(ctx context.Context, itemID string) error {
 	// Keep track of whether we have found full text yet
 	hasFulltext := false
 
-	// FULL TEXT CHECK 1: Has plain text files with full text service
+	// FULL TEXT CHECK 1: Has text/plain mimetype with fulltext field
 	if !hasFulltext {
 		for _, file := range item.Files {
-			if file.Mimetype.Valid && file.Mimetype.String == "text/plain" && file.FullTextService.Valid {
+			if file.Mimetype.Valid && file.Mimetype.String == "text/plain" && file.FullText.Valid {
 				job := &jobs.FulltextPredict{}
-				job.Create(item.ID)
-				job.FulltextFromFile(file, "plain text/full text service")
-				job.Start()
-				SendFullText(job.ID.String(), file.FullTextService.String)
-				hasFulltext = true // Keep track that we found full text
+				job.Create(item.ID, true)
+				fulltext := job.PlainTextFullText(file)
+				fulltext = app.stripXML.Sanitize(fulltext)
+				msg := messages.NewFullTextMsg(job.ID, fulltext)
+
+				// SEND MESSAGE HERE
+				log.Println("Plain text", msg.JobID)
 				err = app.JR.Save(ctx, job)
 				if err != nil {
 					return fmt.Errorf("Error saving job: %w", err)
 				}
+				hasFulltext = true // Keep track that we found full text
 			}
 		}
-
 	}
 
+	// FULL TEXT CHECK 1: Has text/xml mimetype with fulltext field
+	if !hasFulltext {
+		for _, file := range item.Files {
+			if file.Mimetype.Valid && file.Mimetype.String == "text/xml" && file.FullText.Valid {
+				job := &jobs.FulltextPredict{}
+				job.Create(item.ID, true)
+				fulltext := job.XMLFullText(file)
+				fulltext = app.stripXML.Sanitize(fulltext)
+				msg := messages.NewFullTextMsg(job.ID, fulltext)
+
+				// SEND MESSAGE HERE
+				log.Println("XML", msg.JobID)
+				err = app.JR.Save(ctx, job)
+				if err != nil {
+					return fmt.Errorf("Error saving job: %w", err)
+				}
+				hasFulltext = true // Keep track that we found full text
+			}
+		}
+	}
+
+	// These jobs have no method for finding the full text, so create a job to
+	// skip them
 	if !hasFulltext {
 		job := &jobs.FulltextPredict{}
-		job.Create(item.ID)
-		if err != nil {
-			return fmt.Errorf("Error creating item: %w", err)
-		}
+		job.Create(item.ID, false)
 		err = app.JR.Save(ctx, job)
 		if err != nil {
-			log.Println(job)
 			return fmt.Errorf("Error saving job: %w", err)
 		}
-		log.WithField("job", job).Info("Skipped because no full text")
-	}
-
-	if err != nil {
-		return err
 	}
 
 	return nil
