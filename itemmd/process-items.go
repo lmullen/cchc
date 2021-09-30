@@ -40,7 +40,7 @@ func processItemMetadata(ctx context.Context, wg *sync.WaitGroup, msg amqp.Deliv
 	// Skip fetching items which are actually resources
 	if isResourceNotItem(item.URL) {
 		msg.Reject(false)
-		log.WithField("url", item.URL).WithField("id", item.ID).Warn("Skipping item which is actually a resource")
+		log.WithField("url", item.URL).WithField("id", item.ID).Debug("Skipping item which is actually a resource")
 		return
 	}
 	// Check if fetched already
