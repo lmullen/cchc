@@ -47,10 +47,10 @@ if (!interactive()) {
   # For testing
   flog.warn("Using the testing command line arguments since session is interactive.")
   args <- parse_args(parser,
-                     args = c("../test/sermons.csv",
-                              "--out=../test/sermons-quotations-test.csv",
-                              "--bible=bible-payload.rda",
-                              "--model=prediction-payload.rda",
+                     args = c("predictor/test/sermons.csv",
+                              "--out=predictor/test/sermons-quotations-test.csv",
+                              "--bible=predictor/bin/bible-payload.rda",
+                              "--model=predictor/bin/prediction-payload.rda",
                               "--verbose=2",
                               "--tokens=2",
                               "--tfidf=1.0"),
@@ -94,7 +94,7 @@ if (!dir_exists(path_dir(out_path))) {
   quit(save = "no", status = 1)
 }
 if (file_exists(out_path)) {
-  flog.warn("The output file already exists. It will be overwritten.")
+  flog.debug("The output file already exists. It will be overwritten.")
 }
 if (args$options$tokens < 0 || args$options$tfidf <0) {
   flog.fatal("The number of tokens and TF-IDF score must be positive.")
@@ -112,7 +112,8 @@ load(model_file)
 
 flog.debug("Reading batch of texts: %s.", batch_path)
 texts <- read_csv(batch_path,
-                  col_types = "cc")
+                  col_types = "ccc",
+                  col_names = c("job_id", "doc_id", "text"))
 flog.debug("Number of texts: %s.", nrow(texts))
 
 flog.debug("Creating n-gram tokens from the texts.")
@@ -195,6 +196,9 @@ quotations <- predictions %>%
   ungroup() %>%
   select(reference_id, verse_id, doc_id, probability)
 
-write_csv(quotations, out_path)
+quotations <- texts %>%
+  left_join(quotations, by = "doc_id")
+
+write_csv(quotations, out_path, col_names = FALSE)
 flog.info("Successfully identified %s quotations.", pnum(nrow(quotations)))
 

@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"os"
+	"os/exec"
+	"time"
 
 	"github.com/lmullen/cchc/common/messages"
 	log "github.com/sirupsen/logrus"
@@ -34,16 +36,36 @@ func startProcessingDocs(ctx context.Context) {
 		}
 
 		// Write the full text to a temporary CSV
-		fDocs, err := writeDocsCSV(docs)
+		docsFile, err := writeDocsCSV(docs)
 		if err != nil {
 			log.WithError(err).Error("Error writing CSV to send to prediction model")
 		}
-		log.Debug(fDocs)
+
+		// Create a temp file for output.
+		predictionsFile, err := os.CreateTemp("", "prediction-*.csv")
+		if err != nil {
+			log.WithError(err).Error("Error creating temporary file for predictions")
+		}
+		predictionsFile.Close()
 
 		// TODO: Call the prediction model
+		ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
+		defer cancel()
+		cmd := exec.CommandContext(ctx,
+			"Rscript", "/predictor/id-quotations.R",
+			"--bible", "bible-payload.rda",
+			"--model", "prediction-payload.rda",
+			"--verbose", "0",
+			"--out", predictionsFile.Name(),
+			docsFile,
+		)
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			log.WithError(err).WithField("R-output", string(output)).Error("Problem running prediction model in R")
+		}
 
 		// Get the predictions back from a temporary file and write them to the database
-		err = processPredictionsCSV(fDocs)
+		err = processPredictionsCSV(predictionsFile.Name())
 		if err != nil {
 			log.WithError(err).Error("Error getting results from prediction model")
 		}
@@ -53,10 +75,14 @@ func startProcessingDocs(ctx context.Context) {
 		}
 
 		// Clean up the temporary files
-		err = os.Remove(fDocs)
-		if err != nil {
-			log.WithError(err).Warn("Problem removing the temporary files")
-		}
+		// err = os.Remove(predictionsFile.Name())
+		// if err != nil {
+		// 	log.WithError(err).Warn("Problem removing the temporary files")
+		// }
+		// err = os.Remove(docsFile)
+		// if err != nil {
+		// 	log.WithError(err).Warn("Problem removing the temporary files")
+		// }
 
 	}
 }

@@ -60,6 +60,23 @@ services:
     volumes:
       - itemmd-build-cache:/root/.cache/go-build
 
+  predictor:
+    build:
+      dockerfile: predictor.Dockerfile
+    image: ghcr.io/lmullen/cchc-predictor:main
+    container_name: "cchc-predictor"
+    restart: unless-stopped
+    environment:
+      - CCHC_DBSTR
+      - CCHC_MQSTR
+      - CCHC_LOGLEVEL
+      - PASSWORD=guest
+    ports:
+      - 8787:8787
+    depends_on:
+      - "queue"
+    network_mode: "host"
+
 volumes:
   queue-data:
   crawler-build-cache:
