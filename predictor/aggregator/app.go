@@ -124,7 +124,7 @@ func (app *App) Init() error {
 		log.Fatal("Failed to set prefetch on the message broker: ", err)
 	}
 	app.DocumentsQ.Channel = ch
-	dle, dlq, dlk := "failed-items-metadata", "dead-letter-queue", "dead-letter-key"
+	dle, dlq, dlk := "failed-fulltext", "dead-letter-queue", "dead-letter-key"
 	err = ch.ExchangeDeclare(dle, "fanout", true, false, false, false, amqp.Table{})
 	if err != nil {
 		return fmt.Errorf("Failed to declare the dead letter exchange: %w", err)
@@ -137,9 +137,9 @@ func (app *App) Init() error {
 	if err != nil {
 		return fmt.Errorf("Failed to bind dead letter queue and exchange: %w", err)
 	}
-	q, err := ch.QueueDeclare("documents", true, false, false, false,
+	q, err := ch.QueueDeclare("fulltext-predict", true, false, false, false,
 		amqp.Table{
-			"x-max-length":           10000000,
+			// "x-max-length":           10000000,
 			"x-queue-mode":           "lazy",
 			"x-dead-letter-exchange": dle,
 		})
