@@ -4,6 +4,8 @@
 package main
 
 import (
+	"context"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -17,12 +19,11 @@ func main() {
 	}
 	defer app.Shutdown()
 
-	// ctx, cancel := context.WithCancel(context.Background())
-	// wg := &sync.WaitGroup{}
+	_, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	// // Process the items from the queue
-	// wg.Add(1)
-	// go startProcessingItems(ctx, wg)
+	// Process the items from the queue
+	startProcessingDocs(context.TODO())
 
 	// quit := make(chan os.Signal, 1)
 	// signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)

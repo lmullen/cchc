@@ -10,3 +10,12 @@ func NewFullTextMsg(job uuid.UUID, item string, text string) *FullTextPredict {
 		FullText: text,
 	}
 }
+
+// CSVRow converts a FullTextPredict message into a format for writing to a CSV.
+func (f *FullTextPredict) CSVRow() []string {
+	out := make([]string, 3)
+	out[0] = f.JobID.String()
+	out[1] = f.ItemID
+	out[2] = f.FullText
+	return out
+}
