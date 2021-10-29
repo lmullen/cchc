@@ -115,14 +115,14 @@ func ProcessItem(ctx context.Context, itemID string) error {
 
 	// These jobs have no method for finding the full text, so create a job to
 	// skip them
-	if !hasFulltext {
-		job := &jobs.FulltextPredict{}
-		job.Create(item.ID, false)
-		err = app.JR.Save(ctx, job)
-		if err != nil {
-			return fmt.Errorf("Error saving job: %w", err)
-		}
-	}
+	// if !hasFulltext {
+	// 	job := &jobs.FulltextPredict{}
+	// 	job.Create(item.ID, false)
+	// 	err = app.JR.Save(ctx, job)
+	// 	if err != nil {
+	// 		return fmt.Errorf("Error saving job: %w", err)
+	// 	}
+	// }
 
 	return nil
 
