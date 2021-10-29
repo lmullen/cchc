@@ -12,6 +12,8 @@ Mason University
 
 [![cchc-itemmd container](https://github.com/lmullen/cchc/actions/workflows/docker-publish-itemmd.yml/badge.svg)](https://github.com/lmullen/cchc/actions/workflows/docker-publish-itemmd.yml)
 
+[![cchc-qftext container](https://github.com/lmullen/cchc/actions/workflows/docker-publish-qftext.yml/badge.svg)](https://github.com/lmullen/cchc/actions/workflows/docker-publish-qftext.yml)
+
 [![cchc-predictor container](https://github.com/lmullen/cchc/actions/workflows/docker-publish-predictor.yml/badge.svg)](https://github.com/lmullen/cchc/actions/workflows/docker-publish-predictor.yml)
 
 [![Go tests](https://github.com/lmullen/cchc/actions/workflows/go.yml/badge.svg)](https://github.com/lmullen/cchc/actions/workflows/go.yml) 
