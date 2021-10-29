@@ -24,5 +24,6 @@ type FulltextPredict struct {
 
 // Repository is an interface describing a data store for jobs.
 type Repository interface {
+	Get(ctx context.Context, id uuid.UUID) (*FulltextPredict, error)
 	Save(ctx context.Context, job *FulltextPredict) error
 }

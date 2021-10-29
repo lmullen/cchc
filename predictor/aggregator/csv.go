@@ -11,7 +11,6 @@ import (
 	"github.com/lmullen/cchc/common/results"
 
 	"github.com/lmullen/cchc/common/messages"
-	log "github.com/sirupsen/logrus"
 )
 
 // Write out a CSV with the full text for the prediction model
@@ -51,7 +50,7 @@ func processPredictionsCSV(ctx context.Context, path string) error {
 	}
 
 	for _, p := range predictions {
-		log.Debug(p)
+		// log.Debug(p)
 		jobID, err := uuid.Parse(p[0])
 		if err != nil {
 			return err

@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -22,7 +23,19 @@ func NewJobsRepo(db *pgxpool.Pool) *Repo {
 func (r *Repo) Save(ctx context.Context, job *FulltextPredict) error {
 	query := `
 	INSERT INTO jobs.fulltext_predict
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+	ON CONFLICT (id) DO UPDATE
+	SET 
+	item_id = $2,
+	resource_seq = $3,
+	file_seq = $4,
+	format_seq = $5,
+	level = $6,
+	source = $7,
+	has_ft_method = $8,
+	started = $9,
+	finished = $10
+	;
 	`
 
 	_, err := r.db.Exec(ctx, query, job.ID, job.ItemID, job.ResourceSeq, job.FileSeq,
@@ -32,5 +45,28 @@ func (r *Repo) Save(ctx context.Context, job *FulltextPredict) error {
 	}
 
 	return nil
+
+}
+
+// Get finds a job by ID from the repository
+func (r *Repo) Get(ctx context.Context, id uuid.UUID) (*FulltextPredict, error) {
+	query := `
+	SELECT 
+		id, item_id, resource_seq, file_seq, format_seq, level, source, has_ft_method, started, finished
+	FROM
+		jobs.fulltext_predict
+	WHERE id = $1;
+	`
+
+	job := FulltextPredict{}
+
+	err := r.db.QueryRow(ctx, query, id).Scan(&job.ID, &job.ItemID, &job.ResourceSeq,
+		&job.FileSeq, &job.FormatSeq, &job.Level, &job.Source, &job.HasFTMethod,
+		&job.Started, &job.Finished)
+	if err != nil {
+		return nil, err
+	}
+
+	return &job, nil
 
 }

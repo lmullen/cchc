@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/lmullen/cchc/common/jobs"
 	"github.com/lmullen/cchc/common/results"
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
@@ -42,6 +43,7 @@ type App struct {
 	MessageBroker *amqp.Connection
 	DocumentsQ    Queue
 	ResultsRepo   results.Repository
+	JobsRepo      jobs.Repository
 }
 
 // Init creates a new app and connects to the database or returns an error
@@ -160,6 +162,10 @@ func (app *App) Init() error {
 	// Initialize the results repo
 	res := results.NewRepo(db)
 	app.ResultsRepo = res
+
+	// Initialize the jobs repo
+	jobs := jobs.NewJobsRepo(db)
+	app.JobsRepo = jobs
 
 	return nil
 }

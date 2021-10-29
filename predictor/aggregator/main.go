@@ -5,6 +5,9 @@ package main
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"syscall"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -19,18 +22,25 @@ func main() {
 	}
 	defer app.Shutdown()
 
-	_, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx, cancel := context.WithCancel(context.Background())
 
 	// Process the items from the queue
-	startProcessingDocs(context.TODO())
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				processBatchOfDocs(ctx)
+			}
+		}
+	}()
 
-	// quit := make(chan os.Signal, 1)
-	// signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	// <-quit
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
 
-	// log.Info("Shutdown signal received; waiting for ongoing work to finish")
-	// cancel()
-	// wg.Wait()
+	log.Info("Shutdown signal received; waiting for ongoing work to finish")
+	cancel()
 
 }

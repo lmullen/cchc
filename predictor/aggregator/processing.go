@@ -12,8 +12,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-func startProcessingDocs(ctx context.Context) {
-	// TODO: Eventually this should run perpetually
+func processBatchOfDocs(ctx context.Context) {
 	select {
 	case <-ctx.Done():
 		return
@@ -21,6 +20,8 @@ func startProcessingDocs(ctx context.Context) {
 		var msgs []*amqp.Delivery
 		var docs []*messages.FullTextPredict
 		numInBatch := 100
+
+		log.Debugf("Processing a batch of %v documents", numInBatch)
 
 		// Read a batch of full text
 		for i := 0; i < numInBatch; i++ {
@@ -40,9 +41,6 @@ func startProcessingDocs(ctx context.Context) {
 		if err != nil {
 			log.WithError(err).Error("Error writing CSV to send to prediction model")
 		}
-
-		// TODO Remove this
-		checkFile(docsFile)
 
 		// Create a temp file for output.
 		predictionsFile, err := os.CreateTemp("", "prediction-*.csv")
@@ -66,9 +64,6 @@ func startProcessingDocs(ctx context.Context) {
 			log.WithError(err).WithField("R-output", string(output)).Error("Problem running prediction model in R")
 		}
 
-		// TODO Remove this
-		checkFile(predictionsFile.Name())
-
 		// Get the predictions back from a temporary file and write them to the database
 		err = processPredictionsCSV(ctx, predictionsFile.Name())
 		if err != nil {
@@ -80,6 +75,20 @@ func startProcessingDocs(ctx context.Context) {
 			m.Ack(false)
 		}
 
+		//
+		for _, d := range docs {
+			job, err := app.JobsRepo.Get(ctx, d.JobID)
+			if err != nil {
+				log.WithError(err).WithField("job-id", d.JobID).Warning("Problem getting job from database")
+				break
+			}
+			job.Finish()
+			err = app.JobsRepo.Save(ctx, job)
+			if err != nil {
+				log.WithError(err).WithField("job-id", d.JobID).Warning("Problem updating finished job in database")
+			}
+		}
+
 		// Clean up the temporary files
 		err = os.Remove(predictionsFile.Name())
 		if err != nil {
@@ -89,6 +98,8 @@ func startProcessingDocs(ctx context.Context) {
 		if err != nil {
 			log.WithError(err).Warn("Problem removing the temporary files")
 		}
+
+		log.Debugf("Finished processing a batch of %v documents", numInBatch)
 
 	}
 }
