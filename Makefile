@@ -22,8 +22,24 @@ restart-itemmd :
 	docker compose logs itemmd > logs/itemmd-$(shell date +%FT%T).log
 	docker compose up --build --detach itemmd
 
+.PHONY: restart-qftext
+restart-qftext :
+	@echo "Restarting the full text enqueuer"
+	docker compose stop qftext
+	@mkdir -p logs
+	docker compose logs qftext > logs/qftext-$(shell date +%FT%T).log
+	docker compose up --build --detach qftext
+
+.PHONY: restart-predictor
+restart-predictor :
+	@echo "Restarting the predictor"
+	docker compose stop predictor
+	@mkdir -p logs
+	docker compose logs predictor > logs/predictor-$(shell date +%FT%T).log
+	docker compose up --build --detach predictor
+
 .PHONY: restart
-restart : restart-itemmd restart-crawler
+restart : restart-itemmd restart-crawler restart-qftext restart-predictor
 
 .PHONY : stop
 stop :
@@ -36,24 +52,19 @@ down :
 	docker compose logs crawler > logs/crawler-$(shell date +%FT%T).log
 	docker compose logs itemmd > logs/itemmd-$(shell date +%FT%T).log
 	docker compose logs queue > logs/queue-$(shell date +%FT%T).log
+	docker compose logs qftext > logs/qftext-$(shell date +%FT%T).log
 	docker compose logs predictor > logs/predictor-$(shell date +%FT%T).log
 	docker compose down
 
 # DATABASE
 # --------------------------------------------------
-DBHOST=$(CCHC_DBHOST)
-# If using Docker on a Mac, set DBHOST to localhost
-ifeq ($(DBHOST), host.docker.internal)
-DBHOST=localhost
-endif
-DBCONN="postgres://$(CCHC_DBUSER):$(CCHC_DBPASS)@$(DBHOST):$(CCHC_DBPORT)/$(CCHC_DBNAME)?sslmode=disable"
 .PHONY : db-create, db-up, db-down
 
 db-create:
 	./scripts/create-database.sh
 
 db-up :
-	migrate -database $(DBCONN) -path db/migrations up
+	migrate -database $(CCHC_DBSTR) -path db/migrations up
 
 db-down :
-	migrate -database $(DBCONN) -path db/migrations down
+	migrate -database $(CCHC_DBSTR) -path db/migrations down

@@ -21,21 +21,14 @@ services:
     container_name: "cchc-crawler"
     restart: unless-stopped
     environment:
-      - CCHC_DBHOST
-      - CCHC_DBPORT
-      - CCHC_DBUSER
-      - CCHC_DBPASS
-      - CCHC_DBNAME
+      - CCHC_DBSTR
+      - CCHC_MQSTR
       - CCHC_LOGLEVEL
-      - CCHC_QHOST
-      - CCHC_QPORT
-      - CCHC_QUSER
-      - CCHC_QPASS
     depends_on:
       - "queue"
     network_mode: "host"
     volumes:
-      - crawler-build-cache:/root/.cache/go-build
+      - go-build-cache:/root/.cache/go-build
 
   itemmd:
     build:
@@ -44,32 +37,41 @@ services:
     container_name: "cchc-itemmd"
     restart: unless-stopped
     environment:
-      - CCHC_DBHOST
-      - CCHC_DBPORT
-      - CCHC_DBUSER
-      - CCHC_DBPASS
-      - CCHC_DBNAME
+      - CCHC_DBSTR
+      - CCHC_MQSTR
       - CCHC_LOGLEVEL
-      - CCHC_QHOST
-      - CCHC_QPORT
-      - CCHC_QUSER
-      - CCHC_QPASS
     depends_on:
       - "queue"
     network_mode: "host"
     volumes:
-      - itemmd-build-cache:/root/.cache/go-build
+      - go-build-cache:/root/.cache/go-build
+
+  qftext:
+    build:
+      dockerfile: qftext.Dockerfile
+    image: ghcr.io/lmullen/cchc-qftext:main
+    container_name: "cchc-qftext"
+    restart: unless-stopped
+    environment:
+      - CCHC_DBSTR
+      - CCHC_MQSTR
+      - CCHC_LOGLEVEL
+    depends_on:
+      - "queue"
+    network_mode: "host"
+    volumes:
+      - go-build-cache:/root/.cache/go-build
 
   predictor:
     build:
       dockerfile: predictor.Dockerfile
     image: ghcr.io/lmullen/cchc-predictor:main
     container_name: "cchc-predictor"
-    restart: "no"
+    restart: unless-stopped
     environment:
+      - CCHC_LOGLEVEL
       - CCHC_DBSTR
       - CCHC_MQSTR
-      - CCHC_LOGLEVEL
       - PASSWORD=guest
     ports:
       - 8787:8787
@@ -79,5 +81,4 @@ services:
 
 volumes:
   queue-data:
-  crawler-build-cache:
-  itemmd-build-cache:
+  go-build-cache:

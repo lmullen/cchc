@@ -2,8 +2,10 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -17,16 +19,8 @@ import (
 
 // The Config type stores configuration which is read from environment variables.
 type Config struct {
-	dbhost   string
-	dbport   string
-	dbname   string
-	dbuser   string
-	dbpass   string
-	dbssl    string // SSL mode for the database connection
-	qhost    string
-	quser    string
-	qpass    string
-	qport    string
+	dbstr    string
+	mqstr    string
 	loglevel string
 }
 
@@ -56,18 +50,24 @@ func (app *App) Init() error {
 
 	app.Config = &Config{}
 
-	// Read the configuration from environment variables. The `getEnv()` function
-	// will provide a default.
-	app.Config.dbhost = getEnv("CCHC_DBHOST", "localhost")
-	app.Config.dbport = getEnv("CCHC_DBPORT", "5432")
-	app.Config.dbname = getEnv("CCHC_DBNAME", "cchc")
-	app.Config.dbuser = getEnv("CCHC_DBUSER", "lmullen")
-	app.Config.dbpass = getEnv("CCHC_DBPASS", "")
-	app.Config.qhost = getEnv("CCHC_QHOST", "localhost")
-	app.Config.qport = getEnv("CCHC_QPORT", "5672")
-	app.Config.quser = getEnv("CCHC_QUSER", "cchc")
-	app.Config.qpass = getEnv("CCHC_QPASS", "")
-	app.Config.loglevel = getEnv("CCHC_LOGLEVEL", "warn")
+	// Read the configuration from environment variables.
+	dbstr, ok := os.LookupEnv("CCHC_DBSTR")
+	if !ok {
+		return errors.New("CCHC_DBSTR environment variable is not set")
+	}
+	app.Config.dbstr = dbstr
+
+	mqstr, ok := os.LookupEnv("CCHC_MQSTR")
+	if !ok {
+		return errors.New("CCHC_MQSTR environment variable is not set")
+	}
+	app.Config.mqstr = mqstr
+
+	ll, ok := os.LookupEnv("CCHC_LOGLEVEL")
+	if !ok {
+		return errors.New("CCHC_LOGLEVEL environment variable is not set")
+	}
+	app.Config.loglevel = ll
 
 	// Set the logging level
 	switch app.Config.loglevel {
@@ -85,12 +85,9 @@ func (app *App) Init() error {
 	policy := backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 10)
 
 	// Connect to the database and initialize it.
-	dbconstr := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=%s",
-		app.Config.dbhost, app.Config.dbport, app.Config.dbname, app.Config.dbuser,
-		app.Config.dbpass, app.Config.dbssl)
 	var db *sql.DB
 	dbConnect := func() error {
-		d, err := sql.Open("pgx", dbconstr)
+		d, err := sql.Open("pgx", app.Config.dbstr)
 		if err != nil {
 			return fmt.Errorf("Failed to dial the database: %w", err)
 		}
@@ -100,8 +97,7 @@ func (app *App) Init() error {
 		db = d
 		return nil
 	}
-	log.Infof("Attempting to connect to the database: %s on %s",
-		app.Config.dbname, app.Config.dbhost)
+	log.Infof("Attempting to connect to the database")
 	err := backoff.Retry(dbConnect, policy)
 	if err != nil {
 		return fmt.Errorf("Failed to connect to the database: %w", err)
@@ -111,11 +107,9 @@ func (app *App) Init() error {
 	log.Info("Connected to the database successfully")
 
 	// Connect to RabbitMQ and set up the queues. Try to connect multiple times
-	qconnstr := fmt.Sprintf("amqp://%s:%s@%s:%s/",
-		app.Config.quser, app.Config.qpass, app.Config.qhost, app.Config.qport)
 	var rabbit *amqp.Connection
 	mqConnect := func() error {
-		r, err := amqp.Dial(qconnstr)
+		r, err := amqp.Dial(app.Config.mqstr)
 		if err != nil {
 			return err
 		}
