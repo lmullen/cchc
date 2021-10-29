@@ -3,7 +3,6 @@ version: "3.9"
 services:
   queue:
     image: rabbitmq:3-management
-    container_name: "cchc-queue"
     hostname: "cchc-rabbitmq"
     restart: unless-stopped
     ports:
@@ -18,7 +17,6 @@ services:
     build:
       dockerfile: crawler.Dockerfile
     image: ghcr.io/lmullen/cchc-crawler:main
-    container_name: "cchc-crawler"
     restart: unless-stopped
     environment:
       - CCHC_DBSTR
@@ -34,7 +32,6 @@ services:
     build:
       dockerfile: itemmd.Dockerfile
     image: ghcr.io/lmullen/cchc-itemmd:main
-    container_name: "cchc-itemmd"
     restart: unless-stopped
     environment:
       - CCHC_DBSTR
@@ -50,7 +47,6 @@ services:
     build:
       dockerfile: qftext.Dockerfile
     image: ghcr.io/lmullen/cchc-qftext:main
-    container_name: "cchc-qftext"
     restart: unless-stopped
     environment:
       - CCHC_DBSTR
@@ -66,15 +62,15 @@ services:
     build:
       dockerfile: predictor.Dockerfile
     image: ghcr.io/lmullen/cchc-predictor:main
-    container_name: "cchc-predictor"
     restart: unless-stopped
     environment:
       - CCHC_LOGLEVEL
       - CCHC_DBSTR
       - CCHC_MQSTR
       - PASSWORD=guest
-    ports:
-      - 8787:8787
+    deploy:
+      mode: replicated
+      replicas: 2
     depends_on:
       - "queue"
     network_mode: "host"
