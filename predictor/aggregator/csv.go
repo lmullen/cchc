@@ -1,9 +1,14 @@
 package main
 
 import (
+	"context"
 	"encoding/csv"
 	"fmt"
 	"os"
+	"strconv"
+
+	"github.com/google/uuid"
+	"github.com/lmullen/cchc/common/results"
 
 	"github.com/lmullen/cchc/common/messages"
 	log "github.com/sirupsen/logrus"
@@ -31,7 +36,7 @@ func writeDocsCSV(docs []*messages.FullTextPredict) (string, error) {
 }
 
 // Read in results of the prediction model and write them to the database.
-func processPredictionsCSV(path string) error {
+func processPredictionsCSV(ctx context.Context, path string) error {
 	f, err := os.Open(path)
 	if err != nil {
 		return err
@@ -46,8 +51,20 @@ func processPredictionsCSV(path string) error {
 	}
 
 	for _, p := range predictions {
-		// TODO: This is where to do the work for each prediction
 		log.Debug(p)
+		jobID, err := uuid.Parse(p[0])
+		if err != nil {
+			return err
+		}
+		prob, err := strconv.ParseFloat(p[4], 64)
+		if err != nil {
+			return err
+		}
+		q := results.NewQuotation(jobID, p[1], p[2], p[3], prob)
+		err = app.ResultsRepo.Save(ctx, q)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
