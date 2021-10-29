@@ -175,6 +175,13 @@ prop_keepers <- n_keepers / n_potential
 flog.debug("Kept %s potential matches out of %s total (%s%%).",
           pnum(n_keepers), pnum(n_potential), round(prop_keepers * 100, 1))
 
+# If we didn't get any potential matches, then end early
+if (n_keepers < 1) {
+  flog.debug("Quitting early since there were no potential matches")
+  file_create(out_path)
+  quit(save = "no", status = 0) 
+}
+
 # Center and scale the measurements as we did the training data
 measurements <- bake(data_recipe, new_data = potential_matches %>% select(-verse_id, -doc_id))
 
@@ -194,10 +201,11 @@ quotations <- predictions %>%
   filter(prob_adj == max(prob_adj)) %>%
   slice(1) %>%
   ungroup() %>%
-  select(reference_id, verse_id, doc_id, probability)
+  select(doc_id, reference_id, verse_id, probability)
 
 quotations <- texts %>%
-  left_join(quotations, by = "doc_id")
+  left_join(quotations, by = "doc_id") %>%
+  filter(!is.na(probability))
 
 write_csv(quotations, out_path, col_names = FALSE)
 flog.info("Successfully identified %s quotations.", pnum(nrow(quotations)))
