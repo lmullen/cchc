@@ -36,6 +36,7 @@ down :
 	docker compose logs crawler > logs/crawler-$(shell date +%FT%T).log
 	docker compose logs itemmd > logs/itemmd-$(shell date +%FT%T).log
 	docker compose logs queue > logs/queue-$(shell date +%FT%T).log
+	docker compose logs predictor > logs/predictor-$(shell date +%FT%T).log
 	docker compose down
 
 # DATABASE

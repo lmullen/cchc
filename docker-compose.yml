@@ -65,7 +65,7 @@ services:
       dockerfile: predictor.Dockerfile
     image: ghcr.io/lmullen/cchc-predictor:main
     container_name: "cchc-predictor"
-    restart: unless-stopped
+    restart: "no"
     environment:
       - CCHC_DBSTR
       - CCHC_MQSTR
