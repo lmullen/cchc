@@ -153,7 +153,7 @@ func (app *App) Init() error {
 	}
 	q, err := ch.QueueDeclare("items-metadata", true, false, false, false,
 		amqp.Table{
-			"x-max-length":           10000000,
+			// "x-max-length":           10000000,
 			"x-queue-mode":           "lazy",
 			"x-dead-letter-exchange": dle,
 		})
