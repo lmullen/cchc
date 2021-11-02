@@ -1,0 +1,3 @@
+ALTER TABLE items
+  DROP COLUMN IF EXISTS timestamp;
+

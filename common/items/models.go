@@ -14,7 +14,6 @@ type Item struct {
 	Year      sql.NullInt32
 	Date      sql.NullString
 	Subjects  []string
-	Timestamp sql.NullInt64
 	Resources []ItemResource
 	Files     []ItemFile
 	API       sql.NullString // The entire API response stored as JSONB

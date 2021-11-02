@@ -26,7 +26,6 @@ type ItemResponse struct {
 		// OnlineFormat []string  `json:"online_format"`
 		// Version      int64     `json:"_version_"`
 		// HasSegments  bool      `json:"hassegments"`
-		// Timestamp time.Time `json:"timestamp"`
 	} `json:"item"`
 	Resources []struct {
 		FulltextFile string `json:"fulltext_file,omitempty"`
@@ -45,7 +44,6 @@ type ItemResponse struct {
 			Use             string `json:"use,omitempty"`
 		} `json:"files"`
 	} `json:"resources"`
-	Timestamp int64 `json:"timestamp"`
 }
 
 // Item is a representation of an item in the LOC collection returned from the API.
@@ -56,7 +54,6 @@ type Item struct {
 	Year      sql.NullInt32
 	Date      string
 	Subjects  []string
-	Timestamp int64
 	Resources []ItemResource
 	Files     []ItemFile
 	API       []byte // The entire API response stored as JSONB
@@ -157,7 +154,6 @@ func (i *Item) Fetch() error {
 	i.Year = year(result.ItemDetails.Date)
 	i.Date = result.ItemDetails.Date
 	i.Subjects = result.ItemDetails.Subjects
-	i.Timestamp = result.Timestamp
 	i.API = data
 
 	var temp [][]string
@@ -234,8 +230,8 @@ func (i *Item) Fetch() error {
 // Save serializes an item to the database
 func (i Item) Save() error {
 	itemQuery := `
-	INSERT INTO items (id, url, title, year, date, subjects, timestamp, api)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+	INSERT INTO items (id, url, title, year, date, subjects, api)
+	VALUES ($1, $2, $3, $4, $5, $6, $7)
 	ON CONFLICT (id) DO UPDATE
 	SET
 	  url              = $2,
@@ -243,8 +239,7 @@ func (i Item) Save() error {
 		year             = $4,
 		date             = $5,
 		subjects         = $6,
-		timestamp        = $7,
-		api              = $8;
+		api              = $7;
 	`
 
 	resourceQuery := `
@@ -267,7 +262,7 @@ func (i Item) Save() error {
 	}
 
 	_, err = tx.Exec(itemQuery, i.ID, i.URL, i.Title, i.Year, i.Date, i.Subjects,
-		i.Timestamp, i.API)
+		i.API)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("Error saving item %s to database: %w", i, err)

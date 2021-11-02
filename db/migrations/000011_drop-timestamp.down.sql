@@ -1,0 +1,3 @@
+ALTER TABLE ITEMS
+  ADD COLUMN IF NOT EXISTS timestamp bigint;
+

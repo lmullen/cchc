@@ -22,7 +22,7 @@ func NewItemRepo(db *pgxpool.Pool) *Repo {
 func (r *Repo) Get(ctx context.Context, ID string) (*Item, error) {
 	item := Item{}
 	itemQuery := `
-	SELECT id, url, title, year, date, subjects, timestamp, api
+	SELECT id, url, title, year, date, subjects, api
 	FROM items 
 	WHERE id = $1;
 	`
@@ -40,7 +40,7 @@ func (r *Repo) Get(ctx context.Context, ID string) (*Item, error) {
 	`
 
 	err := r.db.QueryRow(ctx, itemQuery, ID).
-		Scan(&item.ID, &item.URL, &item.Title, &item.Year, &item.Date, &item.Subjects, &item.Timestamp, &item.API)
+		Scan(&item.ID, &item.URL, &item.Title, &item.Year, &item.Date, &item.Subjects, &item.API)
 	if err != nil {
 		return nil, err
 	}
