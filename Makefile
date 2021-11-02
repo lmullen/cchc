@@ -60,9 +60,6 @@ down :
 # --------------------------------------------------
 .PHONY : db-create, db-up, db-down
 
-db-create:
-	./scripts/create-database.sh
-
 db-up :
 	migrate -database $(CCHC_DBSTR) -path db/migrations up
 
