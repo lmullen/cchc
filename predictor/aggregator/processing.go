@@ -57,6 +57,7 @@ func processBatchOfDocs(ctx context.Context) {
 			"--model", "prediction-payload.rda",
 			"--verbose", "2",
 			"--out", predictionsFile.Name(),
+			"--potential",
 			docsFile,
 		)
 		output, err := cmd.CombinedOutput()

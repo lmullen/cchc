@@ -6,6 +6,11 @@
 up : 
 	docker compose up --build --force-recreate --detach
 
+# Rebuild and run attached
+.PHONY : attached
+attached : 
+	docker compose up --build --force-recreate
+
 .PHONY: restart-crawler
 restart-crawler :
 	@echo "Restarting the crawler"

@@ -39,7 +39,10 @@ parser <- OptionParser(
              help = "Minimum TF-IDF score to keep a potential match (default: 1.0).") %>%
   add_option(c("-v", "--verbose"),
              action = "store", type = "integer", default = 1,
-             help = "Verbosity: 0 = errors and warnings; 1 = information; 2 = debugging.")
+             help = "Verbosity: 0 = errors and warnings; 1 = information; 2 = debugging.") %>%
+  add_option(c("-p", "--potential"),
+             action = "store_true", default = FALSE,
+             help = "Save the potential matches to a CSV file")
 if (!interactive()) {
   # Command line usage
   args <- parse_args(parser, positional_arguments = 1)
@@ -165,6 +168,14 @@ potential_matches <- token_count %>%
   left_join(tfidf_score, by = c("verse_id", "doc_id")) %>%
   left_join(proportion, by = c("verse_id", "doc_id")) %>%
   as_tibble()
+
+if (args$options$potential) {
+  potential_dir <- "/tmp/potential/"
+  fs::dir_create(potential_dir)
+  potential_file <- str_c(potential_dir, fs::path_file(fs::file_temp()), ".csv")
+  flog.info("Saving the potential matches to ", potential_file)
+  write_csv(potential_matches, potential_file)
+}
 
 pnum <- function(x) { prettyNum(x, big.mark = ",") }
 n_potential <- nrow(potential_matches)

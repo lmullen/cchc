@@ -4,3 +4,4 @@ logs/
 predictor/test/sermons-predicted-test.csv
 .gitignore
 predictor/test/sermons-quotations-test.csv
+potential-matches/*
