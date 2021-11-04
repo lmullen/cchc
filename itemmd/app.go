@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -9,8 +10,8 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/lmullen/cchc/common/messages"
 	log "github.com/sirupsen/logrus"
-	"github.com/streadway/amqp"
 
 	"github.com/hashicorp/go-retryablehttp"
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -29,25 +30,17 @@ type Config struct {
 	loglevel string
 }
 
-// Queue holds all the items related to sending/receiving on a message queue
-type Queue struct {
-	Channel  *amqp.Channel
-	Queue    *amqp.Queue
-	Consumer <-chan amqp.Delivery
-}
-
 // The App type shares access to the database and other resources.
 type App struct {
-	DB            *sql.DB
-	Config        *Config
-	Client        *http.Client
-	MessageBroker *amqp.Connection
-	Limiters      struct {
+	DB       *sql.DB
+	Config   *Config
+	Client   *http.Client
+	MsgRepo  messages.Repository
+	Limiters struct {
 		Newspapers  ratelimit.Limiter
 		Items       ratelimit.Limiter
 		Collections ratelimit.Limiter
 	}
-	ItemMetadataQ Queue
 }
 
 // Init creates a new app and connects to the database or returns an error
@@ -71,7 +64,7 @@ func (app *App) Init() error {
 
 	ll, ok := os.LookupEnv("CCHC_LOGLEVEL")
 	if !ok {
-		return errors.New("CCHC_LOGLEVEL environment variable is not set")
+		ll = "info"
 	}
 	app.Config.loglevel = ll
 
@@ -112,61 +105,14 @@ func (app *App) Init() error {
 	app.DB = db
 	log.Info("Connected to the database successfully")
 
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	// Connect to RabbitMQ and set up the queues. Try to connect multiple times
-	var rabbit *amqp.Connection
-	mqConnect := func() error {
-		r, err := amqp.Dial(app.Config.mqstr)
-		if err != nil {
-			return err
-		}
-		rabbit = r
-		return nil
-	}
-
-	log.Info("Attempting to connect to the message broker")
-	err = backoff.Retry(mqConnect, policy)
+	rabbit, err := messages.NewRabbitMQ(ctx, app.Config.mqstr, "items-metadata", 12)
 	if err != nil {
-		return fmt.Errorf("Failed to connect to message broker: %w", err)
+		return fmt.Errorf("Error connecting to message broker: %w", err)
 	}
-	app.MessageBroker = rabbit
-	ch, err := rabbit.Channel()
-	if err != nil {
-		return fmt.Errorf("Failed to open a channel on message broker: %w", err)
-	}
-	err = ch.Qos(12, 0, true)
-	if err != nil {
-		log.Fatal("Failed to set prefetch on the message broker: ", err)
-	}
-	app.ItemMetadataQ.Channel = ch
-	dle, dlq, dlk := "failed-items-metadata", "dead-letter-queue", "dead-letter-key"
-	err = ch.ExchangeDeclare(dle, "fanout", true, false, false, false, amqp.Table{})
-	if err != nil {
-		return fmt.Errorf("Failed to declare the dead letter exchange: %w", err)
-	}
-	_, err = ch.QueueDeclare(dlq, true, false, false, false, amqp.Table{})
-	if err != nil {
-		return fmt.Errorf("Failed to declare the dead letter exchange: %w", err)
-	}
-	err = ch.QueueBind(dlq, dlk, dle, false, amqp.Table{})
-	if err != nil {
-		return fmt.Errorf("Failed to bind dead letter queue and exchange: %w", err)
-	}
-	q, err := ch.QueueDeclare("items-metadata", true, false, false, false,
-		amqp.Table{
-			// "x-max-length":           10000000,
-			"x-queue-mode":           "lazy",
-			"x-dead-letter-exchange": dle,
-		})
-	if err != nil {
-		return fmt.Errorf("Failed to declare a queue: %w", err)
-	}
-	app.ItemMetadataQ.Queue = &q
-	consumer, err := ch.Consume(q.Name, "item-metadata-consumer",
-		false, false, false, false, nil)
-	if err != nil {
-		return fmt.Errorf("Failed to register a channel consumer: %w", err)
-	}
-	app.ItemMetadataQ.Consumer = consumer
+	app.MsgRepo = rabbit
 	log.Info("Connected to the message broker successfully")
 
 	// Set up a client to use for all HTTP requests. It will automatically retry.
@@ -209,7 +155,7 @@ func (app *App) Shutdown() {
 	} else {
 		log.Info("Closed the connection to the database successfully")
 	}
-	err = app.MessageBroker.Close()
+	err = app.MsgRepo.Close()
 	if err != nil {
 		log.Error("Failed to close the connection to the message queue: ", err)
 	} else {

@@ -14,7 +14,7 @@ import (
 // process each of them.
 func startProcessingItems(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
-	for msg := range app.ItemMetadataQ.Consumer {
+	for msg := range app.MsgRepo.Consume() {
 		select {
 		case <-ctx.Done():
 			return
