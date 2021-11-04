@@ -26,7 +26,7 @@ func processBatchOfDocs(ctx context.Context) {
 		// Read a batch of full text
 		for i := 0; i < numInBatch; i++ {
 			var doc messages.FullTextPredict
-			msg := <-app.DocumentsQ.Consumer
+			msg := <-app.MsgRepo.Consume()
 			err := json.Unmarshal(msg.Body, &doc)
 			if err != nil {
 				log.WithError(err).Error("Error processing doc")
