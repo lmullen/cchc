@@ -6,6 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lmullen/cchc/common/db"
 	"github.com/orlangure/gnomock"
@@ -42,5 +46,14 @@ func TestDBConnection(t *testing.T) {
 	require.NoError(t, err)
 
 	require.IsType(t, &pgxpool.Pool{}, db)
+
+	m, err := migrate.New("file://../../../db/migrations", connstr)
+	require.NoError(t, err)
+
+	err = m.Up()
+	require.NoError(t, err)
+
+	err = m.Down()
+	require.NoError(t, err)
 
 }
