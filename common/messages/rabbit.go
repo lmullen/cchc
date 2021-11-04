@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -20,48 +19,39 @@ type RabbitMQ struct {
 	Consumer   <-chan amqp.Delivery
 }
 
-// getConnString checks whether the connection string for the message broker has been set
-func getConnString() (string, error) {
-	connstr, exists := os.LookupEnv("CCHC_MQSTR")
-	if !exists {
-		return "", errors.New("Message broker connection string not set; use the CCHC_MQSTR environment variable")
-	}
-	return connstr, nil
-}
-
 // connect creates a connection to a RabbitMQ message broker. It will retry the connection several times.
-func connect(ctx context.Context) (*amqp.Connection, error) {
-	connstr, err := getConnString()
-	if err != nil {
-		return nil, err
-	}
-
-	var conn *amqp.Connection
-	connect := func() error {
-		c, err := amqp.Dial(connstr)
-		if err != nil {
-			return err
+func connect(ctx context.Context, connstr string) (*amqp.Connection, error) {
+	select {
+	case <-ctx.Done():
+		return nil, errors.New("Failed to connect to RabbitMQ because context was canceled")
+	default:
+		var conn *amqp.Connection
+		connect := func() error {
+			c, err := amqp.Dial(connstr)
+			if err != nil {
+				return err
+			}
+			conn = c
+			return nil
 		}
-		conn = c
-		return nil
-	}
 
-	policy := backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 10)
-	err = backoff.Retry(connect, policy)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to connect to message broker: %w", err)
-	}
+		policy := backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 10)
+		err := backoff.Retry(connect, policy)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to connect to message broker: %w", err)
+		}
 
-	return conn, nil
+		return conn, nil
+	}
 }
 
 // NewRabbitMQ returns a message repo using RabbitMQ via the amqp interface.
 // It will create (or connect to) a queue for sending a particular type of message
 // (determined by the type of messages sent or receive from the queue) for a
 // particular purpose (determined by the name of the queue).
-func NewRabbitMQ(ctx context.Context, queue string, qos int) (*RabbitMQ, error) {
+func NewRabbitMQ(ctx context.Context, connstr string, queue string, qos int) (*RabbitMQ, error) {
 	repo := RabbitMQ{}
-	conn, err := connect(ctx)
+	conn, err := connect(ctx, connstr)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +63,7 @@ func NewRabbitMQ(ctx context.Context, queue string, qos int) (*RabbitMQ, error) 
 	}
 	repo.Channel = ch
 
-	err = ch.Qos(12, 0, true)
+	err = ch.Qos(qos, 0, true)
 	if err != nil {
 		return nil, err
 	}
@@ -140,4 +130,10 @@ func (r *RabbitMQ) Send(ctx context.Context, body interface{}) error {
 // Consume returns the channel that provides deliveries from the message queue.
 func (r *RabbitMQ) Consume() <-chan amqp.Delivery {
 	return r.Consumer
+}
+
+// Close shutdowns the connection to the message broker and associated resources.
+func (r *RabbitMQ) Close() error {
+	err := r.Connection.Close()
+	return err
 }

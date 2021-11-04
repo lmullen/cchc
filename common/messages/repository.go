@@ -9,6 +9,7 @@ import (
 // Repository is an interface that sends messages from a particular
 // queue in a message broker.
 type Repository interface {
-	Send(ctx context.Context, text *FullTextPredict) error
+	Send(ctx context.Context, body interface{}) error
 	Consume() <-chan amqp.Delivery
+	Close() error
 }
