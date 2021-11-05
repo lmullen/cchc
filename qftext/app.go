@@ -74,7 +74,7 @@ func (app *App) Init() error {
 	}
 	log.Info("Attempting to connect to the message broker")
 
-	rabbit, err := messages.NewRabbitMQ(ctx, mqstr, "fulltext-predict", 8)
+	rabbit, err := messages.NewRabbitMQ(ctx, mqstr, "fulltext-predict", 100)
 	if err != nil {
 		return fmt.Errorf("Error connecting to message broker: %w", err)
 	}

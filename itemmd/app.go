@@ -108,7 +108,7 @@ func (app *App) Init() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// Connect to RabbitMQ and set up the queues. Try to connect multiple times
-	rabbit, err := messages.NewRabbitMQ(ctx, app.Config.mqstr, "items-metadata", 12)
+	rabbit, err := messages.NewRabbitMQ(ctx, app.Config.mqstr, "items-metadata", 64)
 	if err != nil {
 		return fmt.Errorf("Error connecting to message broker: %w", err)
 	}
