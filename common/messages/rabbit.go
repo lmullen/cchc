@@ -21,28 +21,29 @@ type RabbitMQ struct {
 
 // connect creates a connection to a RabbitMQ message broker. It will retry the connection several times.
 func connect(ctx context.Context, connstr string) (*amqp.Connection, error) {
-	select {
-	case <-ctx.Done():
-		return nil, errors.New("Failed to connect to RabbitMQ because context was canceled")
-	default:
-		var conn *amqp.Connection
-		connect := func() error {
+	var conn *amqp.Connection
+
+	connectWithRetry := func() error {
+		select {
+		case <-ctx.Done():
+			return backoff.Permanent(errors.New("Cancelled attempt to conntect to RabbitMQ"))
+		default:
 			c, err := amqp.Dial(connstr)
 			if err != nil {
 				return err
 			}
 			conn = c
-			return nil
 		}
-
-		policy := backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 10)
-		err := backoff.Retry(connect, policy)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to connect to message broker: %w", err)
-		}
-
-		return conn, nil
+		return nil
 	}
+
+	policy := backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 10)
+	err := backoff.Retry(connectWithRetry, policy)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to connect to message broker: %w", err)
+	}
+
+	return conn, nil
 }
 
 // NewRabbitMQ returns a message repo using RabbitMQ via the amqp interface.
