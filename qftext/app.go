@@ -46,13 +46,14 @@ func (app *App) Init() error {
 		log.SetLevel(log.DebugLevel)
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
 	log.Info("Connecting to the database")
 	dbstr, exists := os.LookupEnv("CCHC_DBSTR")
 	if !exists {
 		return errors.New("Database connection string not set: use CCHC_DBSTR environment variable")
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
 	db, err := db.Connect(ctx, dbstr)
 	if err != nil {
 		return fmt.Errorf("Error connecting to database: %w", err)
@@ -67,7 +68,6 @@ func (app *App) Init() error {
 	app.stripXML = bluemonday.StrictPolicy()
 
 	// Connect to RabbitMQ and set up the queue
-
 	mqstr, exists := os.LookupEnv("CCHC_MQSTR")
 	if !exists {
 		return errors.New("Message broker connection string not set: use CCHC_MQSTR environment variable")
@@ -87,6 +87,7 @@ func (app *App) Init() error {
 // Shutdown closes the app's resources
 func (app *App) Shutdown() {
 	app.DB.Close()
+	app.MR.Close()
 	log.Info("Closed the connection to the database")
 	log.Info("Stopped process to create jobs for predictions from full text")
 }
