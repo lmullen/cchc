@@ -120,7 +120,7 @@ func ProcessItem(ctx context.Context, itemID string) error {
 	// 	job.Create(item.ID, false)
 	// 	err = app.JR.Save(ctx, job)
 	// 	if err != nil {
-	// 		return fmt.Errorf("Error saving job: %w", err)
+	// 		return fmt.Errorf("Error saving job: %w", err
 	// 	}
 	// }
 

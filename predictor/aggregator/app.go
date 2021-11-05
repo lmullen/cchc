@@ -7,11 +7,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
+	"github.com/lmullen/cchc/common/db"
 	"github.com/lmullen/cchc/common/jobs"
+	"github.com/lmullen/cchc/common/messages"
 	"github.com/lmullen/cchc/common/results"
 	log "github.com/sirupsen/logrus"
-	"github.com/streadway/amqp"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -29,21 +29,13 @@ type Config struct {
 	loglevel string
 }
 
-// Queue holds all the items related to sending/receiving on a message queue
-type Queue struct {
-	Channel  *amqp.Channel
-	Queue    *amqp.Queue
-	Consumer <-chan amqp.Delivery
-}
-
 // The App type shares access to the database and other resources.
 type App struct {
-	DB            *pgxpool.Pool
-	Config        *Config
-	MessageBroker *amqp.Connection
-	DocumentsQ    Queue
-	ResultsRepo   results.Repository
-	JobsRepo      jobs.Repository
+	DB          *pgxpool.Pool
+	Config      *Config
+	ResultsRepo results.Repository
+	JobsRepo    jobs.Repository
+	MsgRepo     messages.Repository
 }
 
 // Init creates a new app and connects to the database or returns an error
@@ -89,74 +81,19 @@ func (app *App) Init() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	db, err := pgxpool.Connect(ctx, app.Config.dbstr)
+	db, err := db.Connect(ctx, app.Config.dbstr)
 	if err != nil {
-		return fmt.Errorf("Failed to dial the database: %w", err)
-	}
-	if err := db.Ping(ctx); err != nil {
-		return fmt.Errorf("Failed to ping the database: %w", err)
+		return fmt.Errorf("Failed to connect to database: %w", err)
 	}
 	app.DB = db
 	log.Info("Connected to the database successfully")
 
-	// Retry policy
-	policy := backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 10)
-
-	// Connect to RabbitMQ and set up the queues. Try to connect multiple times
-	var rabbit *amqp.Connection
-	mqConnect := func() error {
-		r, err := amqp.Dial(app.Config.mqstr)
-		if err != nil {
-			return err
-		}
-		rabbit = r
-		return nil
-	}
-
 	log.Info("Attempting to connect to the message broker")
-	err = backoff.Retry(mqConnect, policy)
+	rabbit, err := messages.NewRabbitMQ(ctx, app.Config.mqstr, "fulltext-predict", 100)
 	if err != nil {
-		return fmt.Errorf("Failed to connect to message broker: %w", err)
+		return fmt.Errorf("Error connecting to message broker: %w", err)
 	}
-	app.MessageBroker = rabbit
-	ch, err := rabbit.Channel()
-	if err != nil {
-		return fmt.Errorf("Failed to open a channel on message broker: %w", err)
-	}
-	err = ch.Qos(100, 0, true)
-	if err != nil {
-		log.Fatal("Failed to set prefetch on the message broker: ", err)
-	}
-	app.DocumentsQ.Channel = ch
-	dle, dlq, dlk := "failed-fulltext", "dead-letter-queue", "dead-letter-key"
-	err = ch.ExchangeDeclare(dle, "fanout", true, false, false, false, amqp.Table{})
-	if err != nil {
-		return fmt.Errorf("Failed to declare the dead letter exchange: %w", err)
-	}
-	_, err = ch.QueueDeclare(dlq, true, false, false, false, amqp.Table{})
-	if err != nil {
-		return fmt.Errorf("Failed to declare the dead letter exchange: %w", err)
-	}
-	err = ch.QueueBind(dlq, dlk, dle, false, amqp.Table{})
-	if err != nil {
-		return fmt.Errorf("Failed to bind dead letter queue and exchange: %w", err)
-	}
-	q, err := ch.QueueDeclare("fulltext-predict", true, false, false, false,
-		amqp.Table{
-			// "x-max-length":           10000000,
-			"x-queue-mode":           "lazy",
-			"x-dead-letter-exchange": dle,
-		})
-	if err != nil {
-		return fmt.Errorf("Failed to declare a queue: %w", err)
-	}
-	app.DocumentsQ.Queue = &q
-	consumer, err := ch.Consume(q.Name, "documents-consumer",
-		false, false, false, false, nil)
-	if err != nil {
-		return fmt.Errorf("Failed to register a channel consumer: %w", err)
-	}
-	app.DocumentsQ.Consumer = consumer
+	app.MsgRepo = rabbit
 	log.Info("Connected to the message broker successfully")
 
 	// Initialize the results repo
@@ -174,7 +111,7 @@ func (app *App) Init() error {
 func (app *App) Shutdown() {
 	app.DB.Close()
 	log.Info("Closed the connection to the database")
-	err := app.MessageBroker.Close()
+	err := app.MsgRepo.Close()
 	if err != nil {
 		log.Error("Failed to close the connection to the message queue: ", err)
 	} else {

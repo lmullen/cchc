@@ -61,12 +61,15 @@ down :
 	docker compose logs predictor > logs/predictor-$(shell date +%FT%T).log
 	docker compose down
 
-# DATABASE
+# DATABASE and MESSAGE BROKER
 # --------------------------------------------------
-.PHONY : db-create, db-up, db-down
+.PHONY : db-create, db-up, db-down, queue-rm
 
 db-up :
-	migrate -database $(CCHC_DBSTR) -path db/migrations up
+	migrate -database $(CCHC_DBSTR_LOCAL) -path db/migrations up
 
 db-down :
-	migrate -database $(CCHC_DBSTR) -path db/migrations down
+	migrate -database $(CCHC_DBSTR_LOCAL) -path db/migrations down
+
+queue-rm :
+	docker volume rm -f cchc_queue-data
