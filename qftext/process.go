@@ -70,7 +70,7 @@ func ProcessItem(ctx context.Context, itemID string) error {
 	if !hasFulltext {
 		for _, file := range item.Files {
 			if file.Mimetype.Valid && file.Mimetype.String == "text/plain" && file.FullText.Valid {
-				job := &jobs.FulltextPredict{}
+				job := &jobs.Fulltext{}
 				job.Create(item.ID, true)
 				fulltext := job.PlainTextFullText(file)
 				fulltext = app.stripXML.Sanitize(fulltext)
@@ -93,7 +93,7 @@ func ProcessItem(ctx context.Context, itemID string) error {
 	if !hasFulltext {
 		for _, file := range item.Files {
 			if file.Mimetype.Valid && file.Mimetype.String == "text/xml" && file.FullText.Valid {
-				job := &jobs.FulltextPredict{}
+				job := &jobs.Fulltext{}
 				job.Create(item.ID, true)
 				fulltext := job.XMLFullText(file)
 				fulltext = app.stripXML.Sanitize(fulltext)

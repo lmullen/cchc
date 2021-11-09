@@ -13,15 +13,10 @@ import (
 var app = &App{}
 
 func main() {
-	err := app.Init()
-	if err != nil {
-		log.WithError(err).Fatal("Error initializing application")
-	}
-	defer app.Shutdown()
-
+	// Check for interrupt signals and stop gracefully
 	ctx, cancel := context.WithCancel(context.Background())
 	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	defer func() {
 		signal.Stop(quit)
 		cancel()
@@ -34,6 +29,12 @@ func main() {
 		case <-ctx.Done():
 		}
 	}()
+
+	err := app.Init(ctx)
+	if err != nil {
+		log.WithError(err).Fatal("Error initializing application")
+	}
+	defer app.Shutdown()
 
 	// Perpetually run looking for items to queue for jobs, waiting in between
 	for {

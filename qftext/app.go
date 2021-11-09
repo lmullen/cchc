@@ -26,7 +26,7 @@ type App struct {
 }
 
 // Init connects to all the app's resources and sets the config
-func (app *App) Init() error {
+func (app *App) Init(ctx context.Context) error {
 	log.Info("Starting qftext")
 
 	// Set the logging level
@@ -46,7 +46,7 @@ func (app *App) Init() error {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 
 	log.Info("Connecting to the database")
@@ -87,7 +87,8 @@ func (app *App) Init() error {
 // Shutdown closes the app's resources
 func (app *App) Shutdown() {
 	app.DB.Close()
-	app.MR.Close()
 	log.Info("Closed the connection to the database")
-	log.Info("Stopped process to create jobs for predictions from full text")
+	app.MR.Close()
+	log.Info("Closed the connection to the message broker")
+	log.Info("Stopped qftext")
 }
