@@ -12,4 +12,5 @@ type Repository interface {
 	Send(ctx context.Context, body interface{}) error
 	Consume() <-chan amqp.Delivery
 	Close() error
+	QueueName() string
 }

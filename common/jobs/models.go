@@ -21,7 +21,7 @@ type Fulltext struct {
 	HasFTMethod bool
 	Started     sql.NullTime
 	Finished    sql.NullTime
-	Destination string
+	Queue       string
 }
 
 // Repository is an interface describing a data store for jobs.

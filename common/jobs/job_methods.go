@@ -14,13 +14,14 @@ func (job Fulltext) String() string {
 
 // Create fills out the details of the struct. If start is true, a started time
 // will be recorded; otherwise it will be null.
-func (job *Fulltext) Create(itemID string, start bool) {
+func (job *Fulltext) Create(itemID string, queue string, start bool) {
 	// Check to see what kind of full text we have available
 	job.ID = uuid.New()
 	job.ItemID = itemID
 	if start {
 		job.Started.Scan(time.Now())
 	}
+	job.Queue = queue
 }
 
 // Finish records the finishing time for a job.

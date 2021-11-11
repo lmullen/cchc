@@ -138,3 +138,7 @@ func (r *RabbitMQ) Close() error {
 	err := r.Connection.Close()
 	return err
 }
+
+func (r *RabbitMQ) QueueName() string {
+	return r.Queue.Name
+}
