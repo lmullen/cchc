@@ -22,7 +22,7 @@ func NewJobsRepo(db *pgxpool.Pool) *Repo {
 // Save serializes a job to the database
 func (r *Repo) Save(ctx context.Context, job *Fulltext) error {
 	query := `
-	INSERT INTO jobs.fulltext_predict
+	INSERT INTO jobs.fulltext
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 	ON CONFLICT (id) DO UPDATE
 	SET 
@@ -34,7 +34,7 @@ func (r *Repo) Save(ctx context.Context, job *Fulltext) error {
 	source = $7,
 	has_ft_method = $8,
 	started = $9,
-	finished = $10
+	finished = $10,
 	queue = $11
 	;
 	`
@@ -55,7 +55,7 @@ func (r *Repo) Get(ctx context.Context, id uuid.UUID) (*Fulltext, error) {
 	SELECT 
 		id, item_id, resource_seq, file_seq, format_seq, level, source, has_ft_method, started, finished, queue
 	FROM
-		jobs.fulltext_predict
+		jobs.fulltext
 	WHERE id = $1;
 	`
 

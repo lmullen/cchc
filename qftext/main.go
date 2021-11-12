@@ -4,8 +4,8 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -36,18 +36,20 @@ func main() {
 	}
 	defer app.Shutdown()
 
-	// Perpetually run looking for items to queue for jobs, waiting in between
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-			log.Debug("Checking for unprocessed items to add to the job queue")
-			err = FindUnprocessedItems(ctx)
-			if err != nil {
-				log.WithError(err).Error("Error processing items with full text")
-			}
-			time.Sleep(15 * time.Minute)
-		}
-	}
+	wg := sync.WaitGroup{}
+
+	wg.Add(1)
+	go func() {
+		enqueueForQuotations(ctx)
+		wg.Done()
+	}()
+
+	wg.Add(1)
+	go func() {
+		enqueueForLanguages(ctx)
+		wg.Done()
+	}()
+
+	wg.Wait()
+
 }
