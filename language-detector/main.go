@@ -2,17 +2,10 @@ package main
 
 import (
 	"fmt"
-
-	"github.com/pemistahl/lingua-go"
+	"log"
 )
 
 func main() {
-	languages := []lingua.Language{
-		lingua.English,
-		lingua.French,
-		lingua.German,
-		// lingua.Spanish,
-	}
 
 	type Doc struct {
 		lang string
@@ -23,19 +16,18 @@ func main() {
 	en := Doc{lang: "en", text: "The Lares Revolt of 1868 sought the abolition of slavery, freedom of the press and commerce, and the independence of Puerto Rico. Six hundred men, led by liberals, drew up a provisional constitution and declared the Puerto Rican Republic, but they were defeated in their first clash with Spanish troops. Despite the movements quick defeat, during the 20th century the revolt has come to be viewed as the beginning of Puerto Rico's struggle for independence. Pérez Morís opposed Puerto Rican independence, but his work has served as an important study of the revolt."}
 	both := Doc{lang: "es+en", text: es.text + en.text}
 	de := Doc{lang: "de", text: "s war ein wundervoller alter Glaube bei den Griechen, daß jedem neugeborenen Menschenwesen ein Stern am Himmel angezündet werde, der bei seinem Tod erlösche. Die Helligkeit und Größe des Gestirnes mochten der Bedeutung der Persönlichkeit entsprechen: so rühmte man vom König Mithradates, der drei Kriege gegen Rom geführt hat, bei seiner Geburt sei ein Komet erschienen, dessen Schweif den vierten Teil des Himmels überzog und siebzig Tage sichtbar blieb."}
+	tricky := Doc{lang: "tricky", text: "This is in English. So it's not very long. Como estas? Estoy muy bien."}
 
-	docs := []Doc{es, en, both, de}
-
-	// FromLanguages(languages...).
-	// detector := lingua.NewLanguageDetectorBuilder().FromAllSpokenLanguages().Build()
-	detector := lingua.NewLanguageDetectorBuilder().FromLanguages(languages...).Build()
+	docs := []Doc{es, en, both, de, tricky}
 
 	for _, d := range docs {
-		fmt.Println("Actual language: ", d.lang)
-		values := detector.ComputeLanguageConfidenceValues(d.text)
-		for _, elem := range values {
-			fmt.Printf("%s: %.2f\n", elem.Language(), elem.Value())
+		_, w, err := CalculateLanguages(d.text)
+		if err != nil {
+			log.Println(err)
+			break
 		}
+		fmt.Println("Actual language: ", d.lang, "Stats: ", w)
+
 		fmt.Print("\n\n")
 
 	}
