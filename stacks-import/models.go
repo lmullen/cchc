@@ -39,6 +39,9 @@ func (b Book) Exists() (bool, error) {
 	defer cancel()
 	var exists bool
 	err := db.QueryRow(ctx, query, b.LCCN).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
 	return exists, err
 }
 

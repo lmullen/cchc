@@ -58,7 +58,7 @@ func main() {
 	if !exists {
 		log.Fatal("Database connection string not set as an environment variable")
 	}
-	db, err := database.Connect(ctx, connstr)
+	db, err = database.Connect(ctx, connstr)
 	if err != nil {
 		log.Fatal("Error connecting to database: ", err)
 	}
