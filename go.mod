@@ -9,6 +9,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	github.com/jackc/pgx/v4 v4.14.1
 	github.com/microcosm-cc/bluemonday v1.0.16
+	github.com/mpvl/unique v0.0.0-20150818121801-cbe035fff7de
 	github.com/orlangure/gnomock v0.18.2
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/pflag v1.0.5

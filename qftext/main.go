@@ -4,8 +4,8 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -13,15 +13,10 @@ import (
 var app = &App{}
 
 func main() {
-	err := app.Init()
-	if err != nil {
-		log.WithError(err).Fatal("Error initializing application")
-	}
-	defer app.Shutdown()
-
+	// Check for interrupt signals and stop gracefully
 	ctx, cancel := context.WithCancel(context.Background())
 	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	defer func() {
 		signal.Stop(quit)
 		cancel()
@@ -35,18 +30,26 @@ func main() {
 		}
 	}()
 
-	// Perpetually run looking for items to queue for jobs, waiting in between
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-			log.Debug("Checking for unprocessed items to add to the job queue")
-			err = FindUnprocessedItems(ctx)
-			if err != nil {
-				log.WithError(err).Error("Error processing items with full text")
-			}
-			time.Sleep(15 * time.Minute)
-		}
+	err := app.Init(ctx)
+	if err != nil {
+		log.WithError(err).Fatal("Error initializing application")
 	}
+	defer app.Shutdown()
+
+	wg := sync.WaitGroup{}
+
+	wg.Add(1)
+	go func() {
+		enqueueForQuotations(ctx)
+		wg.Done()
+	}()
+
+	wg.Add(1)
+	go func() {
+		enqueueForLanguages(ctx)
+		wg.Done()
+	}()
+
+	wg.Wait()
+
 }

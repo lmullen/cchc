@@ -18,15 +18,18 @@ import (
 
 // App holds resources and config
 type App struct {
-	DB       *pgxpool.Pool
-	IR       items.Repository
-	JR       jobs.Repository
-	MR       messages.Repository
+	DB *pgxpool.Pool
+	IR items.Repository
+	JR jobs.Repository
+	MR struct {
+		quotations messages.Repository
+		languages  messages.Repository
+	}
 	stripXML *bluemonday.Policy
 }
 
 // Init connects to all the app's resources and sets the config
-func (app *App) Init() error {
+func (app *App) Init(ctx context.Context) error {
 	log.Info("Starting qftext")
 
 	// Set the logging level
@@ -46,7 +49,7 @@ func (app *App) Init() error {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 
 	log.Info("Connecting to the database")
@@ -74,11 +77,18 @@ func (app *App) Init() error {
 	}
 	log.Info("Attempting to connect to the message broker")
 
-	rabbit, err := messages.NewRabbitMQ(ctx, mqstr, "fulltext-predict", 100)
+	quotations, err := messages.NewRabbitMQ(ctx, mqstr, "fulltext-quotations", 100)
 	if err != nil {
 		return fmt.Errorf("Error connecting to message broker: %w", err)
 	}
-	app.MR = rabbit
+	app.MR.quotations = quotations
+	log.Info("Successfully connected to the message broker")
+
+	languages, err := messages.NewRabbitMQ(ctx, mqstr, "fulltext-languages", 100)
+	if err != nil {
+		return fmt.Errorf("Error connecting to message broker: %w", err)
+	}
+	app.MR.languages = languages
 	log.Info("Successfully connected to the message broker")
 
 	return nil
@@ -87,7 +97,9 @@ func (app *App) Init() error {
 // Shutdown closes the app's resources
 func (app *App) Shutdown() {
 	app.DB.Close()
-	app.MR.Close()
 	log.Info("Closed the connection to the database")
-	log.Info("Stopped process to create jobs for predictions from full text")
+	app.MR.quotations.Close()
+	app.MR.languages.Close()
+	log.Info("Closed the connection to the message broker")
+	log.Info("Stopped qftext")
 }
