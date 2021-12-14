@@ -4,37 +4,40 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 // Connect returns a pool of connection to the database, which is conncurrency
 // safe. Uses the pgx interface.
-func Connect(ctx context.Context) (*pgxpool.Pool, error) {
-	connstr, err := getConnString()
-	if err != nil {
-		return nil, err
+func Connect(ctx context.Context, connstr string) (*pgxpool.Pool, error) {
+	var db *pgxpool.Pool
+
+	connectWithRetry := func() error {
+		select {
+		case <-ctx.Done():
+			return backoff.Permanent(errors.New("Cancelled attempt to conntect to database"))
+		default:
+			conn, err := pgxpool.Connect(ctx, connstr)
+			if err != nil {
+				return fmt.Errorf("Error connecting to database: %w", err)
+			}
+
+			err = conn.Ping(ctx)
+			if err != nil {
+				return fmt.Errorf("Error pinging database: %w", err)
+			}
+			db = conn
+		}
+		return nil
 	}
 
-	db, err := pgxpool.Connect(ctx, connstr)
+	policy := backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 10)
+	err := backoff.Retry(connectWithRetry, policy)
 	if err != nil {
-		return nil, fmt.Errorf("Error connecting to database: %w", err)
-	}
-
-	err = db.Ping(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("Error pinging database: %w", err)
+		return nil, fmt.Errorf("Failed to connect to database: %w", err)
 	}
 
 	return db, nil
-}
-
-// getConnString returns the DB connection string set as an environment variable
-func getConnString() (string, error) {
-	connstr, exists := os.LookupEnv("CCHC_DBSTR")
-	if !exists {
-		return "", errors.New("Database connection string not set; use the CCHC_DBSTR environment variable")
-	}
-	return connstr, nil
 }

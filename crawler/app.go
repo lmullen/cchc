@@ -127,16 +127,15 @@ func (app *App) Init() error {
 	if err != nil {
 		return fmt.Errorf("Failed to open a channel on message broker: %w", err)
 	}
-	err = ch.Qos(12, 0, true)
+	err = ch.Qos(64, 0, true)
 	if err != nil {
 		log.Fatal("Failed to set prefetch on the message broker: ", err)
 	}
 	app.ItemMetadataQ.Channel = ch
 	q, err := ch.QueueDeclare("items-metadata", true, false, false, false,
 		amqp.Table{
-			// "x-max-length":           10000000,
 			"x-queue-mode":           "lazy",
-			"x-dead-letter-exchange": "failed-items-metadata",
+			"x-dead-letter-exchange": "dead-letter-exchange",
 		})
 	if err != nil {
 		return fmt.Errorf("Failed to declare a queue: %w", err)

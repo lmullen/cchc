@@ -74,6 +74,8 @@ services:
     depends_on:
       - "queue"
     network_mode: "host"
+    # volumes:
+    #   - ./potential-matches/:/tmp/potential/
 
 volumes:
   queue-data:

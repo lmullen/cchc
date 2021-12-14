@@ -4,14 +4,14 @@ FROM golang:latest AS compiler
 # Set the working directory inside the container
 WORKDIR /cchc/predictor/aggregator
 
-# Copy Go code into the app
-COPY common /cchc/common
-COPY predictor/aggregator /cchc/predictor/aggregator
-
 # Copy dependencies prior to building so that this layer is cached unless
 # specified dependencies change
 COPY go.mod go.sum /cchc/
 RUN go mod download
+
+# Copy Go code into the app
+COPY common /cchc/common
+COPY predictor/aggregator /cchc/predictor/aggregator
 
 # Build the Go app, making sure it is a static binary with no debugging symbols
 RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags="-w -s" -o aggregator

@@ -1,12 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	log "github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
+
+	database "github.com/lmullen/cchc/common/db"
 )
 
 var db *pgxpool.Pool
@@ -48,9 +52,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	db, err = DBConnect()
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	connstr, exists := os.LookupEnv("CCHC_DBSTR")
+	if !exists {
+		log.Fatal("Database connection string not set as an environment variable")
+	}
+	db, err = database.Connect(ctx, connstr)
 	if err != nil {
-		log.Fatal("Error connecting to the database", err)
+		log.Fatal("Error connecting to database: ", err)
 	}
 	defer db.Close()
 
