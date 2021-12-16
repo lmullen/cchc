@@ -14,7 +14,7 @@ COPY common /cchc/common
 COPY predictor/aggregator /cchc/predictor/aggregator
 
 # Build the Go app, making sure it is a static binary with no debugging symbols
-RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags="-w -s" -o aggregator
+RUN GOOS=linux CGO_ENABLED=0 go build -a -ldflags="-w -s" -o aggregator
 
 # Start from the same R version used for APB on Argo HPC
 FROM rocker/tidyverse:3.5.2
