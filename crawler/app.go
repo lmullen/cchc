@@ -20,14 +20,7 @@ import (
 // The Config type stores configuration which is read from environment variables.
 type Config struct {
 	dbstr    string
-	mqstr    string
 	loglevel string
-}
-
-// Queue holds all the items related to sending on a message queue
-type Queue struct {
-	Channel *amqp.Channel
-	Queue   *amqp.Queue
 }
 
 // The App type shares access to the database and other resources.
@@ -41,7 +34,6 @@ type App struct {
 		Items       ratelimit.Limiter
 		Collections ratelimit.Limiter
 	}
-	ItemMetadataQ Queue
 }
 
 // Init creates a new App and connects to the database or returns an error
@@ -56,12 +48,6 @@ func (app *App) Init() error {
 		return errors.New("CCHC_DBSTR environment variable is not set")
 	}
 	app.Config.dbstr = dbstr
-
-	mqstr, ok := os.LookupEnv("CCHC_MQSTR")
-	if !ok {
-		return errors.New("CCHC_MQSTR environment variable is not set")
-	}
-	app.Config.mqstr = mqstr
 
 	ll, ok := os.LookupEnv("CCHC_LOGLEVEL")
 	if !ok {
@@ -105,43 +91,6 @@ func (app *App) Init() error {
 
 	app.DB = db
 	log.Info("Connected to the database successfully")
-
-	// Connect to RabbitMQ and set up the queues. Try to connect multiple times
-	var rabbit *amqp.Connection
-	mqConnect := func() error {
-		r, err := amqp.Dial(app.Config.mqstr)
-		if err != nil {
-			return err
-		}
-		rabbit = r
-		return nil
-	}
-
-	log.Info("Attempting to connect to the message broker")
-	err = backoff.Retry(mqConnect, policy)
-	if err != nil {
-		return fmt.Errorf("Failed to connect to message broker: %w", err)
-	}
-	app.MessageBroker = rabbit
-	ch, err := rabbit.Channel()
-	if err != nil {
-		return fmt.Errorf("Failed to open a channel on message broker: %w", err)
-	}
-	err = ch.Qos(64, 0, true)
-	if err != nil {
-		log.Fatal("Failed to set prefetch on the message broker: ", err)
-	}
-	app.ItemMetadataQ.Channel = ch
-	q, err := ch.QueueDeclare("items-metadata", true, false, false, false,
-		amqp.Table{
-			"x-queue-mode":           "lazy",
-			"x-dead-letter-exchange": "dead-letter-exchange",
-		})
-	if err != nil {
-		return fmt.Errorf("Failed to declare a queue: %w", err)
-	}
-	app.ItemMetadataQ.Queue = &q
-	log.Info("Connected to the message broker successfully")
 
 	// Set up a client to use for all HTTP requests. It will automatically retry.
 	rc := retryablehttp.NewClient()

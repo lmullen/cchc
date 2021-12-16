@@ -1,12 +1,7 @@
 package main
 
 import (
-	"database/sql"
-	"encoding/json"
 	"fmt"
-	"time"
-
-	"github.com/streadway/amqp"
 )
 
 // ItemResult is an item returned from a LOC.gov collection results page. There
@@ -76,52 +71,12 @@ func (item ItemResult) Save() error {
 // Fetched checks whether an item's metadata has already been fetched
 // from the API. This will also return false if the item has not been saved at
 // all.
-func (item ItemResult) Fetched() (bool, error) {
-	var fetched bool
-	query := `SELECT EXISTS (SELECT 1 FROM items WHERE id=$1 AND api IS NOT NULL)`
-	err := app.DB.QueryRow(query, item.ID).Scan(&fetched)
-	if err != nil && err != sql.ErrNoRows {
-		return fetched, fmt.Errorf("Error checking if item %s has been fetched: %w", item.ID, err)
-	}
-	return fetched, nil
-}
-
-// EnqueueMetadata sends a message to the message queue to so that the item's
-// metadata will put into a queue to be fetched.
-func (item ItemResult) EnqueueMetadata() error {
-
-	json, err := json.Marshal(item.Msg())
-	if err != nil {
-		return fmt.Errorf("Error marshalling item to JSON: %w", err)
-	}
-
-	msg := amqp.Publishing{
-		DeliveryMode: amqp.Persistent,
-		ContentType:  "text/json",
-		Timestamp:    time.Now(),
-		Body:         json,
-	}
-
-	err = app.ItemMetadataQ.Channel.Publish("", app.ItemMetadataQ.Queue.Name,
-		false, false, msg)
-	if err != nil {
-		return fmt.Errorf("Failed to publish item metadata message: %w", err)
-	}
-
-	return nil
-}
-
-// ItemMetadataMsg is a minimal representation of an item for sending to the
-// message broker.
-type ItemMetadataMsg struct {
-	ID  string `json:"id"`
-	URL string `json:"url"`
-}
-
-// Msg returns a minimal representation for sending to the message broker.
-func (item ItemResult) Msg() ItemMetadataMsg {
-	return ItemMetadataMsg{
-		ID:  item.ID,
-		URL: item.URL,
-	}
-}
+// func (item ItemResult) Fetched() (bool, error) {
+// 	var fetched bool
+// 	query := `SELECT EXISTS (SELECT 1 FROM items WHERE id=$1 AND api IS NOT NULL)`
+// 	err := app.DB.QueryRow(query, item.ID).Scan(&fetched)
+// 	if err != nil && err != sql.ErrNoRows {
+// 		return fetched, fmt.Errorf("Error checking if item %s has been fetched: %w", item.ID, err)
+// 	}
+// 	return fetched, nil
+// }
