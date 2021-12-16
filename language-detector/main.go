@@ -21,14 +21,12 @@ func main() {
 	docs := []Doc{es, en, both, de, tricky}
 
 	for _, d := range docs {
-		_, w, err := CalculateLanguages(d.text)
+		l, w, err := CalculateLanguages(d.text)
 		if err != nil {
 			log.Println(err)
 			break
 		}
-		fmt.Println("Actual language: ", d.lang, "Stats: ", w)
-
-		fmt.Print("\n\n")
+		fmt.Print("Actual language: ", d.lang, " Lingua: ", l, " Whatlang:", w, "\n\n")
 
 	}
 

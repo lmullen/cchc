@@ -13,6 +13,7 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.16
 	github.com/mpvl/unique v0.0.0-20150818121801-cbe035fff7de
 	github.com/orlangure/gnomock v0.18.2
+	github.com/pemistahl/lingua-go v1.0.4
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/streadway/amqp v1.0.0
