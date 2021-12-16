@@ -22,7 +22,7 @@ type ItemResponse struct {
 		Date     string   `json:"date"`
 		Subjects []string `json:"subject_headings"`
 		Title    string   `json:"title"`
-		// Language     []string  `json:"language"`
+		Language []string `json:"language"`
 		// OnlineFormat []string  `json:"online_format"`
 		// Version      int64     `json:"_version_"`
 		// HasSegments  bool      `json:"hassegments"`
@@ -57,6 +57,7 @@ type Item struct {
 	Resources []ItemResource
 	Files     []ItemFile
 	API       []byte // The entire API response stored as JSONB
+	Languages []string
 }
 
 // ItemResource contains a description of some kind of source.
@@ -155,6 +156,7 @@ func (i *Item) Fetch() error {
 	i.Date = result.ItemDetails.Date
 	i.Subjects = result.ItemDetails.Subjects
 	i.API = data
+	i.Languages = result.ItemDetails.Language
 
 	var temp [][]string
 
@@ -230,8 +232,8 @@ func (i *Item) Fetch() error {
 // Save serializes an item to the database
 func (i Item) Save() error {
 	itemQuery := `
-	INSERT INTO items (id, url, title, year, date, subjects, api)
-	VALUES ($1, $2, $3, $4, $5, $6, $7)
+	INSERT INTO items (id, url, title, year, date, subjects, api, languages)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	ON CONFLICT (id) DO UPDATE
 	SET
 	  url              = $2,
@@ -239,7 +241,8 @@ func (i Item) Save() error {
 		year             = $4,
 		date             = $5,
 		subjects         = $6,
-		api              = $7;
+		api              = $7,
+		languages        = $8;
 	`
 
 	resourceQuery := `
@@ -262,7 +265,7 @@ func (i Item) Save() error {
 	}
 
 	_, err = tx.Exec(itemQuery, i.ID, i.URL, i.Title, i.Year, i.Date, i.Subjects,
-		i.API)
+		i.API, i.Languages)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("Error saving item %s to database: %w", i, err)
