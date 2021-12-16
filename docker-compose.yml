@@ -11,8 +11,6 @@ services:
       - CCHC_MQSTR
       - CCHC_LOGLEVEL
     network_mode: "host"
-    volumes:
-      - go-build-cache:/root/.cache/go-build
 
   itemmd:
     build:
@@ -24,8 +22,6 @@ services:
       - CCHC_MQSTR
       - CCHC_LOGLEVEL
     network_mode: "host"
-    volumes:
-      - go-build-cache:/root/.cache/go-build
 
   qftext:
     build:
@@ -37,8 +33,6 @@ services:
       - CCHC_MQSTR
       - CCHC_LOGLEVEL
     network_mode: "host"
-    volumes:
-      - go-build-cache:/root/.cache/go-build
 
   predictor:
     build:
@@ -56,6 +50,3 @@ services:
     network_mode: "host"
     # volumes:
     #   - ./potential-matches/:/tmp/potential/
-
-volumes:
-  go-build-cache:
