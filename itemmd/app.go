@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -10,7 +9,6 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/lmullen/cchc/common/messages"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/hashicorp/go-retryablehttp"
@@ -26,7 +24,6 @@ const (
 // The Config type stores configuration which is read from environment variables.
 type Config struct {
 	dbstr    string
-	mqstr    string
 	loglevel string
 }
 
@@ -35,7 +32,6 @@ type App struct {
 	DB       *sql.DB
 	Config   *Config
 	Client   *http.Client
-	MsgRepo  messages.Repository
 	Limiters struct {
 		Newspapers  ratelimit.Limiter
 		Items       ratelimit.Limiter
@@ -55,12 +51,6 @@ func (app *App) Init() error {
 		return errors.New("CCHC_DBSTR environment variable is not set")
 	}
 	app.Config.dbstr = dbstr
-
-	mqstr, ok := os.LookupEnv("CCHC_MQSTR")
-	if !ok {
-		return errors.New("CCHC_MQSTR environment variable is not set")
-	}
-	app.Config.mqstr = mqstr
 
 	ll, ok := os.LookupEnv("CCHC_LOGLEVEL")
 	if !ok {
@@ -105,16 +95,6 @@ func (app *App) Init() error {
 	app.DB = db
 	log.Info("Connected to the database successfully")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	// Connect to RabbitMQ and set up the queues. Try to connect multiple times
-	rabbit, err := messages.NewRabbitMQ(ctx, app.Config.mqstr, "items-metadata", 64)
-	if err != nil {
-		return fmt.Errorf("Error connecting to message broker: %w", err)
-	}
-	app.MsgRepo = rabbit
-	log.Info("Connected to the message broker successfully")
-
 	// Set up a client to use for all HTTP requests. It will automatically retry.
 	rc := retryablehttp.NewClient()
 	rc.RetryWaitMin = 10 * time.Second
@@ -154,12 +134,6 @@ func (app *App) Shutdown() {
 		log.Error("Failed to close the connection to the database:", err)
 	} else {
 		log.Info("Closed the connection to the database successfully")
-	}
-	err = app.MsgRepo.Close()
-	if err != nil {
-		log.Error("Failed to close the connection to the message queue: ", err)
-	} else {
-		log.Info("Closed the connection to the message broker successfully")
 	}
 	log.Info("Shutdown the item metadata fetcher")
 }

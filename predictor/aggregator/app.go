@@ -81,6 +81,7 @@ func (app *App) Init() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
+	log.Println(app.Config.dbstr)
 	db, err := db.Connect(ctx, app.Config.dbstr)
 	if err != nil {
 		return fmt.Errorf("Failed to connect to database: %w", err)
