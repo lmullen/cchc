@@ -98,4 +98,80 @@ func TestItemsDB(t *testing.T) {
 	itemSaved.Updated = itemSavedAndFetched.Updated
 
 	assert.Equal(t, itemSaved, itemSavedAndFetched)
+
+}
+
+func TestUnfetched(t *testing.T) {
+	t.Parallel()
+
+	user := "gnomock"
+	pass := "strong-passwords-are-the-best"
+	dbname := "cchc_gnomock_test"
+
+	p := postgres.Preset(
+		postgres.WithUser(user, pass),
+		postgres.WithDatabase(dbname),
+	)
+
+	container, err := gnomock.Start(p)
+	assert.NoError(t, err)
+	defer func() { assert.NoError(t, gnomock.Stop(container)) }()
+
+	connstr := fmt.Sprintf("postgres://%s:%s@%s:%v/%s?sslmode=disable",
+		user, pass, container.Host, container.DefaultPort(), dbname)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	db, _ := db.Connect(ctx, connstr)
+	db.Ping(ctx)
+	m, _ := migrate.New("file://../../../db/migrations", connstr)
+	m.Up()
+
+	itemsRepo := items.NewItemRepo(db)
+
+	// Save two dummy items to the database
+	item1 := &items.Item{
+		ID: "http://www.loc.gov/item/mal1285100/",
+		URL: sql.NullString{
+			String: "https://www.loc.gov/item/mal1285100/",
+			Valid:  true,
+		},
+	}
+
+	item2 := &items.Item{
+		ID: "http://www.loc.gov/item/copland.phot0080/",
+		URL: sql.NullString{
+			String: "https://www.loc.gov/item/copland.phot0080/",
+			Valid:  true,
+		},
+	}
+
+	item3 := &items.Item{
+		ID: "http://www.loc.gov/item/91898143/",
+		URL: sql.NullString{
+			String: "https://www.loc.gov/item/91898143/",
+			Valid:  true,
+		},
+		API: sql.NullString{
+			String: "{\"test\":\"test\"}",
+			Valid:  true,
+		},
+	}
+
+	// Save it to the repository
+	err = itemsRepo.Save(ctx, item1)
+	assert.NoError(t, err)
+	err = itemsRepo.Save(ctx, item2)
+	assert.NoError(t, err)
+	err = itemsRepo.Save(ctx, item3)
+	assert.NoError(t, err)
+
+	unfetched, err := itemsRepo.GetAllUnfetched(ctx)
+	assert.NoError(t, err, "no error when getting unfetched")
+
+	assert.Contains(t, unfetched, item1.ID)
+	assert.Contains(t, unfetched, item2.ID)
+	assert.NotContains(t, unfetched, item3.ID)
+
 }

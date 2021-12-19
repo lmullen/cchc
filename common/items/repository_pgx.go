@@ -149,3 +149,27 @@ func (r *Repo) Save(ctx context.Context, item *Item) error {
 
 	return nil
 }
+
+// GetAllUnfetched gets the IDs of all items which still need to be fetched
+func (r *Repo) GetAllUnfetched(ctx context.Context) ([]string, error) {
+	query := `SELECT id FROM items WHERE api IS NULL ORDER BY updated DESC;`
+
+	var unfetched []string
+	var res string
+
+	rows, err := r.db.Query(ctx, query)
+	defer rows.Close()
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+
+		err = rows.Scan(&res)
+		if err != nil {
+			return nil, err
+		}
+		unfetched = append(unfetched, res)
+	}
+
+	return unfetched, nil
+}
