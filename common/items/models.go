@@ -2,6 +2,7 @@ package items
 
 import (
 	"database/sql"
+	"time"
 )
 
 // Item is a representation of an item in the LOC digital collections, along
@@ -17,6 +18,7 @@ type Item struct {
 	Files     []ItemFile
 	Languages []string
 	API       sql.NullString // The entire API response stored as JSONB
+	Updated   time.Time
 }
 
 // ItemResource is a resource attached to an item.

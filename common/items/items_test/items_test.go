@@ -1,4 +1,4 @@
-package db_test
+package items_test
 
 import (
 	"context"
@@ -51,7 +51,7 @@ func TestItemsDB(t *testing.T) {
 
 	// Create an item from ID and URL
 	itemStart := &items.Item{
-		ID: "https://www.loc.gov/item/mal1285100/",
+		ID: "http://www.loc.gov/item/mal1285100/",
 		URL: sql.NullString{
 			String: "https://www.loc.gov/item/mal1285100/",
 			Valid:  true,
@@ -64,6 +64,7 @@ func TestItemsDB(t *testing.T) {
 
 	// Retrieve the item and check that it is the same as what we started with
 	itemSaved, err := itemsRepo.Get(ctx, itemStart.ID)
+	itemStart.Updated = itemSaved.Updated // Set timestamp equal
 	assert.True(t, reflect.DeepEqual(itemStart, itemSaved))
 
 	// Check that the item is not fetched
@@ -86,9 +87,15 @@ func TestItemsDB(t *testing.T) {
 	itemSavedAndFetched, err := itemsRepo.Get(ctx, itemSaved.ID)
 	assert.NoError(t, err)
 
+	// Check that updating the timestamp works correctly
+	assert.True(t, itemSavedAndFetched.Updated.After(itemSaved.Updated))
+
 	// PostgreSQL will change the JSONB column formatting, so don't check it
 	itemSaved.API = sql.NullString{}
 	itemSavedAndFetched.API = sql.NullString{}
+
+	// Ignore the timestamp because that will by definition have changed
+	itemSaved.Updated = itemSavedAndFetched.Updated
 
 	assert.Equal(t, itemSaved, itemSavedAndFetched)
 }

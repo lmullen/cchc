@@ -23,7 +23,7 @@ func NewItemRepo(db *pgxpool.Pool) *Repo {
 func (r *Repo) Get(ctx context.Context, ID string) (*Item, error) {
 	item := Item{}
 	itemQuery := `
-	SELECT id, url, title, year, date, subjects, languages, api
+	SELECT id, url, title, year, date, subjects, languages, api, updated
 	FROM items 
 	WHERE id = $1;
 	`
@@ -41,7 +41,7 @@ func (r *Repo) Get(ctx context.Context, ID string) (*Item, error) {
 	`
 
 	err := r.db.QueryRow(ctx, itemQuery, ID).
-		Scan(&item.ID, &item.URL, &item.Title, &item.Year, &item.Date, &item.Subjects, &item.Languages, &item.API)
+		Scan(&item.ID, &item.URL, &item.Title, &item.Year, &item.Date, &item.Subjects, &item.Languages, &item.API, &item.Updated)
 	if err != nil {
 		return nil, err
 	}
@@ -83,8 +83,8 @@ func (r *Repo) Get(ctx context.Context, ID string) (*Item, error) {
 // or updating the fields.
 func (r *Repo) Save(ctx context.Context, item *Item) error {
 	itemQuery := `
-	INSERT INTO items (id, url, title, year, date, subjects, api, languages)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+	INSERT INTO items (id, url, title, year, date, subjects, languages, api, updated)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
 	ON CONFLICT (id) DO UPDATE
 	SET
 	  url              = $2,
@@ -92,8 +92,9 @@ func (r *Repo) Save(ctx context.Context, item *Item) error {
 		year             = $4,
 		date             = $5,
 		subjects         = $6,
-		api              = $7,
-		languages        = $8;
+		languages        = $7,
+		api              = $8,
+		updated          = NOW();
 	`
 
 	resourceQuery := `
@@ -116,7 +117,7 @@ func (r *Repo) Save(ctx context.Context, item *Item) error {
 	}
 
 	_, err = tx.Exec(ctx, itemQuery, item.ID, item.URL, item.Title, item.Year,
-		item.Date, item.Subjects, item.API, item.Languages)
+		item.Date, item.Subjects, item.Languages, item.API)
 	if err != nil {
 		tx.Rollback(ctx)
 		return fmt.Errorf("Error saving item %s to database: %w", item, err)
