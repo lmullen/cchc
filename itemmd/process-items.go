@@ -55,6 +55,12 @@ func StartProcessingItems(ctx context.Context, wg *sync.WaitGroup) {
 				app.Limiters.Items.Take()
 
 				log.WithField("item_id", item.ID).Debug("Fetching item from loc.gov API")
+
+				if isResourceNotItem(item.URL.String) {
+					log.WithField("item_id", id).Debug("Skipping item because it is actually a resource")
+					continue
+				}
+
 				err = item.Fetch(app.Client)
 				if err != nil {
 					log.WithError(err).WithField("item_id", id).Error("Error fetching item from API")
