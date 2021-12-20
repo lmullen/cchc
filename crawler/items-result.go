@@ -21,8 +21,8 @@ func (item ItemResult) String() string {
 // Save serializes an item to the database.
 func (item ItemResult) Save() error {
 	itemQuery := `
-	INSERT INTO items(id, url) 
-	VALUES ($1, $2)
+	INSERT INTO items(id, url, updated) 
+	VALUES ($1, $2, NOW())
 	ON CONFLICT DO NOTHING;
 	`
 

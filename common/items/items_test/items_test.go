@@ -128,7 +128,8 @@ func TestUnfetched(t *testing.T) {
 	m, _ := migrate.New("file://../../../db/migrations", connstr)
 	m.Up()
 
-	itemsRepo := items.NewItemRepo(db)
+	var itemsRepo items.Repository // Use this asn interface, not a concrete type
+	itemsRepo = items.NewItemRepo(db)
 
 	// Save two dummy items to the database
 	item1 := &items.Item{

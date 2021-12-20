@@ -2,66 +2,74 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"sync"
-
-	"github.com/streadway/amqp"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
 
-// StartProcessingItems begins reading items from the message queue in order to
-// process each of them.
-func startProcessingItems(ctx context.Context, wg *sync.WaitGroup) {
+// StartProcessingItems gets unfetched items
+func StartProcessingItems(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
-	for msg := range app.MsgRepo.Consume() {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-			// Give each item its own goroutine
-			wg.Add(1)
-			go processItemMetadata(ctx, wg, msg)
+
+	// Repeat endlessly unless context is canceled
+	for {
+		timeout, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+		unfetched, err := app.ItemsRepo.GetAllUnfetched(timeout)
+		if err != nil {
+			log.WithError(err).Fatal("Error getting unfetched items from database")
+		}
+
+		if len(unfetched) == 0 {
+			log.Info("No unfetched items. Sleeping until checking again")
+			select {
+			case <-ctx.Done():
+			case <-time.After(60 * time.Second):
+				log.Info("Resuming checking for unfetched items")
+				break
+			}
+		}
+
+		for _, id := range unfetched {
+
+			select {
+			case <-ctx.Done():
+				// Break out of function if context is canceled
+				return
+			default:
+				// If an item previously failed less than an hour ago skip it
+				if !checkable(app.Failures, id) {
+					log.WithField("item_id", id).Debug("Skipping item because it failed to fetch less than an hour ago")
+					continue
+				}
+
+				// Get the item from the database and fetch it, then save to repository
+				item, err := app.ItemsRepo.Get(ctx, id)
+				if err != nil {
+					log.WithError(err).WithField("item_id", id).Error("Error getting item to fetch from database")
+					continue
+				}
+
+				// Make sure to rate limit
+				app.Limiters.Items.Take()
+
+				log.WithField("item_id", item.ID).Debug("Fetching item from loc.gov API")
+				err = item.Fetch(app.Client)
+				if err != nil {
+					log.WithError(err).WithField("item_id", id).Error("Error fetching item from API")
+					// Record when the last failure happened
+					app.Failures[id] = time.Now()
+					log.Debug(app.Failures)
+					continue
+				}
+
+				err = app.ItemsRepo.Save(ctx, item)
+				if err != nil {
+					log.WithError(err).WithField("item_id", id).Error("Error saving item to database")
+					continue
+				}
+			}
 		}
 	}
-}
-
-// ProcessItemMetadata reads an item from the queue, fetches its metadata, and
-// saves it to the database.
-func processItemMetadata(ctx context.Context, wg *sync.WaitGroup, msg amqp.Delivery) {
-	defer wg.Done()
-	var item Item
-	err := json.Unmarshal(msg.Body, &item)
-	if err != nil {
-		msg.Reject(false)
-		log.WithError(err).WithField("msg", msg).Error("Failed to read body of message from queue")
-		return
-	}
-	// Skip fetching items which are actually resources
-	if isResourceNotItem(item.URL) {
-		msg.Reject(false)
-		log.WithField("url", item.URL).WithField("id", item.ID).Debug("Skipping item which is actually a resource")
-		return
-	}
-	// Check if fetched already
-	fetched, _ := item.Fetched()
-	if fetched {
-		msg.Ack(false)
-		log.WithField("id", item.ID).Warn("Skipping item which was queued but already fetched")
-		return
-	}
-	err = item.Fetch()
-	if err != nil {
-		msg.Reject(false)
-		log.WithError(err).WithField("url", item.URL).WithField("id", item.ID).Error("Error fetching item")
-		return
-	}
-	err = item.Save()
-	if err != nil {
-		msg.Reject(false)
-		log.WithError(err).WithField("id", item.ID).Error("Error saving item to database")
-		return
-	}
-	msg.Ack(false)
-	return
 }

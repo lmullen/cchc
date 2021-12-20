@@ -1,24 +1,24 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
+	"github.com/lmullen/cchc/common/db"
+	"github.com/lmullen/cchc/common/items"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/hashicorp/go-retryablehttp"
-	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"go.uber.org/ratelimit"
 )
 
 // Configuration options that aren't worth exposing as environment variables
 const (
-	apiTimeout = 60 // The timeout limit for API requests in seconds
+	apiTimeout = 15 // The timeout limit for API requests in seconds
 )
 
 // The Config type stores configuration which is read from environment variables.
@@ -29,14 +29,16 @@ type Config struct {
 
 // The App type shares access to the database and other resources.
 type App struct {
-	DB       *sql.DB
-	Config   *Config
-	Client   *http.Client
-	Limiters struct {
+	DB        *pgxpool.Pool
+	Config    *Config
+	Client    *http.Client
+	ItemsRepo items.Repository
+	Limiters  struct {
 		Newspapers  ratelimit.Limiter
 		Items       ratelimit.Limiter
 		Collections ratelimit.Limiter
 	}
+	Failures map[string]time.Time
 }
 
 // Init creates a new app and connects to the database or returns an error
@@ -44,13 +46,6 @@ func (app *App) Init() error {
 	log.Info("Starting the item metadata fetcher")
 
 	app.Config = &Config{}
-
-	// Read the configuration from environment variables.
-	dbstr, ok := os.LookupEnv("CCHC_DBSTR")
-	if !ok {
-		return errors.New("CCHC_DBSTR environment variable is not set")
-	}
-	app.Config.dbstr = dbstr
 
 	ll, ok := os.LookupEnv("CCHC_LOGLEVEL")
 	if !ok {
@@ -68,38 +63,35 @@ func (app *App) Init() error {
 		log.SetLevel(log.InfoLevel)
 	case "debug":
 		log.SetLevel(log.DebugLevel)
+	case "trace":
+		log.SetLevel(log.TraceLevel)
 	}
 
-	// Set a policy for backoffs
-	policy := backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 10)
+	app.Failures = make(map[string]time.Time)
 
-	// Connect to the database and initialize it.
-	var db *sql.DB
-	dbConnect := func() error {
-		d, err := sql.Open("pgx", app.Config.dbstr)
-		if err != nil {
-			return fmt.Errorf("Failed to dial the database: %w", err)
-		}
-		if err := d.Ping(); err != nil {
-			return fmt.Errorf("Failed to ping the database: %w", err)
-		}
-		db = d
-		return nil
+	// Read the configuration from environment variables.
+	dbstr, ok := os.LookupEnv("CCHC_DBSTR")
+	if !ok {
+		return errors.New("CCHC_DBSTR environment variable is not set")
 	}
-	log.Infof("Attempting to connect to the database")
-	err := backoff.Retry(dbConnect, policy)
+	app.Config.dbstr = dbstr
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	db, err := db.Connect(ctx, app.Config.dbstr)
 	if err != nil {
-		return fmt.Errorf("Failed to connect to the database: %w", err)
+		return err
 	}
-
 	app.DB = db
+	app.ItemsRepo = items.NewItemRepo(db)
 	log.Info("Connected to the database successfully")
 
 	// Set up a client to use for all HTTP requests. It will automatically retry.
 	rc := retryablehttp.NewClient()
-	rc.RetryWaitMin = 10 * time.Second
-	rc.RetryWaitMax = 2 * time.Minute
-	rc.RetryMax = 6
+	rc.RetryWaitMin = 3 * time.Second
+	rc.RetryWaitMax = 20 * time.Second
+	rc.RetryMax = 2
 	rc.HTTPClient.Timeout = apiTimeout * time.Second
 	rc.Logger = nil
 	// This will log all HTTP requests made, which is not desirable.
@@ -129,11 +121,7 @@ func (app *App) Init() error {
 
 // Shutdown closes the connection to the database.
 func (app *App) Shutdown() {
-	err := app.DB.Close()
-	if err != nil {
-		log.Error("Failed to close the connection to the database:", err)
-	} else {
-		log.Info("Closed the connection to the database successfully")
-	}
+	app.DB.Close()
+	log.Info("Closed the connection to the database successfully")
 	log.Info("Shutdown the item metadata fetcher")
 }

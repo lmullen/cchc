@@ -25,10 +25,9 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	wg := &sync.WaitGroup{}
-
 	// Process the items from the queue
 	wg.Add(1)
-	go startProcessingItems(ctx, wg)
+	go StartProcessingItems(ctx, wg)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
