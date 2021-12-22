@@ -5,7 +5,11 @@ services:
     build:
       dockerfile: crawler.Dockerfile
     image: ghcr.io/lmullen/cchc-crawler:main
-    restart: unless-stopped
+    restart_policy:
+      condition: on-failure
+      delay: 15s
+      max_attempts: 3
+      window: 120s
     environment:
       - CCHC_DBSTR
       - CCHC_MQSTR
@@ -16,7 +20,11 @@ services:
     build:
       dockerfile: itemmd.Dockerfile
     image: ghcr.io/lmullen/cchc-itemmd:main
-    restart: unless-stopped
+    restart_policy:
+      condition: on-failure
+      delay: 15s
+      max_attempts: 3
+      window: 120s
     environment:
       - CCHC_DBSTR
       - CCHC_MQSTR
@@ -27,7 +35,11 @@ services:
     build:
       dockerfile: qftext.Dockerfile
     image: ghcr.io/lmullen/cchc-qftext:main
-    restart: unless-stopped
+    restart_policy:
+      condition: on-failure
+      delay: 15s
+      max_attempts: 3
+      window: 120s
     environment:
       - CCHC_DBSTR
       - CCHC_MQSTR
@@ -38,12 +50,16 @@ services:
     build:
       dockerfile: predictor.Dockerfile
     image: ghcr.io/lmullen/cchc-predictor:main
-    restart: unless-stopped
     environment:
       - CCHC_LOGLEVEL
       - CCHC_DBSTR
       - CCHC_MQSTR
       - PASSWORD=guest
+    restart_policy:
+      condition: on-failure
+      delay: 15s
+      max_attempts: 3
+      window: 120s
     deploy:
       mode: replicated
       replicas: 2
