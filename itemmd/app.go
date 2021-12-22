@@ -18,7 +18,7 @@ import (
 
 // Configuration options that aren't worth exposing as environment variables
 const (
-	apiTimeout = 15 // The timeout limit for API requests in seconds
+	apiTimeout = 10 // The timeout limit for API requests in seconds
 )
 
 // The Config type stores configuration which is read from environment variables.
@@ -42,18 +42,21 @@ type App struct {
 }
 
 // Init creates a new app and connects to the database or returns an error
-func (app *App) Init() error {
+func (app *App) Init(ctx context.Context) error {
 	log.Info("Starting the item metadata fetcher")
+
+	// Set a timeout for getting the application set up
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
 
 	app.Config = &Config{}
 
+	// Set the logging level
 	ll, ok := os.LookupEnv("CCHC_LOGLEVEL")
 	if !ok {
 		ll = "info"
 	}
 	app.Config.loglevel = ll
-
-	// Set the logging level
 	switch app.Config.loglevel {
 	case "error":
 		log.SetLevel(log.ErrorLevel)
@@ -67,17 +70,15 @@ func (app *App) Init() error {
 		log.SetLevel(log.TraceLevel)
 	}
 
+	// Record items that we failed to fetch and when so we don't get stuck fetching them
 	app.Failures = make(map[string]time.Time)
 
-	// Read the configuration from environment variables.
+	// Connect to the database and create the various repositories needed
 	dbstr, ok := os.LookupEnv("CCHC_DBSTR")
 	if !ok {
 		return errors.New("CCHC_DBSTR environment variable is not set")
 	}
 	app.Config.dbstr = dbstr
-
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
 
 	db, err := db.Connect(ctx, app.Config.dbstr)
 	if err != nil {
@@ -90,8 +91,8 @@ func (app *App) Init() error {
 	// Set up a client to use for all HTTP requests. It will automatically retry.
 	rc := retryablehttp.NewClient()
 	rc.RetryWaitMin = 3 * time.Second
-	rc.RetryWaitMax = 20 * time.Second
-	rc.RetryMax = 2
+	rc.RetryWaitMax = 10 * time.Second
+	rc.RetryMax = 3
 	rc.HTTPClient.Timeout = apiTimeout * time.Second
 	rc.Logger = nil
 	// This will log all HTTP requests made, which is not desirable.
@@ -121,7 +122,7 @@ func (app *App) Init() error {
 
 // Shutdown closes the connection to the database.
 func (app *App) Shutdown() {
+	log.Info("Closing the connection to the database")
 	app.DB.Close()
-	log.Info("Closed the connection to the database successfully")
 	log.Info("Shutdown the item metadata fetcher")
 }
