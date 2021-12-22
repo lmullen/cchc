@@ -81,13 +81,18 @@ checkForUnfetched:
 					delete(app.Failures, item.ID)
 				}
 
-				timeout, cancelTimeout := context.WithTimeout(context.Background(), 10*time.Second)
-				defer cancelTimeout()
-				err = app.ItemsRepo.Save(timeout, item)
-				if err != nil {
-					log.WithError(err).WithField("item_id", id).Error("Error saving item to database")
-					continue
-				}
+				// Run the database saving in a separate goroutine so as not to slow down the rate limiter
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					timeout, cancelTimeout := context.WithTimeout(context.Background(), 10*time.Second)
+					defer cancelTimeout()
+					err = app.ItemsRepo.Save(timeout, item)
+					if err != nil {
+						log.WithError(err).WithField("item_id", id).Error("Error saving item to database")
+					}
+				}()
+
 			}
 		}
 	}
