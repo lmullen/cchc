@@ -90,8 +90,8 @@ func (app *App) Init(ctx context.Context) error {
 
 	// Set up a client to use for all HTTP requests. It will automatically retry.
 	rc := retryablehttp.NewClient()
-	rc.RetryWaitMin = 3 * time.Second
-	rc.RetryWaitMax = 10 * time.Second
+	rc.RetryWaitMin = 2 * time.Second
+	rc.RetryWaitMax = 5 * time.Second
 	rc.RetryMax = 3
 	rc.HTTPClient.Timeout = apiTimeout * time.Second
 	rc.Logger = nil

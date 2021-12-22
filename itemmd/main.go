@@ -44,7 +44,7 @@ func main() {
 	// Process items with unfetched metadata
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
-	go StartProcessingItems(ctx, wg)
+	go ProcessUnfetched(ctx, wg)
 	wg.Wait()
 
 }

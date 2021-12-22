@@ -26,7 +26,7 @@ func connect(ctx context.Context, connstr string) (*amqp.Connection, error) {
 	connectWithRetry := func() error {
 		select {
 		case <-ctx.Done():
-			return backoff.Permanent(errors.New("Cancelled attempt to conntect to RabbitMQ"))
+			return backoff.Permanent(errors.New("Cancelled attempt to connect to RabbitMQ"))
 		default:
 			c, err := amqp.Dial(connstr)
 			if err != nil {

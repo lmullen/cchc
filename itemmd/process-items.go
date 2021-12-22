@@ -8,36 +8,47 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// StartProcessingItems gets unfetched items
-func StartProcessingItems(ctx context.Context, wg *sync.WaitGroup) {
+// ProcessUnfetched gets unfetched items
+func ProcessUnfetched(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	// Repeat endlessly unless context is canceled
+	// Repeat the cycle of fetching items endlessly until canceled
+checkForUnfetched:
 	for {
-		timeout, cancel := context.WithTimeout(ctx, 10*time.Second)
-		defer cancel()
-		unfetched, err := app.ItemsRepo.GetAllUnfetched(timeout)
+
+		// First check if we have unfetched items
+		log.Info("Checking if there are any unfetched items in the database")
+		check, unfetched, err := getUnfetched(ctx)
 		if err != nil {
 			log.WithError(err).Fatal("Error getting unfetched items from database")
+			return
 		}
 
-		if len(unfetched) == 0 {
-			log.Info("No unfetched items. Sleeping until checking again")
+		// If there is nothing to fetch, then wait to check again
+		if !check {
+			log.Info("No unfetched items that are currently checkable; will check again in a while")
 			select {
 			case <-ctx.Done():
-			case <-time.After(60 * time.Second):
+				// Break out of the function if the context was canceled
+				log.WithContext(ctx).Info("Work canceled: stopping processing of unfetched items")
+				return
+			case <-time.After(10 * time.Minute):
 				log.Info("Resuming checking for unfetched items")
-				break
+				continue checkForUnfetched
 			}
 		}
 
+		log.WithField("unfetched", len(unfetched)).Info("Found unfetched items and starting to fetch them")
 		for _, id := range unfetched {
 
+			// Check for context cancellation before fetchign each item
 			select {
 			case <-ctx.Done():
 				// Break out of function if context is canceled
+				log.WithContext(ctx).Info("Work canceled: stopping processing of unfetched items")
 				return
 			default:
+				// Do work on each item
 				// If an item previously failed less than an hour ago skip it
 				if !checkable(app.Failures, id) {
 					log.WithField("item_id", id).Debug("Skipping item because it failed to fetch less than an hour ago")
@@ -51,26 +62,28 @@ func StartProcessingItems(ctx context.Context, wg *sync.WaitGroup) {
 					continue
 				}
 
-				// Make sure to rate limit
-				app.Limiters.Items.Take()
-
-				log.WithField("item_id", item.ID).Debug("Fetching item from loc.gov API")
-
 				if isResourceNotItem(item.URL.String) {
 					log.WithField("item_id", id).Debug("Skipping item because it is actually a resource")
 					continue
 				}
 
+				// Make sure to rate limit
+				app.Limiters.Items.Take()
+				log.WithField("item_id", item.ID).Debug("Fetching item from loc.gov API")
 				err = item.Fetch(app.Client)
 				if err != nil {
 					log.WithError(err).WithField("item_id", id).Error("Error fetching item from API")
 					// Record when the last failure happened
 					app.Failures[id] = time.Now()
-					log.Debug(app.Failures)
 					continue
+				} else {
+					// Make sure to delete the key from the map if it is successfully fetched
+					delete(app.Failures, item.ID)
 				}
 
-				err = app.ItemsRepo.Save(ctx, item)
+				timeout, cancelTimeout := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancelTimeout()
+				err = app.ItemsRepo.Save(timeout, item)
 				if err != nil {
 					log.WithError(err).WithField("item_id", id).Error("Error saving item to database")
 					continue
