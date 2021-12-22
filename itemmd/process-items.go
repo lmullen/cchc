@@ -81,7 +81,7 @@ checkForUnfetched:
 					delete(app.Failures, item.ID)
 				}
 
-				timeout, cancelTimeout := context.WithTimeout(context.Background(), 5*time.Second)
+				timeout, cancelTimeout := context.WithTimeout(context.Background(), 10*time.Second)
 				defer cancelTimeout()
 				err = app.ItemsRepo.Save(timeout, item)
 				if err != nil {
