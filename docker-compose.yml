@@ -1,18 +1,6 @@
 version: "3.9"
 
 services:
-  queue:
-    image: rabbitmq:3-management
-    hostname: "cchc-rabbitmq"
-    restart: unless-stopped
-    ports:
-      - 5672:5672
-      - 15672:15672
-    volumes:
-      - queue-data:/var/lib/rabbitmq/
-      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
-    # network_mode: "host"
-
   crawler:
     build:
       dockerfile: crawler.Dockerfile
@@ -22,11 +10,7 @@ services:
       - CCHC_DBSTR
       - CCHC_MQSTR
       - CCHC_LOGLEVEL
-    depends_on:
-      - "queue"
     network_mode: "host"
-    volumes:
-      - go-build-cache:/root/.cache/go-build
 
   itemmd:
     build:
@@ -37,11 +21,7 @@ services:
       - CCHC_DBSTR
       - CCHC_MQSTR
       - CCHC_LOGLEVEL
-    depends_on:
-      - "queue"
     network_mode: "host"
-    volumes:
-      - go-build-cache:/root/.cache/go-build
 
   qftext:
     build:
@@ -52,11 +32,7 @@ services:
       - CCHC_DBSTR
       - CCHC_MQSTR
       - CCHC_LOGLEVEL
-    depends_on:
-      - "queue"
     network_mode: "host"
-    volumes:
-      - go-build-cache:/root/.cache/go-build
 
   predictor:
     build:
@@ -71,12 +47,6 @@ services:
     deploy:
       mode: replicated
       replicas: 2
-    depends_on:
-      - "queue"
     network_mode: "host"
     # volumes:
     #   - ./potential-matches/:/tmp/potential/
-
-volumes:
-  queue-data:
-  go-build-cache:

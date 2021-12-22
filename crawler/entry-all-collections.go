@@ -67,24 +67,6 @@ func StartProcessingCollections(cp chan CollectionAPIPage) {
 						"error":   err,
 					}).Error("Error saving item")
 				}
-				fetched, err := item.Fetched()
-				if err != nil {
-					log.WithFields(log.Fields{
-						"item_id": item.ID,
-						"error":   err,
-					}).Error("Error checking if item has been fetched")
-				}
-				if fetched {
-					// Don't put the message in the queue if we've already fetched it
-					return
-				}
-				err = item.EnqueueMetadata()
-				if err != nil {
-					log.WithFields(log.Fields{
-						"item_id": item.ID,
-						"error":   err,
-					}).Fatal("Error putting item in queue for metadata processing")
-				}
 			}
 		}(r)
 	}
