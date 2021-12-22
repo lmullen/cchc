@@ -10,7 +10,6 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	log "github.com/sirupsen/logrus"
-	"github.com/streadway/amqp"
 
 	"github.com/hashicorp/go-retryablehttp"
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -25,11 +24,10 @@ type Config struct {
 
 // The App type shares access to the database and other resources.
 type App struct {
-	DB            *sql.DB
-	Config        *Config
-	Client        *http.Client
-	MessageBroker *amqp.Connection
-	Limiters      struct {
+	DB       *sql.DB
+	Config   *Config
+	Client   *http.Client
+	Limiters struct {
 		Newspapers  ratelimit.Limiter
 		Items       ratelimit.Limiter
 		Collections ratelimit.Limiter
@@ -131,12 +129,6 @@ func (app *App) Shutdown() {
 		log.Error("Failed to close the connection to the database:", err)
 	} else {
 		log.Info("Closed the connection to the database successfully")
-	}
-	err = app.MessageBroker.Close()
-	if err != nil {
-		log.Error("Failed to close the connection to the message queue: ", err)
-	} else {
-		log.Info("Closed the connection to the message broker successfully")
 	}
 	log.Info("Shutdown the LOC.gov API crawler")
 }
