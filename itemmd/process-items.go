@@ -85,7 +85,7 @@ checkForUnfetched:
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					timeout, cancelTimeout := context.WithTimeout(context.Background(), 10*time.Second)
+					timeout, cancelTimeout := context.WithTimeout(context.Background(), 60*time.Second)
 					defer cancelTimeout()
 					err = app.ItemsRepo.Save(timeout, item)
 					if err != nil {
