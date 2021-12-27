@@ -78,13 +78,13 @@ func processBatchOfDocs(ctx context.Context) {
 
 		//
 		for _, d := range docs {
-			job, err := app.JobsRepo.Get(ctx, d.JobID)
+			job, err := app.JobsRepo.GetFullText(ctx, d.JobID)
 			if err != nil {
 				log.WithError(err).WithField("job-id", d.JobID).Warning("Problem getting job from database")
 				break
 			}
 			job.Finish()
-			err = app.JobsRepo.Save(ctx, job)
+			err = app.JobsRepo.SaveFullText(ctx, job)
 			if err != nil {
 				log.WithError(err).WithField("job-id", d.JobID).Warning("Problem updating finished job in database")
 			}
