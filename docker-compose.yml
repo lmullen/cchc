@@ -33,22 +33,6 @@ services:
       - CCHC_LOGLEVEL
     network_mode: "host"
 
-  qftext:
-    build:
-      dockerfile: qftext.Dockerfile
-    image: ghcr.io/lmullen/cchc-qftext:main
-    deploy:
-      restart_policy:
-        condition: on-failure
-        delay: 15s
-        max_attempts: 3
-        window: 120s
-    environment:
-      - CCHC_DBSTR
-      - CCHC_MQSTR
-      - CCHC_LOGLEVEL
-    network_mode: "host"
-
   predictor:
     build:
       dockerfile: predictor.Dockerfile
