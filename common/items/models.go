@@ -48,3 +48,8 @@ type ItemFile struct {
 	Info            sql.NullString
 	Use             sql.NullString
 }
+
+// PlainText is the cleaned up, plain text of part (or all) of an item.
+type PlainText struct {
+	Text string
+}

@@ -23,3 +23,6 @@ func year(date string) sql.NullInt32 {
 	year.Scan(y)
 	return year
 }
+
+// stripXML is a package level function to strip XML/HTML from text
+// var stripXML *bluemonday.Policy = bluemonday.StrictPolicy()

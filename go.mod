@@ -10,6 +10,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	github.com/jackc/pgx/v4 v4.14.1
 	github.com/jdkato/prose/v2 v2.0.0
+	github.com/k3a/html2text v1.0.8
 	github.com/microcosm-cc/bluemonday v1.0.16
 	github.com/mpvl/unique v0.0.0-20150818121801-cbe035fff7de
 	github.com/orlangure/gnomock v0.18.2
