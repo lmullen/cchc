@@ -11,8 +11,6 @@ require (
 	github.com/jackc/pgx/v4 v4.14.1
 	github.com/jdkato/prose/v2 v2.0.0
 	github.com/k3a/html2text v1.0.8
-	github.com/microcosm-cc/bluemonday v1.0.16
-	github.com/mpvl/unique v0.0.0-20150818121801-cbe035fff7de
 	github.com/orlangure/gnomock v0.18.2
 	github.com/pemistahl/lingua-go v1.0.4
 	github.com/sirupsen/logrus v1.8.1
@@ -26,7 +24,6 @@ require (
 require (
 	github.com/Microsoft/go-winio v0.5.1 // indirect
 	github.com/andres-erbsen/clock v0.0.0-20160526145045-9e14626cd129 // indirect
-	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/containerd/containerd v1.5.8 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deckarep/golang-set v1.7.1 // indirect
@@ -36,7 +33,6 @@ require (
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/gorilla/css v1.0.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
