@@ -17,7 +17,7 @@ func Connect(ctx context.Context, connstr string) (*pgxpool.Pool, error) {
 	connectWithRetry := func() error {
 		select {
 		case <-ctx.Done():
-			return backoff.Permanent(errors.New("Cancelled attempt to conntect to database"))
+			return backoff.Permanent(errors.New("Cancelled attempt to connect to database"))
 		default:
 			conn, err := pgxpool.Connect(ctx, connstr)
 			if err != nil {

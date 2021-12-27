@@ -17,25 +17,34 @@ var app = &App{}
 
 func main() {
 
-	err := app.Init()
+	ctx, cancel := context.WithCancel(context.Background())
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	// Clean up function that will be called at program end no matter what
+	defer func() {
+		signal.Stop(quit)
+		cancel()
+	}()
+	// Listen for shutdown signals in a go-routine and cancel context then
+	go func() {
+		select {
+		case <-quit:
+			log.Info("Shutdown signal received; quitting item metadata fetcher")
+			cancel()
+		case <-ctx.Done():
+		}
+	}()
+
+	err := app.Init(ctx)
 	if err != nil {
 		log.Fatal("Error initializing application: ", err)
 	}
 	defer app.Shutdown()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	// Process items with unfetched metadata
 	wg := &sync.WaitGroup{}
-
-	// Process the items from the queue
 	wg.Add(1)
-	go startProcessingItems(ctx, wg)
-
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
-	log.Info("Shutdown signal received; waiting for ongoing work to finish")
-	cancel()
+	go ProcessUnfetched(ctx, wg)
 	wg.Wait()
 
 }

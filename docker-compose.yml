@@ -1,68 +1,58 @@
 version: "3.9"
 
 services:
-  queue:
-    image: rabbitmq:3-management
-    hostname: "cchc-rabbitmq"
-    restart: unless-stopped
-    ports:
-      - 5672:5672
-      - 15672:15672
-    volumes:
-      - queue-data:/var/lib/rabbitmq/
-      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
-    # network_mode: "host"
-
   crawler:
     build:
       dockerfile: crawler.Dockerfile
     image: ghcr.io/lmullen/cchc-crawler:main
-    restart: unless-stopped
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 3
+        window: 120s
     environment:
       - CCHC_DBSTR
       - CCHC_MQSTR
       - CCHC_LOGLEVEL
-    depends_on:
-      - "queue"
     network_mode: "host"
-    volumes:
-      - go-build-cache:/root/.cache/go-build
 
   itemmd:
     build:
       dockerfile: itemmd.Dockerfile
     image: ghcr.io/lmullen/cchc-itemmd:main
-    restart: unless-stopped
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 3
+        window: 120s
     environment:
       - CCHC_DBSTR
       - CCHC_MQSTR
       - CCHC_LOGLEVEL
-    depends_on:
-      - "queue"
     network_mode: "host"
-    volumes:
-      - go-build-cache:/root/.cache/go-build
 
   qftext:
     build:
       dockerfile: qftext.Dockerfile
     image: ghcr.io/lmullen/cchc-qftext:main
-    restart: unless-stopped
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 3
+        window: 120s
     environment:
       - CCHC_DBSTR
       - CCHC_MQSTR
       - CCHC_LOGLEVEL
-    depends_on:
-      - "queue"
     network_mode: "host"
-    volumes:
-      - go-build-cache:/root/.cache/go-build
 
   predictor:
     build:
       dockerfile: predictor.Dockerfile
     image: ghcr.io/lmullen/cchc-predictor:main
-    restart: unless-stopped
     environment:
       - CCHC_LOGLEVEL
       - CCHC_DBSTR
@@ -71,12 +61,11 @@ services:
     deploy:
       mode: replicated
       replicas: 2
-    depends_on:
-      - "queue"
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 3
+        window: 120s
     network_mode: "host"
     # volumes:
     #   - ./potential-matches/:/tmp/potential/
-
-volumes:
-  queue-data:
-  go-build-cache:

@@ -14,7 +14,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/jackc/pgx/v4/pgxpool"
-	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
 // Configuration options that aren't worth exposing as environment variables
@@ -81,6 +80,7 @@ func (app *App) Init() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
+	log.Println(app.Config.dbstr)
 	db, err := db.Connect(ctx, app.Config.dbstr)
 	if err != nil {
 		return fmt.Errorf("Failed to connect to database: %w", err)

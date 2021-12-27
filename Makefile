@@ -6,6 +6,12 @@
 up : 
 	docker compose up --build --force-recreate --detach
 
+# Run in production from containers
+.PHONY : run
+run :
+	docker compose pull
+	docker compose up --force-recreate --detach
+
 # Rebuild and run attached
 .PHONY : attached
 attached : 

@@ -13,7 +13,7 @@ RUN go mod download
 COPY crawler /app
 
 # Build the Go app, making sure it is a static binary with no debugging symbols
-RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -ldflags="-w -s" -o app
+RUN GOOS=linux CGO_ENABLED=0 go build -a -ldflags="-w -s" -o app
 
 # Create non-root user information
 RUN echo "cchc:x:65534:65534:CCHC:/:" > /etc_passwd

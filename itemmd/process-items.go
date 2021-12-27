@@ -2,66 +2,98 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"sync"
-
-	"github.com/streadway/amqp"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
 
-// StartProcessingItems begins reading items from the message queue in order to
-// process each of them.
-func startProcessingItems(ctx context.Context, wg *sync.WaitGroup) {
+// ProcessUnfetched gets unfetched items
+func ProcessUnfetched(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
-	for msg := range app.MsgRepo.Consume() {
-		select {
-		case <-ctx.Done():
+
+	// Repeat the cycle of fetching items endlessly until canceled
+checkForUnfetched:
+	for {
+
+		// First check if we have unfetched items
+		log.Info("Checking if there are any unfetched items in the database")
+		check, unfetched, err := getUnfetched(ctx)
+		if err != nil {
+			log.WithError(err).Fatal("Error getting unfetched items from database")
 			return
-		default:
-			// Give each item its own goroutine
-			wg.Add(1)
-			go processItemMetadata(ctx, wg, msg)
+		}
+
+		// If there is nothing to fetch, then wait to check again
+		if !check {
+			log.Info("No unfetched items that are currently checkable; will check again in a while")
+			select {
+			case <-ctx.Done():
+				// Break out of the function if the context was canceled
+				log.WithContext(ctx).Info("Work canceled: stopping processing of unfetched items")
+				return
+			case <-time.After(10 * time.Minute):
+				log.Info("Resuming checking for unfetched items")
+				continue checkForUnfetched
+			}
+		}
+
+		log.WithField("unfetched", len(unfetched)).Info("Found unfetched items and starting to fetch them")
+		for _, id := range unfetched {
+
+			// Check for context cancellation before fetchign each item
+			select {
+			case <-ctx.Done():
+				// Break out of function if context is canceled
+				log.WithContext(ctx).Info("Work canceled: stopping processing of unfetched items")
+				return
+			default:
+				// Do work on each item
+				// If an item previously failed less than an hour ago skip it
+				if !checkable(app.Failures, id) {
+					log.WithField("item_id", id).Debug("Skipping item because it failed to fetch less than an hour ago")
+					continue
+				}
+
+				// Get the item from the database and fetch it, then save to repository
+				item, err := app.ItemsRepo.Get(ctx, id)
+				if err != nil {
+					log.WithError(err).WithField("item_id", id).Error("Error getting item to fetch from database")
+					continue
+				}
+
+				if isResourceNotItem(item.URL.String) {
+					log.WithField("item_id", id).Debug("Skipping item because it is actually a resource")
+					continue
+				}
+
+				// Make sure to rate limit
+				app.Limiters.Items.Take()
+				log.WithField("item_id", item.ID).Debug("Fetching item from loc.gov API")
+				err = item.Fetch(app.Client)
+				if err != nil {
+					log.WithError(err).WithField("item_id", id).Error("Error fetching item from API")
+					// Record when the last failure happened
+					app.Failures[id] = time.Now()
+					continue
+				} else {
+					// Make sure to delete the key from the map if it is successfully fetched
+					delete(app.Failures, item.ID)
+				}
+
+				// Run the database saving in a separate goroutine so as not to slow down the rate limiter
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					timeout, cancelTimeout := context.WithTimeout(context.Background(), 60*time.Second)
+					defer cancelTimeout()
+					err = app.ItemsRepo.Save(timeout, item)
+					if err != nil {
+						log.WithError(err).WithField("item_id", id).Error("Error saving item to database")
+					}
+				}()
+
+			}
 		}
 	}
-}
-
-// ProcessItemMetadata reads an item from the queue, fetches its metadata, and
-// saves it to the database.
-func processItemMetadata(ctx context.Context, wg *sync.WaitGroup, msg amqp.Delivery) {
-	defer wg.Done()
-	var item Item
-	err := json.Unmarshal(msg.Body, &item)
-	if err != nil {
-		msg.Reject(false)
-		log.WithError(err).WithField("msg", msg).Error("Failed to read body of message from queue")
-		return
-	}
-	// Skip fetching items which are actually resources
-	if isResourceNotItem(item.URL) {
-		msg.Reject(false)
-		log.WithField("url", item.URL).WithField("id", item.ID).Debug("Skipping item which is actually a resource")
-		return
-	}
-	// Check if fetched already
-	fetched, _ := item.Fetched()
-	if fetched {
-		msg.Ack(false)
-		log.WithField("id", item.ID).Warn("Skipping item which was queued but already fetched")
-		return
-	}
-	err = item.Fetch()
-	if err != nil {
-		msg.Reject(false)
-		log.WithError(err).WithField("url", item.URL).WithField("id", item.ID).Error("Error fetching item")
-		return
-	}
-	err = item.Save()
-	if err != nil {
-		msg.Reject(false)
-		log.WithError(err).WithField("id", item.ID).Error("Error saving item to database")
-		return
-	}
-	msg.Ack(false)
-	return
 }
