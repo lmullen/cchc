@@ -19,55 +19,49 @@ func NewJobsRepo(db *pgxpool.Pool) *Repo {
 	}
 }
 
-// Save serializes a job to the database
-func (r *Repo) Save(ctx context.Context, job *Fulltext) error {
-	query := `
-	INSERT INTO jobs.fulltext
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-	ON CONFLICT (id) DO UPDATE
-	SET 
-	item_id = $2,
-	resource_seq = $3,
-	file_seq = $4,
-	format_seq = $5,
-	level = $6,
-	source = $7,
-	has_ft_method = $8,
-	started = $9,
-	finished = $10,
-	queue = $11
-	;
-	`
-
-	_, err := r.db.Exec(ctx, query, job.ID, job.ItemID, job.ResourceSeq, job.FileSeq,
-		job.FormatSeq, job.Level, job.Source, job.HasFTMethod, job.Started, job.Finished, job.Queue)
-	if err != nil {
-		return err
-	}
-
-	return nil
-
-}
-
-// Get finds a job by ID from the repository
-func (r *Repo) Get(ctx context.Context, id uuid.UUID) (*Fulltext, error) {
+// GetFullText finds a full text job by ID from the repository
+func (r *Repo) GetFullText(ctx context.Context, id uuid.UUID) (*FullText, error) {
 	query := `
 	SELECT 
-		id, item_id, resource_seq, file_seq, format_seq, level, source, has_ft_method, started, finished, queue
+		id, item_id, has_ft_method, destination, started, finished
 	FROM
 		jobs.fulltext
 	WHERE id = $1;
 	`
 
-	job := Fulltext{}
+	job := FullText{}
 
-	err := r.db.QueryRow(ctx, query, id).Scan(&job.ID, &job.ItemID, &job.ResourceSeq,
-		&job.FileSeq, &job.FormatSeq, &job.Level, &job.Source, &job.HasFTMethod,
-		&job.Started, &job.Finished, &job.Queue)
+	err := r.db.QueryRow(ctx, query, id).Scan(&job.ID, &job.ItemID, &job.HasFTMethod,
+		&job.Destination, &job.Started, &job.Finished)
 	if err != nil {
 		return nil, err
 	}
 
 	return &job, nil
+
+}
+
+// SaveFullText serializes a job to the database
+func (r *Repo) SaveFullText(ctx context.Context, job *FullText) error {
+	query := `
+	INSERT INTO jobs.fulltext
+	VALUES ($1, $2, $3, $4, $5, $6)
+	ON CONFLICT (id) DO UPDATE
+	SET
+	item_id = $2,
+	has_ft_method = $3,
+	destination = $4,
+	started = $5,
+	finished = $6;
+	`
+
+	_, err := r.db.Exec(ctx, query,
+		job.ID, job.ItemID, job.HasFTMethod, job.Destination,
+		job.Started, job.Finished)
+	if err != nil {
+		return err
+	}
+
+	return nil
 
 }
