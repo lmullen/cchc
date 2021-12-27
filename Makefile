@@ -67,15 +67,21 @@ down :
 	docker compose logs predictor > logs/predictor-$(shell date +%FT%T).log
 	docker compose down
 
-# DATABASE and MESSAGE BROKER
+# DATABASE 
 # --------------------------------------------------
-.PHONY : db-create, db-up, db-down, queue-rm
+.PHONY : migration,  db-up, db-down, db-drop
+
+migration :
+	@read -p "What is the slug for the migration? " migration;\
+	migrate create -dir db/migrations -ext sql -seq $$migration
 
 db-up :
+	@echo "Migrating to current version of database"
 	migrate -database "$(CCHC_DBSTR_LOCAL)" -path db/migrations up
 
 db-down :
-	migrate -database "$(CCHC_DBSTR_LOCAL)" -path db/migrations down
+	migrate -database "$(CCHC_DBSTR_LOCAL)" -path db/migrations down 1
 
-queue-rm :
-	docker volume rm -f cchc_queue-data
+db-drop :
+	@echo "Dropping the local database"
+	migrate -database "$(CCHC_DBSTR_LOCAL)" -path migrations drop
