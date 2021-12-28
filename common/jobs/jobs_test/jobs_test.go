@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"sort"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -209,5 +210,65 @@ func TestNoJobsNeedEnqueuing(t *testing.T) {
 
 	assert.Nil(t, job)
 	assert.ErrorIs(t, err, jobs.ErrAllQueued)
+
+}
+
+func TestGettingJobsFromQueue(t *testing.T) {
+	t.Parallel()
+
+	user := "gnomock"
+	pass := "strong-passwords-are-the-best"
+	dbname := "cchc_gnomock_test_job_queue_retrieval"
+
+	p := postgres.Preset(
+		postgres.WithUser(user, pass),
+		postgres.WithDatabase(dbname),
+	)
+
+	container, err := gnomock.Start(p)
+	assert.NoError(t, err)
+	defer func() { assert.NoError(t, gnomock.Stop(container)) }()
+
+	connstr := fmt.Sprintf("postgres://%s:%s@%s:%v/%s?sslmode=disable",
+		user, pass, container.Host, container.DefaultPort(), dbname)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	db, _ := db.Connect(ctx, connstr)
+	db.Ping(ctx)
+	m, _ := migrate.New("file://../../../db/migrations", connstr)
+	m.Up()
+
+	var itemsRepo items.Repository
+	itemsRepo = items.NewItemRepo(db)
+	var jobsRepo jobs.Repository
+	jobsRepo = jobs.NewJobsRepo(db)
+
+	for i := 0; i < 10; i++ {
+		item := &items.Item{ID: strconv.Itoa(i)}
+		err = itemsRepo.Save(ctx, item)
+		require.NoError(t, err)
+	}
+
+	for i := 0; i < 10; i++ {
+		_, err = jobsRepo.CreateJobForUnqueued(ctx, "testing")
+		require.NoError(t, err)
+	}
+
+	for i := 0; i < 11; i++ {
+		if i == 10 {
+			job, err := jobsRepo.GetReadyJob(ctx, "testing")
+			assert.Nil(t, job)
+			assert.ErrorIs(t, err, jobs.ErrNoJobs)
+		} else {
+			job, err := jobsRepo.GetReadyJob(ctx, "testing")
+			assert.NoError(t, err)
+			assert.Equal(t, "running", job.Status)
+			job.Finish()
+			err = jobsRepo.SaveFullText(ctx, job)
+			assert.NoError(t, err)
+		}
+	}
 
 }

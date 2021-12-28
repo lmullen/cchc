@@ -100,7 +100,7 @@ func (r *Repo) CreateJobForUnqueued(ctx context.Context, destination string) (*F
 	timeout, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 
-	// This operation has to happene in a transaction to be sure that the
+	// This operation has to happen in a transaction to be sure that the
 	// `FOR UPDATE SKIP LOCKED` gets a unique item for each instance of this
 	// function that might be running.
 	tx, err := r.db.Begin(timeout)
@@ -137,5 +137,71 @@ func (r *Repo) CreateJobForUnqueued(ctx context.Context, destination string) (*F
 
 	// Succesful so return
 	return job, nil
+
+}
+
+// GetReadyJob gets a job for a particular destination that is available and marks it as started.
+func (r *Repo) GetReadyJob(ctx context.Context, destination string) (*FullText, error) {
+	timeout, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+
+	getQuery := `
+	SELECT id, item_id, destination, started, finished, status
+	FROM jobs.fulltext
+	WHERE status = 'ready' AND destination = $1
+	FOR UPDATE SKIP LOCKED
+	LIMIT 1;
+	`
+
+	// This operation has to happen in a transaction to be sure that the
+	// `FOR UPDATE SKIP LOCKED` gets a unique item for each instance of this
+	// function that might be running.
+	tx, err := r.db.Begin(timeout)
+	if err != nil {
+		return nil, err
+	}
+
+	job := FullText{}
+
+	err = tx.QueryRow(timeout, getQuery, destination).Scan(
+		&job.ID,
+		&job.ItemID,
+		&job.Destination,
+		&job.Started,
+		&job.Finished,
+		&job.Status,
+	)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, ErrNoJobs
+		}
+		return nil, err
+	}
+
+	updateQuery := `
+	UPDATE jobs.fulltext 
+	SET 
+		status = 'running',
+		started = $1
+	WHERE id = $2;
+	`
+
+	now := time.Now()
+
+	_, err = tx.Exec(ctx, updateQuery, now, job.ID)
+	if err != nil {
+		tx.Rollback(ctx)
+		return nil, err
+	}
+
+	job.Started.Scan(now)
+	job.Status = "running"
+
+	err = tx.Commit(timeout)
+	if err != nil {
+		return &job, err
+	}
+
+	return &job, nil
 
 }

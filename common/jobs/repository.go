@@ -11,4 +11,5 @@ type Repository interface {
 	GetFullText(ctx context.Context, id uuid.UUID) (*FullText, error)
 	SaveFullText(ctx context.Context, job *FullText) error
 	CreateJobForUnqueued(ctx context.Context, destination string) (*FullText, error)
+	GetReadyJob(ctx context.Context, destination string) (*FullText, error)
 }
