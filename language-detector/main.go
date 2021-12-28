@@ -1,33 +1,109 @@
 package main
 
 import (
-	"fmt"
-	"log"
+	"context"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
+var app App
+
+const queue = "language"
+const waittime = 1 * time.Minute
+
 func main() {
-
-	type Doc struct {
-		lang string
-		text string
-	}
-
-	es := Doc{lang: "es", text: "AL EXCMO. SEÑOR DON JOSÉ RAMON DEMETRIO FERNANDEZ Y MARTINEZ,,,Marqués de la Esperanza, Gran Cruz de la Real órden americana de Isabel la Católica, Comendador de número de la misma órden, ex-Diputado Constituyente, Teniente Coronel honorario del Batallon de Voluntarios de Puerto-Rico, Presidente del Centro hispano-ultramarino, etc., etc.,Excmo. Sr.:,Sabemos que al aparecer en público la,Historia de la Insurreccion de Lares,,un clamoreo se alzará por los que, haciendo poca justicia á los españoles nacidos en este suelo, creen que,puerto-riqueño,y,anti-español,son voces sinónimas; y se nos dirá que calumniamos al país, que somos enemigos de los hijos de esta provincia. Sea el nombre de V. E. escudo en que se emboten los tiros de nuestros detractores. Puerto-riqueño y ligado á su suelo natal por los lazos de la familia y de la propiedad, ninguno tiene mayores motivos ni mas derechò que V. E. para interesarse por el bienestar, por el verdadero progreso y prosperidad de Puerto-Rico. Nadie puede sostener que odiamos á nuestros hermanos de esta preciada Antilla, llevando á su frente nuestro libro el respetabilisimo nombre de un puerto-riqueño como V. E. Detestamos, sí, como V. E., como todos los leales de aquende y allende el mar á los hipócritas que, bajo especiosos pretestos políticos, buscan en las luchas de los partidos peninsulares los medios de debilitar aquí los elementos españoles y de dar vuelo por medio de exageradas reformas á los elementos contrarios á la nacionalidad y al órden; pero ni abrigamos sentimientos hostiles contra los puerto-riqueños que no reniegan de España, ni á nuestros mismos adversarios es nuestra mente calumniar en lo mas minimo.,,Otro motivo nos mueve á dedicar á V. E. nuestra modesta obra: V. E. es el jefe querido y patriótico del partido liberal-conservador, del partido español,sin condiciones;,y al rendir este dábil tributo de admiracion y gratitud á tan dignisimo patricio, creemos obsequiar á todos y á cada uno de los buenos españoles aquí nacidos ó residentes, porque V. E. representa y sintetiza las nobles aspiraciones de todos los amantes del órden y de la nacionalidad española en Puerto-Rico.,,Dignese V. E. aceptar esta nuestra humilde ofrenda y la distinguida consideracion con que somos de V. E. atentos y S. S. Q. B. S. M.,"}
-	en := Doc{lang: "en", text: "The Lares Revolt of 1868 sought the abolition of slavery, freedom of the press and commerce, and the independence of Puerto Rico. Six hundred men, led by liberals, drew up a provisional constitution and declared the Puerto Rican Republic, but they were defeated in their first clash with Spanish troops. Despite the movements quick defeat, during the 20th century the revolt has come to be viewed as the beginning of Puerto Rico's struggle for independence. Pérez Morís opposed Puerto Rican independence, but his work has served as an important study of the revolt."}
-	both := Doc{lang: "es+en", text: es.text + en.text}
-	de := Doc{lang: "de", text: "s war ein wundervoller alter Glaube bei den Griechen, daß jedem neugeborenen Menschenwesen ein Stern am Himmel angezündet werde, der bei seinem Tod erlösche. Die Helligkeit und Größe des Gestirnes mochten der Bedeutung der Persönlichkeit entsprechen: so rühmte man vom König Mithradates, der drei Kriege gegen Rom geführt hat, bei seiner Geburt sei ein Komet erschienen, dessen Schweif den vierten Teil des Himmels überzog und siebzig Tage sichtbar blieb."}
-	tricky := Doc{lang: "tricky", text: "This is in English. So it's not very long. Como estas? Estoy muy bien."}
-
-	docs := []Doc{es, en, both, de, tricky}
-
-	for _, d := range docs {
-		l, w, err := CalculateLanguages(d.text)
-		if err != nil {
-			log.Println(err)
-			break
+	ctx, cancel := context.WithCancel(context.Background())
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	// Clean up function that will be called at program end no matter what
+	defer func() {
+		signal.Stop(quit)
+		cancel()
+	}()
+	// Listen for shutdown signals in a go-routine and cancel context then
+	go func() {
+		select {
+		case <-quit:
+			log.Info("Shutdown signal received; quitting language detector")
+			cancel()
+		case <-ctx.Done():
 		}
-		fmt.Print("Actual language: ", d.lang, " Lingua: ", l, " Whatlang:", w, "\n\n")
+	}()
 
+	err := app.Init(ctx)
+	if err != nil {
+		log.Fatal("Error initializing application: ", err)
 	}
+	defer app.Shutdown()
+
+	wg := &sync.WaitGroup{}
+
+	wg.Add(1)
+	go createJobs(ctx, wg)
+	// go func() {
+	// 	for i := 0; i < 100; i++ {
+	// 		select {
+	// 		case <-ctx.Done():
+	// 			return
+	// 		default:
+	// 			job, err := app.JobsRepo.CreateJobForUnqueued(ctx, queue)
+	// 			if err != nil {
+	// 				if err == jobs.ErrAllQueued {
+	// 					log.Info("All jobs for language are queued. Waiting fifteen minutes.")
+	// 					select {
+	// 					case <-time.After(1 * time.Minute):
+	// 						continue
+	// 					case <-ctx.Done():
+	// 						return
+	// 					}
+	// 				}
+	// 				log.WithError(err).Error("Error creating job")
+	// 				continue
+	// 			}
+	// 			log.WithField("job", job).Debug("Created job")
+	// 		}
+	// 	}
+	// }()
+
+	// wg.Add(1)
+	// go func() {
+	// 	defer wg.Done()
+	// 	for {
+	// 		select {
+	// 		case <-ctx.Done():
+	// 			return
+	// 		default:
+	// 			job, err := app.JobsRepo.GetReadyJob(ctx, queue)
+	// 			if err != nil {
+	// 				if err == jobs.ErrNoJobs {
+	// 					log.Info("No ready jobs. Waiting fifteen minutes.")
+	// 					select {
+	// 					case <-time.After(1 * time.Minute):
+	// 						continue
+	// 					case <-ctx.Done():
+	// 						return
+	// 					}
+	// 				}
+	// 				log.WithError(err).Error("Error getting ready job")
+	// 				continue
+	// 			}
+	// 			log.WithField("job", job).Debug("Got a ready job")
+	// 			time.Sleep(2 * time.Second)
+	// 			job.Skip()
+	// 			err = app.JobsRepo.SaveFullText(ctx, job)
+	// 			if err != nil {
+	// 				log.WithError(err).Error("Error saving job after skipping it")
+	// 			}
+	// 			log.WithField("job", job).Debug("Skipped the job")
+	// 		}
+	// 	}
+	// }()
+
+	wg.Wait()
 
 }
