@@ -4,12 +4,16 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
+	"sort"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/mpvl/unique"
 
 	"github.com/lmullen/cchc/common/db"
 	"github.com/lmullen/cchc/common/items"
@@ -82,7 +86,6 @@ func TestJobsDB(t *testing.T) {
 	job.Finish()
 	err = jobsRepo.SaveFullText(ctx, job)
 	assert.NoError(t, err)
-
 }
 
 func TestJobsStatus(t *testing.T) {
@@ -103,4 +106,72 @@ func TestJobsStatus(t *testing.T) {
 
 	job.Finish()
 	assert.Equal("finished", job.Status)
+}
+
+// Test that we can enqueue jobs without errors
+func TestEnqueingJobs(t *testing.T) {
+	t.Parallel()
+
+	user := "gnomock"
+	pass := "strong-passwords-are-the-best"
+	dbname := "cchc_gnomock_test_job_queue"
+
+	p := postgres.Preset(
+		postgres.WithUser(user, pass),
+		postgres.WithDatabase(dbname),
+	)
+
+	container, err := gnomock.Start(p)
+	assert.NoError(t, err)
+	defer func() { assert.NoError(t, gnomock.Stop(container)) }()
+
+	connstr := fmt.Sprintf("postgres://%s:%s@%s:%v/%s?sslmode=disable",
+		user, pass, container.Host, container.DefaultPort(), dbname)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	db, _ := db.Connect(ctx, connstr)
+	db.Ping(ctx)
+	m, _ := migrate.New("file://../../../db/migrations", connstr)
+	m.Up()
+
+	var itemsRepo items.Repository
+	itemsRepo = items.NewItemRepo(db)
+	var jobsRepo jobs.Repository
+	jobsRepo = jobs.NewJobsRepo(db)
+
+	for i := 0; i < 200; i++ {
+		item := &items.Item{ID: fmt.Sprintf("%04d", i)}
+		err := itemsRepo.Save(ctx, item)
+		require.NoError(t, err)
+	}
+
+	wg := &sync.WaitGroup{}
+	var items1 []string
+	var items2 []string
+
+	testQueue := func(items *[]string) {
+		defer wg.Done()
+		for i := 0; i < 100; i++ {
+			job, err := jobsRepo.CreateJobForUnqueued(ctx, "testing")
+			require.NoError(t, err)
+			*items = append(*items, job.ItemID)
+		}
+	}
+
+	wg.Add(1)
+	go testQueue(&items1)
+	wg.Add(1)
+	go testQueue(&items2)
+	wg.Wait()
+
+	allItems := append(items1, items2...)
+
+	assert.Equal(t, 200, len(allItems))
+
+	sort.Strings(allItems)
+	log.Println(allItems)
+	assert.True(t, unique.StringsAreUnique(allItems))
+
 }
