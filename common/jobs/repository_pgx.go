@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -113,6 +114,9 @@ func (r *Repo) CreateJobForUnqueued(ctx context.Context, destination string) (*F
 	err = tx.QueryRow(timeout, query, destination).Scan(&itemID)
 	if err != nil {
 		tx.Rollback(timeout)
+		if err == pgx.ErrNoRows {
+			return nil, ErrAllQueued
+		}
 		return nil, err
 	}
 

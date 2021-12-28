@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"sort"
 	"sync"
 	"testing"
@@ -171,7 +170,44 @@ func TestEnqueingJobs(t *testing.T) {
 	assert.Equal(t, 200, len(allItems))
 
 	sort.Strings(allItems)
-	log.Println(allItems)
 	assert.True(t, unique.StringsAreUnique(allItems))
+
+}
+
+func TestNoJobsNeedEnqueuing(t *testing.T) {
+	t.Parallel()
+
+	user := "gnomock"
+	pass := "strong-passwords-are-the-best"
+	dbname := "cchc_gnomock_test_job_queue_no_items"
+
+	p := postgres.Preset(
+		postgres.WithUser(user, pass),
+		postgres.WithDatabase(dbname),
+	)
+
+	container, err := gnomock.Start(p)
+	assert.NoError(t, err)
+	defer func() { assert.NoError(t, gnomock.Stop(container)) }()
+
+	connstr := fmt.Sprintf("postgres://%s:%s@%s:%v/%s?sslmode=disable",
+		user, pass, container.Host, container.DefaultPort(), dbname)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	db, _ := db.Connect(ctx, connstr)
+	db.Ping(ctx)
+	m, _ := migrate.New("file://../../../db/migrations", connstr)
+	m.Up()
+
+	var jobsRepo jobs.Repository
+	jobsRepo = jobs.NewJobsRepo(db)
+
+	// There are no items in the database, so we should expect not to make any jobs.
+	job, err := jobsRepo.CreateJobForUnqueued(ctx, "testing")
+
+	assert.Nil(t, job)
+	assert.ErrorIs(t, err, jobs.ErrAllQueued)
 
 }
