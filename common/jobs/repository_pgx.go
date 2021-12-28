@@ -79,7 +79,7 @@ func (r *Repo) CreateJobForUnqueued(ctx context.Context, destination string) (*F
 	query := `
 	SELECT id
 	FROM   items i
-	WHERE  NOT EXISTS (
+	WHERE api IS NOT NULL AND NOT EXISTS (
 		SELECT item_id, destination
 		FROM   jobs.fulltext
 		WHERE  item_id=i.id AND destination = $1

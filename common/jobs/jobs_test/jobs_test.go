@@ -142,7 +142,10 @@ func TestEnqueingJobs(t *testing.T) {
 	jobsRepo = jobs.NewJobsRepo(db)
 
 	for i := 0; i < 200; i++ {
-		item := &items.Item{ID: fmt.Sprintf("%04d", i)}
+		item := &items.Item{
+			ID:  fmt.Sprintf("%04d", i),
+			API: sql.NullString{String: "{\"test\":\"test\"}", Valid: true},
+		}
 		err := itemsRepo.Save(ctx, item)
 		require.NoError(t, err)
 	}
@@ -246,7 +249,11 @@ func TestGettingJobsFromQueue(t *testing.T) {
 	jobsRepo = jobs.NewJobsRepo(db)
 
 	for i := 0; i < 10; i++ {
-		item := &items.Item{ID: strconv.Itoa(i)}
+		item := &items.Item{
+			ID:  strconv.Itoa(i),
+			API: sql.NullString{String: "{\"test\":\"test\"}", Valid: true},
+		}
+
 		err = itemsRepo.Save(ctx, item)
 		require.NoError(t, err)
 	}
