@@ -84,3 +84,23 @@ func TestJobsDB(t *testing.T) {
 	assert.NoError(t, err)
 
 }
+
+func TestJobsStatus(t *testing.T) {
+	t.Parallel()
+	assert := assert.New(t)
+
+	job := jobs.NewFullText("test_item", "test_queue")
+	assert.Equal("ready", job.Status)
+
+	job.Start()
+	assert.Equal("running", job.Status)
+
+	job.Skip()
+	assert.Equal("skipped", job.Status)
+
+	job.Fail()
+	assert.Equal("failed", job.Status)
+
+	job.Finish()
+	assert.Equal("finished", job.Status)
+}
