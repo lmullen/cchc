@@ -12,8 +12,8 @@ import (
 type FullText struct {
 	ID          uuid.UUID
 	ItemID      string
-	HasFTMethod bool
 	Destination string
 	Started     sql.NullTime
 	Finished    sql.NullTime
+	Status      string
 }

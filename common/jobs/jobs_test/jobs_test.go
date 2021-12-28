@@ -67,7 +67,7 @@ func TestJobsDB(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create a new job
-	job := jobs.NewFullText(item.ID, "testing", false)
+	job := jobs.NewFullText(item.ID, "testing")
 
 	// Save it to the database
 	err = jobsRepo.SaveFullText(ctx, job)
