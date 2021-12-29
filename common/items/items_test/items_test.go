@@ -42,7 +42,7 @@ func TestItemsDB(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	db, _ := db.Connect(ctx, connstr)
+	db, _ := db.Connect(ctx, connstr, "items-test")
 	db.Ping(ctx)
 	m, _ := migrate.New("file://../../../db/migrations", connstr)
 	m.Up()
@@ -123,7 +123,7 @@ func TestUnfetched(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	db, _ := db.Connect(ctx, connstr)
+	db, _ := db.Connect(ctx, connstr, "items-test")
 	db.Ping(ctx)
 	m, _ := migrate.New("file://../../../db/migrations", connstr)
 	m.Up()

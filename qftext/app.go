@@ -52,17 +52,17 @@ package main
 // 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 // 	defer cancel()
 
-// 	log.Info("Connecting to the database")
-// 	dbstr, exists := os.LookupEnv("CCHC_DBSTR")
-// 	if !exists {
-// 		return errors.New("Database connection string not set: use CCHC_DBSTR environment variable")
-// 	}
-// 	db, err := db.Connect(ctx, dbstr)
-// 	if err != nil {
-// 		return fmt.Errorf("Error connecting to database: %w", err)
-// 	}
-// 	app.DB = db
-// 	log.Info("Successfully connected to the database")
+// log.Info("Connecting to the database")
+// dbstr, exists := os.LookupEnv("CCHC_DBSTR")
+// if !exists {
+// 	return errors.New("Database connection string not set: use CCHC_DBSTR environment variable")
+// }
+// db, err := db.Connect(ctx, dbstr, "cchc-qftext")
+// if err != nil {
+// 	return fmt.Errorf("Error connecting to database: %w", err)
+// }
+// app.DB = db
+// log.Info("Successfully connected to the database")
 
 // 	app.IR = items.NewItemRepo(app.DB)
 // 	app.JR = jobs.NewJobsRepo(app.DB)
