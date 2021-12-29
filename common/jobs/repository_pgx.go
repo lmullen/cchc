@@ -105,8 +105,11 @@ func (r *Repo) CreateJobForUnqueued(ctx context.Context, destination string) (*F
 	// function that might be running.
 	tx, err := r.db.Begin(timeout)
 	if err != nil {
+		tx.Rollback(timeout)
 		return nil, err
 	}
+	// Make sure we cancel the transaction
+	defer tx.Rollback(context.Background())
 
 	// Get a single item ID (guaranteeed to be unique, no matter how many instances
 	// of this function are running) which we can use to make a job.
@@ -158,8 +161,11 @@ func (r *Repo) GetReadyJob(ctx context.Context, destination string) (*FullText, 
 	// function that might be running.
 	tx, err := r.db.Begin(timeout)
 	if err != nil {
+		tx.Rollback(timeout)
 		return nil, err
 	}
+	// Make sure we cancel the transaction
+	defer tx.Rollback(context.Background())
 
 	job := FullText{}
 
