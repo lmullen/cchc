@@ -11,7 +11,7 @@ import (
 
 func createJobs(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
-start:
+	log.Info("Checking whether jobs need to be created")
 	for {
 		select {
 		case <-ctx.Done():
@@ -26,8 +26,9 @@ start:
 					log.Infof("All jobs for language are queued, so waiting %s to check again", waittime)
 					select {
 					case <-ctx.Done():
-						break start
+						return
 					case <-time.After(waittime):
+						log.Info("Checking again whether jobs need to be created")
 						continue
 					}
 				}
