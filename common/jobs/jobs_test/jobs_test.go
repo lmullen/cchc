@@ -46,7 +46,7 @@ func TestJobsDB(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	db, _ := db.Connect(ctx, connstr)
+	db, _ := db.Connect(ctx, connstr, "jobs-test")
 	db.Ping(ctx)
 	m, _ := migrate.New("file://../../../db/migrations", connstr)
 	m.Up()
@@ -131,7 +131,7 @@ func TestEnqueingJobs(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	db, _ := db.Connect(ctx, connstr)
+	db, _ := db.Connect(ctx, connstr, "jobs-test")
 	db.Ping(ctx)
 	m, _ := migrate.New("file://../../../db/migrations", connstr)
 	m.Up()
@@ -200,7 +200,7 @@ func TestNoJobsNeedEnqueuing(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	db, _ := db.Connect(ctx, connstr)
+	db, _ := db.Connect(ctx, connstr, "jobs-test")
 	db.Ping(ctx)
 	m, _ := migrate.New("file://../../../db/migrations", connstr)
 	m.Up()
@@ -238,7 +238,7 @@ func TestGettingJobsFromQueue(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	db, _ := db.Connect(ctx, connstr)
+	db, _ := db.Connect(ctx, connstr, "jobs-test")
 	db.Ping(ctx)
 	m, _ := migrate.New("file://../../../db/migrations", connstr)
 	m.Up()

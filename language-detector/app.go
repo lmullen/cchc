@@ -64,7 +64,7 @@ func (app *App) Init(ctx context.Context) error {
 	}
 	app.Config.dbstr = dbstr
 
-	db, err := db.Connect(ctx, app.Config.dbstr)
+	db, err := db.Connect(ctx, app.Config.dbstr, "cchc-language-detector")
 	if err != nil {
 		return err
 	}
