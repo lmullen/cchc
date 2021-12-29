@@ -81,7 +81,7 @@ func (app *App) Init() error {
 	defer cancel()
 
 	log.Println(app.Config.dbstr)
-	db, err := db.Connect(ctx, app.Config.dbstr)
+	db, err := db.Connect(ctx, app.Config.dbstr, "cchc-predictor-aggregator")
 	if err != nil {
 		return fmt.Errorf("Failed to connect to database: %w", err)
 	}

@@ -11,7 +11,13 @@ import (
 
 // Connect returns a pool of connection to the database, which is conncurrency
 // safe. Uses the pgx interface.
-func Connect(ctx context.Context, connstr string) (*pgxpool.Pool, error) {
+func Connect(ctx context.Context, connstr string, application string) (*pgxpool.Pool, error) {
+
+	connstr, err := addApplication(connstr, application)
+	if err != nil {
+		return nil, fmt.Errorf("Error adding application name to connection string: %w", err)
+	}
+
 	var db *pgxpool.Pool
 
 	connectWithRetry := func() error {
@@ -34,7 +40,7 @@ func Connect(ctx context.Context, connstr string) (*pgxpool.Pool, error) {
 	}
 
 	policy := backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 10)
-	err := backoff.Retry(connectWithRetry, policy)
+	err = backoff.Retry(connectWithRetry, policy)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect to database: %w", err)
 	}

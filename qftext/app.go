@@ -57,7 +57,7 @@ func (app *App) Init(ctx context.Context) error {
 	if !exists {
 		return errors.New("Database connection string not set: use CCHC_DBSTR environment variable")
 	}
-	db, err := db.Connect(ctx, dbstr)
+	db, err := db.Connect(ctx, dbstr, "cchc-qftext")
 	if err != nil {
 		return fmt.Errorf("Error connecting to database: %w", err)
 	}

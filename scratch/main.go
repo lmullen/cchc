@@ -23,7 +23,7 @@ func main() {
 	client := rc.StandardClient()
 
 	ctx := context.Background()
-	db, err := db.Connect(ctx, os.Getenv("CCHC_DBSTR_LOCAL"))
+	db, err := db.Connect(ctx, os.Getenv("CCHC_DBSTR_LOCAL"), "cchc-scratch")
 	if err != nil {
 		log.Fatal(err)
 	}
