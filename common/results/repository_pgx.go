@@ -21,7 +21,7 @@ func NewRepo(db *pgxpool.Pool) *Repo {
 // SaveQuotation serializes a job to the database
 func (r *Repo) SaveQuotation(ctx context.Context, q *Quotation) error {
 	query := `
-	INSERT INTO results.biblical_quotations
+	INSERT INTO results.biblical_quotations (job_id, item_id, reference_id, verse_id, probability)
 	VALUES ($1, $2, $3, $4, $5);
 	`
 
