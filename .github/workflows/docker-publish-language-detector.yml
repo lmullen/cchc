@@ -1,4 +1,4 @@
-name: cchc-qftext container
+name: cchc-language-detector container
 
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
@@ -54,7 +54,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
-          images: ${{ env.REGISTRY }}/lmullen/cchc-qftext
+          images: ${{ env.REGISTRY }}/lmullen/cchc-language-detector
 
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
@@ -62,7 +62,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: qftext.Dockerfile
+          file: language-detector.Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
