@@ -18,8 +18,8 @@ func NewRepo(db *pgxpool.Pool) *Repo {
 	}
 }
 
-// Save serializes a job to the database
-func (r *Repo) Save(ctx context.Context, q *Quotation) error {
+// SaveQuotation serializes a job to the database
+func (r *Repo) SaveQuotation(ctx context.Context, q *Quotation) error {
 	query := `
 	INSERT INTO results.biblical_quotations
 	VALUES ($1, $2, $3, $4, $5);
