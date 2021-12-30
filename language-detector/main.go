@@ -14,7 +14,7 @@ import (
 var app App
 
 const queue = "language"
-const waittime = 10 * time.Minute
+const waittime = 15 * time.Minute
 const jobtimeout = 120 * time.Second
 
 func main() {
@@ -47,6 +47,8 @@ func main() {
 	wg.Add(1)
 	go createJobs(ctx, wg)
 
+	// Sleep a bit to give time for the jobs to be created before processing
+	time.Sleep(15 * time.Second)
 	wg.Add(1)
 	go processJobs(ctx, wg)
 
