@@ -41,6 +41,7 @@ func processJobs(ctx context.Context, wg *sync.WaitGroup) {
 			if err != nil {
 				log.WithError(err).WithField("job", job).Error("Error processing job")
 			}
+			log.WithField("job", job).Debug("Successfully processed job")
 
 		}
 	}

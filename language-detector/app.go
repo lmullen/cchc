@@ -9,6 +9,7 @@ import (
 	"github.com/lmullen/cchc/common/db"
 	"github.com/lmullen/cchc/common/items"
 	"github.com/lmullen/cchc/common/jobs"
+	"github.com/lmullen/cchc/common/results"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -22,10 +23,11 @@ type Config struct {
 
 // The App type shares access to the database and other resources.
 type App struct {
-	DB        *pgxpool.Pool
-	Config    *Config
-	ItemsRepo items.Repository
-	JobsRepo  jobs.Repository
+	DB          *pgxpool.Pool
+	Config      *Config
+	ItemsRepo   items.Repository
+	JobsRepo    jobs.Repository
+	ResultsRepo results.Repository
 }
 
 // Init creates a new app and connects to the database or returns an error
@@ -71,6 +73,7 @@ func (app *App) Init(ctx context.Context) error {
 	app.DB = db
 	app.ItemsRepo = items.NewItemRepo(db)
 	app.JobsRepo = jobs.NewJobsRepo(db)
+	app.ResultsRepo = results.NewRepo(db)
 	log.Info("Connected to the database successfully")
 
 	return nil

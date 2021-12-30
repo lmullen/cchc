@@ -56,7 +56,15 @@ func processDocument(job *jobs.FullText) error {
 	}
 
 	// This is where we should save the results to the database. But for now, just print them.
-	log.WithField("job", job).WithField("results", results).Debug("Successfully processed job")
+	err = app.ResultsRepo.SaveLanguages(ctx, job.ID, job.ItemID, results)
+	if err != nil {
+		job.Fail()
+		errSave := app.JobsRepo.SaveFullText(ctx, job)
+		if errSave != nil {
+			log.WithError(err).WithField("job", job).Error("Error saving job status")
+		}
+		return err
+	}
 
 	// The job was successful
 	job.Finish()
