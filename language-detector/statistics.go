@@ -28,16 +28,13 @@ func tokenize(s string) (*prose.Document, error) {
 }
 
 // CalculateLanguages computes the number of sentences identified as each language.
-// This is returned as a map with a count of sentences matching each language.
-func CalculateLanguages(text string) (results LanguageStats, err error) {
-
-	// Keep track of the number of sentences with each language
-	results = make(LanguageStats)
-	// whatlang = make(LanguageStats)
+// You pass in a map of the the languages. This is passed in rather than generated
+// in the function, because we might want to count multiple pages in the same item.
+func CalculateLanguages(text string, results LanguageStats) error {
 
 	doc, err := tokenize(text)
 	if err != nil {
-		return nil, fmt.Errorf("Error tokenizing text: %w", err)
+		return fmt.Errorf("Error tokenizing text: %w", err)
 	}
 
 	// Detect language for each sentence and track results
@@ -57,6 +54,6 @@ func CalculateLanguages(text string) (results LanguageStats, err error) {
 		}
 	}
 
-	return
+	return nil
 
 }

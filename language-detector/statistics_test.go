@@ -21,7 +21,9 @@ func TestCalculateLanguages(t *testing.T) {
 
 	text := "This is a dummy document. Ese reloj fue un regalo de mi mujer.  It has two English, one Spanish, and one German sentences. Ich möchte ein Bier."
 
-	results, err := CalculateLanguages(text)
+	results := make(LanguageStats)
+
+	err := CalculateLanguages(text, results)
 	assert.NoError(t, err)
 
 	expected := LanguageStats{
