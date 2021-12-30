@@ -3,7 +3,6 @@ module github.com/lmullen/cchc
 go 1.17
 
 require (
-	github.com/abadojack/whatlanggo v1.0.1
 	github.com/cenkalti/backoff/v4 v4.1.2
 	github.com/golang-migrate/migrate/v4 v4.15.1
 	github.com/google/uuid v1.3.0
