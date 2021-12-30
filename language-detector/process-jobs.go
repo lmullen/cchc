@@ -35,15 +35,13 @@ func processJobs(ctx context.Context, wg *sync.WaitGroup) {
 				log.WithError(err).Error("Error getting a job that is ready")
 				continue
 			}
-			log.WithField("job", job).Debug("Got a ready job")
-			job.Skip()
-			timeoutSave, cancelSave := context.WithTimeout(context.Background(), 15*time.Second)
-			defer cancelSave()
-			err = app.JobsRepo.SaveFullText(timeoutSave, job)
+
+			// TODO work happens here
+			err = processDocument(job)
 			if err != nil {
-				log.WithError(err).Error("Error saving job after skipping it")
+				log.WithError(err).WithField("job", job).Error("Error processing job")
 			}
-			log.WithField("job", job).Debug("Skipped the job")
+
 		}
 	}
 }

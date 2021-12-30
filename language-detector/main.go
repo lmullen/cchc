@@ -14,7 +14,8 @@ import (
 var app App
 
 const queue = "language"
-const waittime = 15 * time.Minute
+const waittime = 10 * time.Minute
+const jobtimeout = 120 * time.Second
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -43,8 +44,8 @@ func main() {
 
 	wg := &sync.WaitGroup{}
 
-	// wg.Add(1)
-	// go createJobs(ctx, wg)
+	wg.Add(1)
+	go createJobs(ctx, wg)
 
 	wg.Add(1)
 	go processJobs(ctx, wg)
