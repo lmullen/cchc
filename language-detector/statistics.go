@@ -6,10 +6,13 @@ import (
 	"github.com/jdkato/prose/v2"
 )
 
+// LanguageStats is a map with an ISO 693-3 code for langauges and the count of
+// the number of sentences in that language. Unknown languages are recorded as
+// `UND`.
 type LanguageStats map[string]int
 
 func (s LanguageStats) incrementKey(k string) {
-	s[k] += 1
+	s[k]++
 }
 
 func tokenize(s string) (*prose.Document, error) {
@@ -37,7 +40,7 @@ func CalculateLanguages(text string) (results LanguageStats, err error) {
 		return nil, fmt.Errorf("Error tokenizing text: %w", err)
 	}
 
-	// Count languages with both libraries
+	// Detect language for each sentence and track results
 	for _, s := range doc.Sentences() {
 		// wl := whatlanggo.Detect(s.Text)
 		// if wl.IsReliable() {
