@@ -174,7 +174,7 @@ func TestEnqueingJobs(t *testing.T) {
 
 	allItems := append(items1, items2...)
 
-	assert.Equal(t, 200, len(allItems))
+	assert.Equal(t, totaltests, len(allItems))
 
 	sort.Strings(allItems)
 	assert.True(t, unique.StringsAreUnique(allItems))
