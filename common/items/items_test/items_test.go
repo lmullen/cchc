@@ -176,3 +176,47 @@ func TestUnfetched(t *testing.T) {
 	assert.NotContains(t, unfetched, item3.ID)
 
 }
+
+// Check full text on various items
+func TestItemsFullText(t *testing.T) {
+	t.Parallel()
+
+	itemWithPlainText := &items.Item{
+		ID: "http://www.loc.gov/item/02024776/",
+		URL: sql.NullString{
+			String: "https://www.loc.gov/item/02024776/",
+			Valid:  true,
+		},
+	}
+	err := itemWithPlainText.Fetch(http.DefaultClient)
+	text, has := itemWithPlainText.FullText()
+	assert.NoError(t, err)
+	assert.True(t, has)
+	assert.Equal(t, 29, len(text))
+
+	itemWithXMLText := &items.Item{
+		ID: "http://www.loc.gov/item/afc1941004_sr07/",
+		URL: sql.NullString{
+			String: "https://www.loc.gov/item/afc1941004_sr07/",
+			Valid:  true,
+		},
+	}
+	err = itemWithXMLText.Fetch(http.DefaultClient)
+	text, has = itemWithXMLText.FullText()
+	assert.NoError(t, err)
+	assert.True(t, has)
+	assert.Equal(t, 2, len(text))
+
+	itemWithNoText := &items.Item{
+		ID: "http://www.loc.gov/item/2020771054/",
+		URL: sql.NullString{
+			String: "https://www.loc.gov/item/2020771054/",
+			Valid:  true,
+		},
+	}
+	err = itemWithXMLText.Fetch(http.DefaultClient)
+	text, has = itemWithNoText.FullText()
+	assert.NoError(t, err)
+	assert.False(t, has)
+	assert.Equal(t, 0, len(text))
+}

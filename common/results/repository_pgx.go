@@ -3,6 +3,7 @@ package results
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -18,14 +19,43 @@ func NewRepo(db *pgxpool.Pool) *Repo {
 	}
 }
 
-// Save serializes a job to the database
-func (r *Repo) Save(ctx context.Context, q *Quotation) error {
+// SaveQuotation serializes a job to the database
+func (r *Repo) SaveQuotation(ctx context.Context, q *Quotation) error {
 	query := `
-	INSERT INTO results.biblical_quotations
+	INSERT INTO results.biblical_quotations (job_id, item_id, reference_id, verse_id, probability)
 	VALUES ($1, $2, $3, $4, $5);
 	`
 
 	_, err := r.db.Exec(ctx, query, q.JobID, q.ItemID, q.ReferenceID, q.VerseID, q.Probability)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+// SaveLanguages serializes the results of calculating languages to the database.
+func (r *Repo) SaveLanguages(ctx context.Context, jobID uuid.UUID, itemID string, languages map[string]int) error {
+
+	insert := `
+			INSERT INTO results.languages (job_id, item_id, lang, sentences)
+			VALUES ($1, $2, $3, $4);
+		`
+
+	tx, err := r.db.Begin(ctx)
+	defer tx.Rollback(ctx) // Roll back the transaction if something goes wrong
+	if err != nil {
+		return err
+	}
+
+	for lang, sent := range languages {
+		_, err := tx.Exec(ctx, insert, jobID, itemID, lang, sent)
+		if err != nil {
+			return err
+		}
+	}
+	err = tx.Commit(ctx)
 	if err != nil {
 		return err
 	}

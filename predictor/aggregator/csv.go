@@ -60,7 +60,7 @@ func processPredictionsCSV(ctx context.Context, path string) error {
 			return err
 		}
 		q := results.NewQuotation(jobID, p[1], p[2], p[3], prob)
-		err = app.ResultsRepo.Save(ctx, q)
+		err = app.ResultsRepo.SaveQuotation(ctx, q)
 		if err != nil {
 			return err
 		}
