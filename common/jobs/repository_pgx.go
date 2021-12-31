@@ -76,26 +76,30 @@ func (r *Repo) SaveFullText(ctx context.Context, job *FullText) error {
 // This error could be safely ignored.
 func (r *Repo) CreateJobForUnqueued(ctx context.Context, destination string) (*FullText, error) {
 
-	query := `
-	SELECT id
-	FROM   items i
-	WHERE api IS NOT NULL AND NOT EXISTS (
-		SELECT item_id, destination
-		FROM   jobs.fulltext
-		WHERE  item_id=i.id AND destination = $1
-	 )
-	FOR NO KEY UPDATE OF i SKIP LOCKED
-	LIMIT 1;
-	`
-
 	// query := `
-	// SELECT i.id
-	// FROM items i
-	// LEFT JOIN jobs.fulltext j ON i.id = j.item_id
-	// WHERE j.item_id IS NULL
+	// SELECT id
+	// FROM   items i
+	// WHERE api IS NOT NULL AND NOT EXISTS (
+	// 	SELECT item_id, destination
+	// 	FROM   jobs.fulltext
+	// 	WHERE  item_id=i.id AND destination = $1
+	//  )
 	// FOR UPDATE OF i SKIP LOCKED
 	// LIMIT 1;
 	// `
+
+	query := `
+	SELECT i.id
+	FROM items i
+	LEFT JOIN 
+		(SELECT id, item_id, destination
+		FROM jobs.fulltext 
+		WHERE destination = $1) j
+	ON i.id = j.item_id
+	WHERE j.item_id IS NULL AND i.api IS NOT NULL
+	FOR UPDATE OF i SKIP LOCKED
+	LIMIT 1;
+	`
 
 	timeout, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
