@@ -141,7 +141,10 @@ func TestEnqueingJobs(t *testing.T) {
 	var jobsRepo jobs.Repository
 	jobsRepo = jobs.NewJobsRepo(db)
 
-	for i := 0; i < 200; i++ {
+	totaltests := 500
+	halftests := 250
+
+	for i := 0; i < totaltests; i++ {
 		item := &items.Item{
 			ID:  fmt.Sprintf("%04d", i),
 			API: sql.NullString{String: "{\"test\":\"test\"}", Valid: true},
@@ -156,7 +159,7 @@ func TestEnqueingJobs(t *testing.T) {
 
 	testQueue := func(items *[]string) {
 		defer wg.Done()
-		for i := 0; i < 100; i++ {
+		for i := 0; i < halftests; i++ {
 			job, err := jobsRepo.CreateJobForUnqueued(ctx, "testing")
 			require.NoError(t, err)
 			*items = append(*items, job.ItemID)
