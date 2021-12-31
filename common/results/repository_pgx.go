@@ -44,10 +44,10 @@ func (r *Repo) SaveLanguages(ctx context.Context, jobID uuid.UUID, itemID string
 		`
 
 	tx, err := r.db.Begin(ctx)
-	defer tx.Rollback(ctx) // Roll back the transaction if something goes wrong
 	if err != nil {
 		return err
 	}
+	defer tx.Rollback(ctx) // Roll back the transaction if something goes wrong
 
 	for lang, sent := range languages {
 		_, err := tx.Exec(ctx, insert, jobID, itemID, lang, sent)
