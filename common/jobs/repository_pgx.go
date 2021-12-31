@@ -84,7 +84,7 @@ func (r *Repo) CreateJobForUnqueued(ctx context.Context, destination string) (*F
 		FROM   jobs.fulltext
 		WHERE  item_id=i.id AND destination = $1
 	 )
-	FOR NO KEY UPDATE SKIP LOCKED
+	FOR NO KEY UPDATE OF i SKIP LOCKED
 	LIMIT 1;
 	`
 
