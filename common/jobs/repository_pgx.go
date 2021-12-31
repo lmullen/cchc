@@ -88,16 +88,38 @@ func (r *Repo) CreateJobForUnqueued(ctx context.Context, destination string) (*F
 	// LIMIT 1;
 	// `
 
+	// query := `
+	// SELECT i.id
+	// FROM items i
+	// LEFT JOIN
+	// 	(SELECT id, item_id, destination
+	// 	FROM jobs.fulltext
+	// 	WHERE destination = $1) j
+	// ON i.id = j.item_id
+	// WHERE j.item_id IS NULL AND i.api IS NOT NULL
+	// FOR UPDATE OF i SKIP LOCKED
+	// LIMIT 1;
+	// `
+
 	query := `
-	SELECT i.id
-	FROM items i
-	LEFT JOIN 
-		(SELECT id, item_id, destination
-		FROM jobs.fulltext 
-		WHERE destination = $1) j
-	ON i.id = j.item_id
-	WHERE j.item_id IS NULL AND i.api IS NOT NULL
-	FOR UPDATE OF i SKIP LOCKED
+	SELECT id
+	FROM   items i
+	WHERE api IS NOT NULL AND NOT EXISTS (
+		SELECT item_id, destination
+		FROM   jobs.fulltext
+		WHERE  item_id=i.id AND destination = $1
+	 ) FOR NO KEY UPDATE OF i SKIP LOCKED
+	LIMIT 1;
+	`
+
+	lockQuery := `
+	SELECT pg_advisory_xact_lock(10)
+	FROM   items i
+	WHERE api IS NOT NULL AND NOT EXISTS (
+		SELECT item_id, destination
+		FROM   jobs.fulltext
+		WHERE  item_id=i.id AND destination = $1
+	 ) FOR NO KEY UPDATE OF i SKIP LOCKED
 	LIMIT 1;
 	`
 
@@ -114,6 +136,13 @@ func (r *Repo) CreateJobForUnqueued(ctx context.Context, destination string) (*F
 	}
 	// Make sure we cancel the transaction
 	defer tx.Rollback(context.Background())
+
+	// Lock the row
+	_, err = tx.Exec(timeout, lockQuery, destination)
+	if err != nil {
+		tx.Rollback(timeout)
+		return nil, err
+	}
 
 	// Get a single item ID (guaranteeed to be unique, no matter how many instances
 	// of this function are running) which we can use to make a job.
