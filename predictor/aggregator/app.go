@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/lmullen/cchc/common/db"
+	"github.com/lmullen/cchc/common/items"
 	"github.com/lmullen/cchc/common/jobs"
-	"github.com/lmullen/cchc/common/messages"
 	"github.com/lmullen/cchc/common/results"
 	log "github.com/sirupsen/logrus"
 
@@ -24,7 +24,6 @@ const (
 // The Config type stores configuration which is read from environment variables.
 type Config struct {
 	dbstr    string
-	mqstr    string
 	loglevel string
 }
 
@@ -32,9 +31,9 @@ type Config struct {
 type App struct {
 	DB          *pgxpool.Pool
 	Config      *Config
+	ItemsRepo   items.Repository
 	ResultsRepo results.Repository
 	JobsRepo    jobs.Repository
-	MsgRepo     messages.Repository
 }
 
 // Init creates a new app and connects to the database or returns an error
@@ -43,22 +42,13 @@ func (app *App) Init() error {
 
 	app.Config = &Config{}
 
-	// Read the configuration from environment variables
-	dbstr, exists := os.LookupEnv("CCHC_DBSTR")
-	if !exists {
-		return errors.New("Database connection string not set as an environment variable")
-	}
-	app.Config.dbstr = dbstr
-
-	mqstr, exists := os.LookupEnv("CCHC_MQSTR")
-	if !exists {
-		return errors.New("Message queue connection string not set as an environment variable")
-	}
-	app.Config.mqstr = mqstr
+	// Set a timeout for getting the application set up
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
 
 	ll, exists := os.LookupEnv("CCHC_LOGLEVEL")
 	if !exists {
-		ll = "warn"
+		ll = "info"
 	}
 	app.Config.loglevel = ll
 
@@ -72,29 +62,26 @@ func (app *App) Init() error {
 		log.SetLevel(log.InfoLevel)
 	case "debug":
 		log.SetLevel(log.DebugLevel)
-	default:
-		log.SetLevel(log.WarnLevel)
+	case "trace":
+		log.SetLevel(log.TraceLevel)
 	}
 
-	// Connect to the database and initialize it.
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
+	// Connect to the database and create the various repositories needed
+	dbstr, exists := os.LookupEnv("CCHC_DBSTR")
+	if !exists {
+		return errors.New("CCHC_DBSTR environment variable is not set")
+	}
+	app.Config.dbstr = dbstr
 
-	log.Println(app.Config.dbstr)
 	db, err := db.Connect(ctx, app.Config.dbstr, "cchc-predictor-aggregator")
 	if err != nil {
 		return fmt.Errorf("Failed to connect to database: %w", err)
 	}
 	app.DB = db
+	app.ItemsRepo = items.NewItemRepo(db)
+	app.JobsRepo = jobs.NewJobsRepo(db)
+	app.ResultsRepo = results.NewRepo(db)
 	log.Info("Connected to the database successfully")
-
-	log.Info("Attempting to connect to the message broker")
-	rabbit, err := messages.NewRabbitMQ(ctx, app.Config.mqstr, "fulltext-predict", 100)
-	if err != nil {
-		return fmt.Errorf("Error connecting to message broker: %w", err)
-	}
-	app.MsgRepo = rabbit
-	log.Info("Connected to the message broker successfully")
 
 	// Initialize the results repo
 	res := results.NewRepo(db)
@@ -109,13 +96,7 @@ func (app *App) Init() error {
 
 // Shutdown closes the connection to the database.
 func (app *App) Shutdown() {
+	log.Info("Closing the connection to the database")
 	app.DB.Close()
-	log.Info("Closed the connection to the database")
-	err := app.MsgRepo.Close()
-	if err != nil {
-		log.Error("Failed to close the connection to the message queue: ", err)
-	} else {
-		log.Info("Closed the connection to the message broker successfully")
-	}
-	log.Info("Shutdown the predictor")
+	log.Info("Shutdown the prediction model fetcher")
 }
