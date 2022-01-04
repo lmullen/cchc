@@ -37,7 +37,7 @@ func createJobs(ctx context.Context, wg *sync.WaitGroup) {
 				if strings.Contains(err.Error(), "SQLSTATE 23505") {
 					// TODO This is an error, but not at this problem of the program. So
 					// only log it if we really want to know all the dirty details. It doesn't
-					// actually cause a problem and needs to be fixed with the queuing locks
+					// actually cause a problem and has been fixed with advisory locks
 					// in the jobs package.
 					log.WithError(err).Trace("Attempt to create duplicate job failed")
 				} else {
