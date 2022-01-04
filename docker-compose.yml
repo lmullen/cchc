@@ -48,21 +48,20 @@ services:
         window: 120s
     network_mode: "host"
 
-  # predictor:
-  #   build:
-  #     dockerfile: predictor.Dockerfile
-  #   image: ghcr.io/lmullen/cchc-predictor:main
-  #   environment:
-  #     - CCHC_LOGLEVEL
-  #     - CCHC_DBSTR
-  #     - CCHC_MQSTR
-  #     - PASSWORD=guest
-  #   deploy:
-  #     mode: replicated
-  #     replicas: 1
-  #     restart_policy:
-  #       condition: on-failure
-  #       delay: 15s
-  #       max_attempts: 3
-  #       window: 120s
-  #   network_mode: "host"
+  predictor:
+    build:
+      dockerfile: predictor.Dockerfile
+    image: ghcr.io/lmullen/cchc-predictor:main
+    environment:
+      - CCHC_LOGLEVEL
+      - CCHC_DBSTR
+      - PASSWORD=guest
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 3
+        window: 120s
+    network_mode: "host"
