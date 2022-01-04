@@ -7,9 +7,14 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
+
+const queue = "quotations"
+const waittime = 15 * time.Minute
+const jobtimeout = 30 * time.Minute
 
 var app = &App{}
 
@@ -40,9 +45,13 @@ func main() {
 	defer app.Shutdown()
 
 	wg := &sync.WaitGroup{}
+
+	// Create jobs for items
 	wg.Add(1)
+	go createJobs(ctx, wg)
 
 	// Process the items from the queue
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		for {
