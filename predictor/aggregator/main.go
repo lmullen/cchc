@@ -52,6 +52,8 @@ func main() {
 
 	// Process the items from the queue
 	wg.Add(1)
+	// Sleep a bit to give time for the jobs to be created before processing
+	time.Sleep(15 * time.Second)
 	go func() {
 		defer wg.Done()
 		for {
