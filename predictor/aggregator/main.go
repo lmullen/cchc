@@ -15,6 +15,7 @@ import (
 const queue = "quotations"
 const waittime = 15 * time.Minute
 const jobtimeout = 30 * time.Minute
+const itemsPerBatch = 25
 
 var app = &App{}
 
