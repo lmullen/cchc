@@ -44,9 +44,11 @@ func main() {
 
 	// Process the items from the queue
 	go func() {
+		defer wg.Done()
 		for {
 			select {
 			case <-ctx.Done():
+				log.Info("Stopped processing batches")
 				return
 			default:
 				processBatchOfDocs(ctx)
