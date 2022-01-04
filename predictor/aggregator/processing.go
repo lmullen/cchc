@@ -98,7 +98,7 @@ func processBatchOfDocs(ctx context.Context) {
 		}
 
 		// At this point we have a complement of jobs, so start the process of running them
-		log.Debugf("Processing a batch of %v items and %v pages", len(jobsInBatch), len(docsInBatch))
+		log.Debugf("Running quotation finder on a batch of %v items and %v pages", len(jobsInBatch), len(docsInBatch))
 
 		// Write the full text to a temporary CSV
 		docsFile, err := writeDocsCSV(docsInBatch)
