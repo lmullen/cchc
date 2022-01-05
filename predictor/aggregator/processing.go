@@ -118,6 +118,7 @@ func processBatchOfDocs(ctx context.Context) {
 			"--bible", "bible-payload.rda",
 			"--model", "prediction-payload.rda",
 			"--verbose", "2",
+			"--tokens", "5",
 			"--out", predictionsFile.Name(),
 			// "--potential",
 			docsFile,
