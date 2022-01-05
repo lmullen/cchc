@@ -23,13 +23,13 @@ func processBatchOfDocs(ctx context.Context) {
 		// Keep track of the specific pages in this batch
 		docsInBatch := make([]*Doc, 0, itemsPerBatch)
 
-		log.Debugf("Collecting a batch of %v items", itemsPerBatch)
+		log.Debugf("Collecting a batch of up to %v items or %v pages", itemsPerBatch, pagesPerBatch)
 
 		// We are going to get as many items as we want to form a batch.
 		// Keep in mind that each item may contain many subdocuments.
 		// We will skip jobs if they don't have full text. And if we run to the end
 		// the available batches, we will start early with what we have.
-		for len(jobsInBatch) < itemsPerBatch {
+		for len(jobsInBatch) < itemsPerBatch && len(docsInBatch) < pagesPerBatch {
 			job, err := app.JobsRepo.GetReadyJob(timeout, queue)
 			if err != nil {
 				if err == jobs.ErrNoJobs && len(jobsInBatch) > 0 {
