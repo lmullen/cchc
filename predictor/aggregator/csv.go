@@ -9,12 +9,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lmullen/cchc/common/results"
-
-	"github.com/lmullen/cchc/common/messages"
 )
 
 // Write out a CSV with the full text for the prediction model
-func writeDocsCSV(docs []*messages.FullTextPredict) (string, error) {
+func writeDocsCSV(docs []*Doc) (string, error) {
 	f, err := os.CreateTemp("", "fulltext-*.csv")
 	if err != nil {
 		return "", err
