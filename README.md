@@ -16,6 +16,8 @@ Mason University
 
 [![cchc-predictor container](https://github.com/lmullen/cchc/actions/workflows/docker-publish-predictor.yml/badge.svg)](https://github.com/lmullen/cchc/actions/workflows/docker-publish-predictor.yml)
 
+[![cchc-ctrl container](https://github.com/lmullen/cchc/actions/workflows/docker-publish-ctrl.yml/badge.svg)](https://github.com/lmullen/cchc/actions/workflows/docker-publish-ctrl.yml)
+
 [![Go tests](https://github.com/lmullen/cchc/actions/workflows/go.yml/badge.svg)](https://github.com/lmullen/cchc/actions/workflows/go.yml) 
 
 ### About this repository

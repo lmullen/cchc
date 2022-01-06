@@ -97,6 +97,20 @@ services:
     image: adminer
     ports:
       - 8888:8080
+  
+  ctrl:
+    profiles:
+      - ctrl
+    deploy:
+      restart_policy:
+        condition: none
+    build:
+      dockerfile: cchc-ctrl.Dockerfile
+    image: ghcr.io/lmullen/cchc-ctrl:main
+    environment:
+      - CCHC_DBSTR
+      - CCHC_LOGLEVEL
+    network_mode: "host"
 
 volumes: 
   cchc-dbdata:
