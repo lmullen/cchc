@@ -48,7 +48,7 @@ func TestJobsDB(t *testing.T) {
 
 	db, _ := db.Connect(ctx, connstr, "jobs-test")
 	db.Ping(ctx)
-	m, _ := migrate.New("file://../../../db/migrations", connstr)
+	m, _ := migrate.New("file://../../../migrations", connstr)
 	m.Up()
 
 	var itemsRepo items.Repository
@@ -133,7 +133,7 @@ func TestEnqueingJobs(t *testing.T) {
 
 	db, _ := db.Connect(ctx, connstr, "jobs-test")
 	db.Ping(ctx)
-	m, _ := migrate.New("file://../../../db/migrations", connstr)
+	m, _ := migrate.New("file://../../../migrations", connstr)
 	m.Up()
 
 	var itemsRepo items.Repository
@@ -205,7 +205,7 @@ func TestNoJobsNeedEnqueuing(t *testing.T) {
 
 	db, _ := db.Connect(ctx, connstr, "jobs-test")
 	db.Ping(ctx)
-	m, _ := migrate.New("file://../../../db/migrations", connstr)
+	m, _ := migrate.New("file://../../../migrations", connstr)
 	m.Up()
 
 	var jobsRepo jobs.Repository
@@ -243,7 +243,7 @@ func TestGettingJobsFromQueue(t *testing.T) {
 
 	db, _ := db.Connect(ctx, connstr, "jobs-test")
 	db.Ping(ctx)
-	m, _ := migrate.New("file://../../../db/migrations", connstr)
+	m, _ := migrate.New("file://../../../migrations", connstr)
 	m.Up()
 
 	var itemsRepo items.Repository

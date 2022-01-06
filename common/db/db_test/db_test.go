@@ -47,7 +47,7 @@ func TestDBConnection(t *testing.T) {
 
 	require.IsType(t, &pgxpool.Pool{}, db)
 
-	m, err := migrate.New("file://../../../db/migrations", connstr)
+	m, err := migrate.New("file://../../../migrations", connstr)
 	require.NoError(t, err)
 
 	err = m.Up()

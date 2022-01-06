@@ -44,7 +44,7 @@ func TestItemsDB(t *testing.T) {
 
 	db, _ := db.Connect(ctx, connstr, "items-test")
 	db.Ping(ctx)
-	m, _ := migrate.New("file://../../../db/migrations", connstr)
+	m, _ := migrate.New("file://../../../migrations", connstr)
 	m.Up()
 
 	itemsRepo := items.NewItemRepo(db)
@@ -125,7 +125,7 @@ func TestUnfetched(t *testing.T) {
 
 	db, _ := db.Connect(ctx, connstr, "items-test")
 	db.Ping(ctx)
-	m, _ := migrate.New("file://../../../db/migrations", connstr)
+	m, _ := migrate.New("file://../../../migrations", connstr)
 	m.Up()
 
 	var itemsRepo items.Repository // Use this asn interface, not a concrete type
