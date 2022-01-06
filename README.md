@@ -52,38 +52,3 @@ Application-wide settings are set with environment variables.
 #### Docker
 
 You can run each of the parts of this application using [Docker](https://www.docker.com). The Docker images for the different services are provided in the [GitHub container registry](https://github.com/lmullen/cchc/packages). For instance, you could run 
-
-#### PostgreSQL database
-
-This application assumes that configuration is passed in as environment
-variables. You should set the following environment variables, though most will
-have reasonable defaults.
-
-Database (PostgreSQL) configuration:
-
-- `CCHC_DBHOST`
-- `CCHC_DBPORT`
-- `CCHC_DBUSER`
-- `CCHC_DBPASS`
-- `CCHC_DBNAME`
-
-Message broker (RabbitMQ) configuration:
-
-- `CCHC_QUSER`
-- `CCHC_QPORT`
-- `CCHC_QHOST`
-- `CCHC_QPASS`
-
-Application configuration:
-
-- `CCHC_LOGLEVEL`
-
-The `Makefile` controls most of the application. You can create the database
-with `make db-create` and run migrations with `make db-up` and `make db-down`.
-
-You can run the application with `make up`.
-
-Note that the application is containerized, except for the database. You will
-need to provide your own PostgreSQL database.
-
-
