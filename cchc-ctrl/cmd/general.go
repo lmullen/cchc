@@ -12,15 +12,22 @@ import (
 )
 
 // database is a global variable for the database
+var dbstr string
 var database *pgxpool.Pool
 
-// connectDB connects to the database or dies trying
-func connectDB(cmd *cobra.Command, args []string) {
-	dbstr, set := os.LookupEnv("CCHC_DBSTR")
+// getConfig checks for the environment variable or dies trying
+func getConfig() {
+	str, set := os.LookupEnv("CCHC_DBSTR")
 	if !set {
 		fmt.Println("The $CCHC_DBSTR environment variable is not set.")
 		os.Exit(1)
 	}
+	dbstr = str
+}
+
+// connectDB connects to the database or dies trying
+func connectDB(cmd *cobra.Command, args []string) {
+	getConfig() // This will set the global variable or fail
 
 	ctx, cancel := timeout()
 	defer cancel()

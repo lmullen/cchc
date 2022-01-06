@@ -4,7 +4,8 @@ import (
 	"context"
 	"embed"
 
-	"github.com/golang-migrate/migrate/v4" // Driver for migrations
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres" //Driver for migrations
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 )
 
