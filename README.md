@@ -6,8 +6,6 @@
 [Roy Rosenzweig Center for History and New Media](https://rrchnm.org), George
 Mason University
 
-### Project status
-
 [![cchc-crawler container](https://github.com/lmullen/cchc/actions/workflows/docker-publish-crawler.yml/badge.svg)](https://github.com/lmullen/cchc/actions/workflows/docker-publish-crawler.yml)
 
 [![cchc-itemmd container](https://github.com/lmullen/cchc/actions/workflows/docker-publish-itemmd.yml/badge.svg)](https://github.com/lmullen/cchc/actions/workflows/docker-publish-itemmd.yml)
@@ -23,6 +21,11 @@ Mason University
 ### About this repository
 
 This repository contains code for one of the projects that are part of the [Computing Cultural Heritage in the Cloud](https://labs.loc.gov/work/experiments/cchc/) initiative at the Library of Congress Labs.
+
+### License
+
+All code is copyrighted &copy; 2021 Lincoln A. Mullen. Code is licensed [CC0 1.0
+Universal](https://github.com/lmullen/cchc/blob/main/LICENSE).
 
 ### Using this repository
 
@@ -57,8 +60,4 @@ You can run the application with `make up`.
 Note that the application is containerized, except for the database. You will
 need to provide your own PostgreSQL database.
 
-### License
-
-All code is copyrighted &copy; 2021 Lincoln A. Mullen. Code is licensed [CC0 1.0
-Universal](https://github.com/lmullen/cchc/blob/main/LICENSE).
 
