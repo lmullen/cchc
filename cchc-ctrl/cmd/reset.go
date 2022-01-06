@@ -19,17 +19,10 @@ require interactive user confirmation, unless it is run with the --force/-f flag
 	PreRun: connectDB,
 	Run: func(cmd *cobra.Command, args []string) {
 		if !force {
-			fmt.Println("Resetting the database will delete all data.")
-			fmt.Print("Are you sure you want to proceed? If so, type `yes`: ")
-			var confirmation string
-			fmt.Scanln(&confirmation)
-			if confirmation != "yes" {
-				fmt.Println("Confirmation not received")
-				shutdown(nil, nil)
-				os.Exit(8)
-			}
-
+			fmt.Println("Reseting the database will delete all your data.")
+			getConfirmation()
 		}
+
 		ctx, cancel := timeout()
 		defer cancel()
 		err := db.MigrateDown(ctx, dbstr)
@@ -38,6 +31,7 @@ require interactive user confirmation, unless it is run with the --force/-f flag
 			fmt.Printf("	%s\n", err)
 			os.Exit(5)
 		}
+
 		err = db.MigrateUp(ctx, dbstr)
 		if err != nil {
 			fmt.Println("Failed to reset the database with this error:")
@@ -45,6 +39,7 @@ require interactive user confirmation, unless it is run with the --force/-f flag
 			shutdown(nil, nil)
 			os.Exit(6)
 		}
+
 		fmt.Println("Reset the database successfully")
 	},
 	PostRun: shutdown,

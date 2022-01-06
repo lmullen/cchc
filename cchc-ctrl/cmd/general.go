@@ -56,3 +56,15 @@ func timeout() (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithTimeout(context.Background(), time)
 	return ctx, cancel
 }
+
+// getConfirmation gets user confirmation or dies trying
+func getConfirmation() {
+	fmt.Print("Are you sure you want to proceed? If so, type `yes`: ")
+	var confirmation string
+	fmt.Scanln(&confirmation)
+	if confirmation != "yes" {
+		fmt.Println("Confirmation not received")
+		shutdown(nil, nil)
+		os.Exit(8)
+	}
+}
