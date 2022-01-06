@@ -2,7 +2,8 @@ package db
 
 import "net/url"
 
-func addApplication(connstr string, application string) (string, error) {
+// AddApplication adds an application string to a database connection URL
+func AddApplication(connstr string, application string) (string, error) {
 	url, err := url.Parse(connstr)
 	if err != nil {
 		return "", err
