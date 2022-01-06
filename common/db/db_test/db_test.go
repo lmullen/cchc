@@ -47,13 +47,49 @@ func TestDBConnection(t *testing.T) {
 
 	require.IsType(t, &pgxpool.Pool{}, db)
 
-	m, err := migrate.New("file://../../../db/migrations", connstr)
+	m, err := migrate.New("file://../migrations", connstr)
 	require.NoError(t, err)
 
 	err = m.Up()
 	require.NoError(t, err)
 
 	err = m.Down()
+	require.NoError(t, err)
+
+}
+
+func TestDBMigrations(t *testing.T) {
+	t.Parallel()
+
+	user := "gnomock"
+	pass := "strong-passwords-are-the-best"
+	dbname := "cchc_gnomock_migrate_test"
+
+	p := postgres.Preset(
+		postgres.WithUser(user, pass),
+		postgres.WithDatabase(dbname),
+	)
+
+	container, err := gnomock.Start(p)
+	require.NoError(t, err)
+	defer func() { require.NoError(t, gnomock.Stop(container)) }()
+
+	connstr := fmt.Sprintf("postgres://%s:%s@%s:%v/%s?sslmode=disable",
+		user, pass, container.Host, container.DefaultPort(), dbname)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	database, err := db.Connect(ctx, connstr, "db-test")
+	require.NoError(t, err)
+
+	err = database.Ping(ctx)
+	require.NoError(t, err)
+
+	err = db.MigrateUp(ctx, connstr)
+	require.NoError(t, err)
+
+	err = db.MigrateDown(ctx, connstr)
 	require.NoError(t, err)
 
 }

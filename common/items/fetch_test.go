@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestItem_Fetch(t *testing.T) {
@@ -17,7 +18,7 @@ func TestItem_Fetch(t *testing.T) {
 	assert.False(t, item.Fetched(), "fetched method returns false before fetching")
 
 	err := item.Fetch(http.DefaultClient)
-	assert.NoError(t, err, "fetching does not result in an error")
+	require.NoError(t, err, "fetching does not result in an error")
 	assert.True(t, item.Fetched(), "fetched method returns true after fetching")
 
 	assert.Contains(t, item.Languages, "english", "this item's language is english")

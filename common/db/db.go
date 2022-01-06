@@ -13,7 +13,7 @@ import (
 // safe. Uses the pgx interface.
 func Connect(ctx context.Context, connstr string, application string) (*pgxpool.Pool, error) {
 
-	connstr, err := addApplication(connstr, application)
+	connstr, err := AddApplication(connstr, application)
 	if err != nil {
 		return nil, fmt.Errorf("Error adding application name to connection string: %w", err)
 	}

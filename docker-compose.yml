@@ -65,3 +65,52 @@ services:
         max_attempts: 3
         window: 120s
     network_mode: "host"
+
+  db:
+    profiles:
+      - db
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 3
+        window: 120s
+    image: postgres:14.1
+    environment:
+      POSTGRES_PASSWORD: ${CCHC_DB_PASSWORD:-cchcdbpass}
+      POSTGRES_USER: cchc
+      POSTGRES_DB: cchc
+    ports:
+      - 5433:5432
+    volumes:
+      - cchc-dbdata:/var/lib/postgresql/data
+
+  adminer:
+    profiles:
+      - db
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 3
+        window: 120s
+    image: adminer
+    ports:
+      - 8888:8080
+  
+  ctrl:
+    profiles:
+      - ctrl
+    deploy:
+      restart_policy:
+        condition: none
+    build:
+      dockerfile: cchc-ctrl.Dockerfile
+    image: ghcr.io/lmullen/cchc-ctrl:main
+    environment:
+      - CCHC_DBSTR
+      - CCHC_LOGLEVEL
+    network_mode: "host"
+
+volumes: 
+  cchc-dbdata:
