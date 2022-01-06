@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -21,7 +22,7 @@ connect to the database.`,
 		if err != nil {
 			fmt.Println("Failed to connect to and ping the database:")
 			fmt.Printf("	%s\n", err)
-			return
+			os.Exit(4)
 		}
 		fmt.Println("Successfully connected to and pinged the database")
 	},

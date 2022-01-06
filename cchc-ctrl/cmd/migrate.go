@@ -1,7 +1,3 @@
-/*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
-*/
 package cmd
 
 import (
@@ -20,13 +16,9 @@ var migrateCmd = &cobra.Command{
 the current schema for the application.`,
 	PreRun: connectDB,
 	Run: func(cmd *cobra.Command, args []string) {
-		str, err := db.AddApplication(dbstr, "cchc-ctrl")
-		if err != nil {
-			str = dbstr
-		}
 		ctx, cancel := timeout()
 		defer cancel()
-		err = db.Migrate(ctx, str)
+		err := db.MigrateUp(ctx, dbstr)
 		if err != nil {
 			fmt.Println("Failed to run migrations with this error:")
 			fmt.Printf("	%s\n", err)

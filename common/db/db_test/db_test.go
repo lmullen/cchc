@@ -86,7 +86,10 @@ func TestDBMigrations(t *testing.T) {
 	err = database.Ping(ctx)
 	require.NoError(t, err)
 
-	err = db.Migrate(ctx, connstr)
+	err = db.MigrateUp(ctx, connstr)
+	require.NoError(t, err)
+
+	err = db.MigrateDown(ctx, connstr)
 	require.NoError(t, err)
 
 }

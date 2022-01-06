@@ -22,7 +22,12 @@ func getConfig() {
 		fmt.Println("The $CCHC_DBSTR environment variable is not set.")
 		os.Exit(1)
 	}
-	dbstr = str
+	strWithApp, err := db.AddApplication(str, "cchc-ctrl")
+	if err != nil {
+		strWithApp = str
+	}
+
+	dbstr = strWithApp
 }
 
 // connectDB connects to the database or dies trying
