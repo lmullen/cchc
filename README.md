@@ -28,7 +28,7 @@ The purpose of this project is to experiment with cloud computing approaches to 
 
 ### License
 
-All code is copyrighted &copy; 2021 Lincoln A. Mullen. Code is licensed [CC0 1.0
+All code is copyrighted &copy; 2021–2022 Lincoln Mullen. Code is licensed [CC0 1.0
 Universal](https://github.com/lmullen/cchc/blob/main/LICENSE).
 
 ## Using the application
