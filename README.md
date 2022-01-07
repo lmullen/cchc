@@ -61,12 +61,15 @@ You can get this application's source code by [cloning the repository](https://d
 When you navigate in your terminal to the root of the repository, you can get run the necessary commands using Docker Compose. Use the following command to pull all the necessary containers:
 
 ```
-docker compose --profile db --profile ctrl pull
+docker compose \
+	--profile db --profile ctrl --profile api \
+	--profile languages --profile quotations \
+	pull
 ```
 
 ### PostgreSQL database
 
-All metadata, application state (such as the job queues), and results are stored in a [PostgreSQL database](https://www.postgresql.org). While any version from v12 up should work, this application has been tested the most on PostgreSQL 14.1.
+All metadata, application state (such as the job queues) and results are stored in a [PostgreSQL database](https://www.postgresql.org). While any version from v12 up should work, this application has been tested the most on PostgreSQL 14.1.
 
 You are **strongly** encouraged to use a database whose data is stored in a way that you can understand and access if you care at all about the data stored in it. While this application does provide a Docker container which stores its data in a [Docker volume](https://docs.docker.com/storage/volumes/), persisting data in Docker requires considerable understanding to do correctly, as does securing the database.
 
@@ -75,7 +78,7 @@ Your database should have a user with permissions to create schemas and tables. 
 If you would like to use a containerized database, then you can start one with Docker Compose.
 
 ```
-docker compose up --detach db
+docker compose --profile db up --detach
 ```
 
 If you set the `CCHC_DB_PASSWORD` environment variable _before_ the first time you run the database service, it will set the PostgreSQL user password to that value. Otherwise, it will use the default password below.
@@ -101,7 +104,10 @@ Otherwise, use that connection string as a template.
 To stop and remove a particular service, you can use the `stop` or `down` functions in Docker compose. To stop and remove all services (including the database), run the following:
 
 ```
-docker compose --profile db --profile ctrl down
+docker compose \
+	--profile db --profile ctrl --profile api \
+	--profile languages --profile quotations \
+	down
 ```
 
 While containers are running or stopped (but not after they have been removed) you can see the logs by running the following:
@@ -110,7 +116,7 @@ While containers are running or stopped (but not after they have been removed) y
 docker compose logs
 ```
 
-You can see the logs for a particular service by running the following:
+You can see the logs for a particular service by running the following, changing the name for the service you want.
 
 ```
 docker compose logs itemmd
