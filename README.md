@@ -117,6 +117,36 @@ You can use whatever client you prefer to connect to the database. However, if y
 
 ![Adminer login](README-adminer-login.png)
 
+### Initializing the database and using `cchc-ctrl`
+
+Regardless of whether you use the containerized database or host your own, you will need to migrate the database to the current schema. You can do this, as well as other maintenance tasks, using the `ctrl` service.
+
+First check that you can successfully connect to the database.
+
+```
+docker compose run --rm ctrl /cchc-ctrl ping
+```
+
+Then you can run the migrations:
+
+```
+docker compose run --rm ctrl /cchc-ctrl migrate
+```
+
+Currently, this utility supports the following actions:
+
+- `help`:        Help about any command
+- `migrate`:     Migrate the database to the current schema
+- `ping`:        Check connection to the database
+- `reset`:       Reset the database (deletes all data)
+- `retry-jobs`   Retry skipped and failed jobs
+
+For full documentation on how to use this utility, consult the help.
+
+```
+docker compose run --rm ctrl /cchc-ctrl help
+```
+
 ### Crawler and item metadata fetcher
 
 Two services (`crawler` and `itemmd`) identify items from the Library of Congress API and then fetch the full metadata. These services are intended to be run continuously. The crawler will periodically (currently, once every two days) check for updates to the Library of Congress digital collections, and the item metadata fetcher will get the full metadata for each item.
@@ -126,7 +156,7 @@ They save the resulting metadata in several database tables in the `public` sche
 To start these services, run the following:
 
 ```
-docker compose --profile api up --detach 
+docker compose --profile api up --detach
 ```
 
 ### Miscellaneous
