@@ -1,3 +1,4 @@
+// This program identifies the language of each sentence in full-text items.
 package main
 
 import (
