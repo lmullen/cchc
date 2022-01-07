@@ -168,14 +168,45 @@ This service seeks to identify the language of each sentence in the full-text it
 To start this service, run the following:
 
 ```
-docker compose --profile langauges up --detach
+docker compose --profile languages up --detach
+```
+
+By default, this service will start with a single worker. If, however, you want to start with more than one worker, you can use the `--scale` flag. For example, this invocation will start six workers.
+
+```
+docker compose --profile languages up --scale language-detector=6
 ```
 
 Results as stored in the `results.languages` table. This service keeps track of jobs in the `jobs.fulltext` table. This computed result can then be compared to the `language` field in the `items` table. Items that do not have full text will be skipped. You can delete skipped or failed jobs with the `cchc-ctrl` service. 
 
-This is an example of a service which does useful work on the Library of Congress collections. Note that this particular service is written entirely in Go. It could be used as a template for creating a similar service in Go.
+This is an example of a service which does useful work on the Library of Congress collections. Note that this particular service is written entirely in Go. This service could be used as a template for creating a similar service in Go.
+
+### Quotation detector
+
+This service seeks to identify biblical quotations in full-text items.
+
+To start this service, run the following:
+
+```
+docker compose --profile quotations up --detach
+```
+
+By default, this service will start with a single worker. If, however, you want to start with more than one worker, you can use the `--scale` flag. For example, this invocation will start six workers.
+
+```
+docker compose --profile quotations up --scale predictor=4
+```
+
+Results as stored in the `results.biblical_quotations` table. This service keeps track of jobs in the `jobs.fulltext` table. Items that do not have full text will be skipped. You can delete skipped or failed jobs with the `cchc-ctrl` service. 
+
+This is an example of a service which does useful work on the Library of Congress collections. Note that this particular service uses Go to collect a set of items to be processed, then shells out to an R script to run a machine-learning model. This service could be used as an example of running an arbitrary script in a different language on a batch of data.
 
 ### Miscellaneous
+
+Details about the status of the application can be found in the `stats` schema of the database. The most important are these two: 
+
+- The `stats.item_status` view will show many items have been crawled, and of those how many have had their full item metadata fetched.
+- The `stats.job_status_ft` view will show how many jobs are running, skipped, failed, and available.
 
 To stop and remove a particular service, you can use the `stop` or `down` functions in Docker compose. To stop and remove all services (including the database), run the following:
 
