@@ -225,3 +225,39 @@ You can see the logs for a particular service by running the following, changing
 ```
 docker compose logs itemmd
 ```
+
+## For developers
+
+### Code organization and compilation
+
+General purpose libraries (e.g., for interacting with the loc.gov API or with the database), are contained in the `common` folder.
+
+Specific services are each in their own directories in the project root, and each has a Dockerfile associated with it.
+
+You can compile all of the code inside Docker containers by running `make build` or this invocation:
+
+```
+docker compose --profile cchc build
+```
+
+If you prefer to build the Go applications directly, after cloning the repository run `go mod download` in the root. Then you can run `go build` or `go install` in any of the directories for the different services.
+
+### Documentation
+
+Documentation for all of the Go packages are available at [pkg.go.dev](https://pkg.go.dev/github.com/lmullen/cchc#section-directories).
+
+### Testing
+
+You can run the included tests with `go test -v ./...` in the root of the repository. (Or you can run `make test`: the [Makefile](https://github.com/lmullen/cchc/blob/main/Makefile) contains a number of helpful shortcuts.) Tests are also continuously run using GitHub Actions.
+
+Note that integration tests use [Gnomock](https://github.com/orlangure/gnomock), so you must have Docker running on your system run most tests. Gnomock should pull the necessary containers the first time you run the tests.
+
+### Running your own work (or, to Go or not to Go)
+
+Almost everything in this repository is written in [Go](https://go.dev), with the exception of the biblical quotations prediction model adapted from the [America's Public Bible](https://github.com/lmullen/americas-public-bible) source code, which is written in R.
+
+Go is a great language. You should learn it. 😉
+
+If you did want to write your own program that did work on the database, then you should start with the [language detector](https://github.com/lmullen/cchc/tree/main/language-detector) source code as a model. It is intended to be a comparatively simple kind of processing written in pure Go. If you wanted to shell out to a different program, that is always harder, but the [quotation detector](https://github.com/lmullen/cchc/tree/main/predictor) does that.
+
+But don't overthink it. It is really the database (continuously updated if you wish) that is the output of this program. You should be able to run just the crawler and the item metadata fetcher and ignore the rest of the services. And you should be able to interact with that database however you wish with your own program, since every language has drivers for PostgreSQL. For instance, if you wanted to run work by pulling items from the the database, but then writing the results out to a CSV, nothing is stopping you. Have fun. 
