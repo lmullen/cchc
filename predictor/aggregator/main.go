@@ -1,4 +1,4 @@
-// This program identifies biblical quotations in loc.gov full-text items
+// This program identifies biblical quotations in loc.gov full-text items.
 package main
 
 import (

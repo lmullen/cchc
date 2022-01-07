@@ -1,4 +1,4 @@
-// Package items allows for interactions with items in the Library of Congress digital collections
+// Package items allows for interactions with items in the Library of Congress digital collections.
 //
 // It provides a Repository interface for generalized interactions storing and
 // retrieving items from a data store, as well as a concrete type that implements

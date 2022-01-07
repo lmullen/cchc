@@ -1,4 +1,4 @@
-// Package messages sends jobs to a message queue. DEPRECATED
+// Package messages sends jobs to a message queue. DEPRECATED.
 //
 // It provides a Repository interface for generalized interactions storing and
 // retrieving messages from a message queue, as well as a concrete type that

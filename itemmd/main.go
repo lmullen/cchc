@@ -1,4 +1,4 @@
-// This program fetches the full metadata for LOC.gov items
+// This program fetches the full metadata for LOC.gov items.
 package main
 
 import (
