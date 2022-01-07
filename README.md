@@ -159,6 +159,22 @@ To start these services, run the following:
 docker compose --profile api up --detach
 ```
 
+Note that in the documentation below the `--scale` flag is suggested for using more than one worker at a time. Do not attempt to scale the crawler or item metadata fetcher beyond one instance each. The loc.gov API is strictly rate limited, and using more than one replica for these services will result in your IP address being blocked.
+
+### Language detector
+
+This service seeks to identify the language of each sentence in the full-text items, and thus identify multilingual documents in the collections.
+
+To start this service, run the following:
+
+```
+docker compose --profile langauges up --detach
+```
+
+Results as stored in the `results.languages` table. This service keeps track of jobs in the `jobs.fulltext` table. This computed result can then be compared to the `language` field in the `items` table. Items that do not have full text will be skipped. You can delete skipped or failed jobs with the `cchc-ctrl` service. 
+
+This is an example of a service which does useful work on the Library of Congress collections. Note that this particular service is written entirely in Go. It could be used as a template for creating a similar service in Go.
+
 ### Miscellaneous
 
 To stop and remove a particular service, you can use the `stop` or `down` functions in Docker compose. To stop and remove all services (including the database), run the following:
