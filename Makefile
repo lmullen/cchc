@@ -4,7 +4,11 @@
 # Rebuild and run all services detached
 .PHONY : up
 up : 
-	docker compose up --build --force-recreate --detach
+	docker compose --profile api --profile language up --build --force-recreate --detach
+
+# Stops ALL profiles
+down :
+	docker compose --profile db --profile api --profile language --profile quotations down
 
 # DATABASE 
 # --------------------------------------------------
