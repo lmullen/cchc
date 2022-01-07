@@ -1,11 +1,14 @@
-// This program crawls the LOC.gov API and retrieves information about its
-// digital collections. It proceeds in this way.
-//   1. It fetches all digital collections (with some filtering)
-//   2. It fetches the items in those digital collections via the search (again
-//      with some filtering).
-//   3. It then fetches metadata about those items from the API.
+// This program crawls the LOC.gov API and identifies the existence of digitized items
+//
+// It proceeds in this way.
+//
+// 1. It fetches all digital collections (with some filtering)
+// 2. It fetches the items in those digital collections (again
+//    with some filtering for full text items).
 //
 // Everything gets stored in a database.
+//
+// The task of fetching the full item metadata is handled by itemmd.
 package main
 
 import (
