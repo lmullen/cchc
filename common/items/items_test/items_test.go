@@ -30,6 +30,7 @@ func TestItemsDB(t *testing.T) {
 	p := postgres.Preset(
 		postgres.WithUser(user, pass),
 		postgres.WithDatabase(dbname),
+		postgres.WithVersion("14"),
 	)
 
 	container, err := gnomock.Start(p)
@@ -111,6 +112,7 @@ func TestUnfetched(t *testing.T) {
 	p := postgres.Preset(
 		postgres.WithUser(user, pass),
 		postgres.WithDatabase(dbname),
+		postgres.WithVersion("14"),
 	)
 
 	container, err := gnomock.Start(p)
