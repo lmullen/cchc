@@ -20,3 +20,17 @@ db-up :
 
 db-down :
 	migrate -database "$(CCHC_DBSTR_LOCAL)" -path common/db/migrations down 1
+
+
+# DEPLOY 
+# --------------------------------------------------
+.PHONY : deploy
+
+deploy : export CCHC_VERSION=release
+deploy : 
+	docker compose --profile ctrl build --parallel
+	docker push ghcr.io/lmullen/cchc-crawler:release
+	docker push ghcr.io/lmullen/cchc-itemmd:release
+	docker push ghcr.io/lmullen/cchc-ctrl:release
+	docker push ghcr.io/lmullen/cchc-language-detector:release
+	docker push ghcr.io/lmullen/cchc-predictor:release
