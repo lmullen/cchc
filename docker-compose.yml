@@ -75,7 +75,7 @@ services:
         delay: 15s
         max_attempts: 3
         window: 120s
-    image: postgres:14.1
+    image: postgres:14
     environment:
       POSTGRES_PASSWORD: ${CCHC_DB_PASSWORD:-cchcdbpass}
       POSTGRES_USER: cchc
