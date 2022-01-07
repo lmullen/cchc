@@ -248,6 +248,8 @@ If you prefer to build the Go applications directly, after cloning the repositor
 
 Documentation for all of the Go packages are available at [pkg.go.dev](https://pkg.go.dev/github.com/lmullen/cchc#section-directories).
 
+Note that most of the programs outside of the `common` packages do not have functions that are intended for general reuse, and so those symbols are not imported. Thus, the documentation does not show up at the Go package documentation website. However, most functions in those programs are documented in the source code.
+
 ### Testing
 
 You can run the included tests with `go test -v ./...` in the root of the repository. (Or you can run `make test`: the [Makefile](https://github.com/lmullen/cchc/blob/main/Makefile) contains a number of helpful shortcuts.) Tests are also continuously run using GitHub Actions.
