@@ -2,7 +2,10 @@
 # --------------------------------------------------
 
 # Rebuild and run all services detached
-.PHONY : up
+.PHONY : build, up, down
+build :
+	docker compose --profile db --profile api --profile language --profile quotations build
+
 up : 
 	docker compose --profile api --profile language up --build --force-recreate --detach
 
