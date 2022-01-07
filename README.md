@@ -40,6 +40,23 @@ This application has a few main sections:
 
 All of these parts of the application are containerized, though you are strongly encouraged to use your own, non-containerized database.
 
+When using Docker Compose for orchestration, the application is split up into several profiles which do discrete kinds of work. These are the profiles (specific to Docker Compose), as well as the description of each of the services/containers associated with them.
+
+- Compose profile: `db`. An optional profile to set up a database
+	- Compose service: `db`; Docker image: `postgres:14`. A PostgreSQL database
+	- Compose service: `adminer`; Docker image: `adminer`. A database management client
+- Compose profile: `api`. Fetches metadata from the loc.gov API
+	- Compose service: `crawler`; Docker image: `ghcr.io/lmullen/cchc-crawler`. Discovers items from the API.
+	- Compose service: `itemmd`; Docker image: `ghcr.io/lmullen/cchc-itemmd`. Fetches the full metadata for items that have been discovered by the crawler.
+- Compose profile: `ctrl`
+	- Compose service: `ctrl`; Docker image: `ghcr.io/lmullen/cchc-ctrl`. Runs administrative scripts on the database.
+- Compose profile: `languages`
+	- Compose service: `language-detector`; Docker image: `ghcr.io/lmullen/cchc-language-detector`. Guess the language of each sentence in full-text items, to look for multilingual documents.
+- Compose profile:  `quotations`
+	- Compose service: `predictor`; Docker image: `ghcr.io/lmullen/cchc-predictor`. Identifies biblical quotations in full-text items.
+
+If you are not using Docker Compose to run these containers, you can still use this organization conceptually to understand the pieces of the application. See below for a description of each of the services.
+
 ### Settings
 
 Application-wide settings are set with environment variables.
@@ -61,10 +78,7 @@ You can get this application's source code by [cloning the repository](https://d
 When you navigate in your terminal to the root of the repository, you can get run the necessary commands using Docker Compose. Use the following command to pull all the necessary containers:
 
 ```
-docker compose \
-	--profile db --profile ctrl --profile api \
-	--profile languages --profile quotations \
-	pull
+docker compose --profile db --profile cchc pull
 ```
 
 ### PostgreSQL database
@@ -103,15 +117,24 @@ You can use whatever client you prefer to connect to the database. However, if y
 
 ![Adminer login](README-adminer-login.png)
 
+### Crawler and item metadata fetcher
+
+Two services (`crawler` and `itemmd`) identify items from the Library of Congress API and then fetch the full metadata. These services are intended to be run continuously. The crawler will periodically (currently, once every two days) check for updates to the Library of Congress digital collections, and the item metadata fetcher will get the full metadata for each item.
+
+They save the resulting metadata in several database tables in the `public` schema, including `collections` (digital collections from LOC), `items` (specific items, which are associated with one or more collections), and `resources` and `files`, which track the files associated with items. The `api` column on the `items` table contains the full JSON response for each item from the API, and can be used to get other metadata fields which have not been extracted into specific columns.
+
+To start these services, run the following:
+
+```
+docker compose --profile api up --detach 
+```
+
 ### Miscellaneous
 
 To stop and remove a particular service, you can use the `stop` or `down` functions in Docker compose. To stop and remove all services (including the database), run the following:
 
 ```
-docker compose \
-	--profile db --profile ctrl --profile api \
-	--profile languages --profile quotations \
-	down
+docker compose --profile db --profile cchc down
 ```
 
 While containers are running or stopped (but not after they have been removed) you can see the logs by running the following:
