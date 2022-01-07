@@ -1,3 +1,4 @@
+// Package cmd contains code for the specific sub-commands for database administration
 package cmd
 
 import (
