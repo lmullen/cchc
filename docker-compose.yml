@@ -82,9 +82,6 @@ services:
     profiles:
       - ctrl
       - cchc
-    deploy:
-      restart_policy:
-        condition: none
     build:
       dockerfile: cchc-ctrl.Dockerfile
     image: ghcr.io/lmullen/cchc-ctrl:${CCHC_VERSION:-release}
