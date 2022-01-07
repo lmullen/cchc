@@ -99,6 +99,10 @@ export CCHC_DBSTR=postgres://cchc:cchcdbpass@localhost:5433/cchc?sslmode=disable
 
 Otherwise, use that connection string as a template.
 
+You can use whatever client you prefer to connect to the database. However, if you use the containerized database, then a [basic client](https://www.adminer.org) is started for you. You can access this service at <http://localhost:8888/>. Use the following settings to login:
+
+![Adminer login](README-adminer-login.png)
+
 ### Miscellaneous
 
 To stop and remove a particular service, you can use the `stop` or `down` functions in Docker compose. To stop and remove all services (including the database), run the following:
