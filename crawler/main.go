@@ -1,4 +1,4 @@
-// This program crawls the LOC.gov API and identifies the existence of digitized items
+// This program crawls the LOC.gov API and identifies digitized items.
 //
 // It proceeds in this way.
 //
