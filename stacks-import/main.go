@@ -1,3 +1,4 @@
+// This program imports Stacks e-books to the database
 package main
 
 import (
