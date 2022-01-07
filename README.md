@@ -1,8 +1,8 @@
 # Computing Cultural Heritage in the Cloud
 
-## America's Public Bible: Machine-Learning Detection of Biblical Quotations across Library of Congress Collections via Cloud Computing
+## Machine-Learning Detection of Biblical Quotations across Library of Congress Collections via Cloud Computing
 
-[Lincoln Mullen](https://lincolnmullen.com), Director of Computational History,
+[Lincoln Mullen](https://lincolnmullen.com), 
 [Roy Rosenzweig Center for History and New Media](https://rrchnm.org), George
 Mason University
 
