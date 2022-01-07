@@ -2,9 +2,11 @@ version: "3.9"
 
 services:
   crawler:
+    profiles:
+      - api
     build:
       dockerfile: crawler.Dockerfile
-    image: ghcr.io/lmullen/cchc-crawler:main
+    image: ghcr.io/lmullen/cchc-crawler:${CCHC_VERSION:-release}
     deploy:
       restart_policy:
         condition: on-failure
@@ -17,9 +19,11 @@ services:
     network_mode: "host"
 
   itemmd:
+    profiles:
+      - api
     build:
       dockerfile: itemmd.Dockerfile
-    image: ghcr.io/lmullen/cchc-itemmd:main
+    image: ghcr.io/lmullen/cchc-itemmd:${CCHC_VERSION:-release}
     deploy:
       restart_policy:
         condition: on-failure
@@ -32,9 +36,11 @@ services:
     network_mode: "host"
 
   language-detector:
+    profiles:
+      - language
     build:
       dockerfile: language-detector.Dockerfile
-    image: ghcr.io/lmullen/cchc-language-detector:main
+    image: ghcr.io/lmullen/cchc-language-detector:${CCHC_VERSION:-release}
     environment:
       - CCHC_LOGLEVEL
       - CCHC_DBSTR
@@ -49,9 +55,11 @@ services:
     network_mode: "host"
 
   predictor:
+    profiles:
+      - quotations
     build:
       dockerfile: predictor.Dockerfile
-    image: ghcr.io/lmullen/cchc-predictor:main
+    image: ghcr.io/lmullen/cchc-predictor:${CCHC_VERSION:-release}
     environment:
       - CCHC_LOGLEVEL
       - CCHC_DBSTR
@@ -66,6 +74,20 @@ services:
         window: 120s
     network_mode: "host"
 
+  ctrl:
+    profiles:
+      - ctrl
+    deploy:
+      restart_policy:
+        condition: none
+    build:
+      dockerfile: cchc-ctrl.Dockerfile
+    image: ghcr.io/lmullen/cchc-ctrl:${CCHC_VERSION:-release}
+    environment:
+      - CCHC_DBSTR
+      - CCHC_LOGLEVEL
+    network_mode: "host"
+
   db:
     profiles:
       - db
@@ -75,7 +97,7 @@ services:
         delay: 15s
         max_attempts: 3
         window: 120s
-    image: postgres:14.1
+    image: postgres:14
     environment:
       POSTGRES_PASSWORD: ${CCHC_DB_PASSWORD:-cchcdbpass}
       POSTGRES_USER: cchc
@@ -97,20 +119,6 @@ services:
     image: adminer
     ports:
       - 8888:8080
-  
-  ctrl:
-    profiles:
-      - ctrl
-    deploy:
-      restart_policy:
-        condition: none
-    build:
-      dockerfile: cchc-ctrl.Dockerfile
-    image: ghcr.io/lmullen/cchc-ctrl:main
-    environment:
-      - CCHC_DBSTR
-      - CCHC_LOGLEVEL
-    network_mode: "host"
 
 volumes: 
   cchc-dbdata:

@@ -2,27 +2,20 @@
 # --------------------------------------------------
 
 # Rebuild and run all services detached
-.PHONY : up
+.PHONY : build, up, down
+build :
+	docker compose --profile db --profile api --profile language --profile quotations build
+
 up : 
-	docker compose up --build --force-recreate --detach
+	docker compose --profile api --profile language up --build --force-recreate --detach
 
-# Run in production from containers
-.PHONY : run
-run :
-	docker compose pull
-	docker compose up --force-recreate --detach
-
-.PHONY : stop
-stop :
-	docker compose stop
-
-.PHONY : down
+# Stops ALL profiles
 down :
-	docker compose down
+	docker compose --profile db --profile api --profile language --profile quotations down
 
 # DATABASE 
 # --------------------------------------------------
-.PHONY : migration,  db-up, db-down, db-drop
+.PHONY : migration,  db-up, db-down
 
 migration :
 	@read -p "What is the slug for the migration? " migration;\
@@ -35,6 +28,16 @@ db-up :
 db-down :
 	migrate -database "$(CCHC_DBSTR_LOCAL)" -path common/db/migrations down 1
 
-db-drop :
-	@echo "Dropping the local database"
-	migrate -database "$(CCHC_DBSTR_LOCAL)" -path  drop
+
+# DEPLOY 
+# --------------------------------------------------
+.PHONY : deploy
+
+deploy : export CCHC_VERSION=release
+deploy : 
+	docker compose --profile ctrl build --parallel
+	docker push ghcr.io/lmullen/cchc-crawler:release
+	docker push ghcr.io/lmullen/cchc-itemmd:release
+	docker push ghcr.io/lmullen/cchc-ctrl:release
+	docker push ghcr.io/lmullen/cchc-language-detector:release
+	docker push ghcr.io/lmullen/cchc-predictor:release
