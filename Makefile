@@ -1,8 +1,8 @@
 # APPLICATION
 # --------------------------------------------------
+.PHONY : build, up, down, test
 
 # Rebuild and run all services detached
-.PHONY : build, up, down
 build :
 	docker compose --profile cchc build
 
@@ -14,10 +14,14 @@ up :
 down :
 	docker compose --profile db --profile cchc down
 
+test :
+	go test -v ./...
+
 # DATABASE 
 # --------------------------------------------------
 .PHONY : migration,  db-up, db-down
 
+# Create a new migration
 migration :
 	@read -p "What is the slug for the migration? " migration;\
 	migrate create -dir common/db/migrations -ext sql -seq $$migration
