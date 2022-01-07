@@ -1,3 +1,8 @@
+// Package jobs keeps track of work to be done against the database, including queuing
+//
+// It provides a Repository interface for generalized interactions storing and
+// retrieving jobs from a data store, as well as a concrete type that implements
+// that interface for a PostgreSQL database using the pgx package.
 package jobs
 
 import (
