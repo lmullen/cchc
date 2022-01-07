@@ -18,7 +18,8 @@ import (
 
 // Configuration options that aren't worth exposing as environment variables
 const (
-	apiTimeout = 10 // The timeout limit for API requests in seconds
+	apiTimeout   = 10            // The timeout limit for API requests in seconds
+	waitInterval = 2 * time.Hour // How long to wait to check for more items
 )
 
 // The Config type stores configuration which is read from environment variables.

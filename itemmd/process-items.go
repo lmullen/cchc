@@ -32,7 +32,7 @@ checkForUnfetched:
 				// Break out of the function if the context was canceled
 				log.WithContext(ctx).Info("Work canceled: stopping processing of unfetched items")
 				return
-			case <-time.After(10 * time.Minute):
+			case <-time.After(waitInterval):
 				log.Info("Resuming checking for unfetched items")
 				continue checkForUnfetched
 			}
@@ -63,7 +63,7 @@ checkForUnfetched:
 				}
 
 				if isResourceNotItem(item.URL.String) {
-					log.WithField("item_id", id).Debug("Skipping item because it is actually a resource")
+					log.WithField("item_id", id).Trace("Skipping item because it is actually a resource")
 					continue
 				}
 
