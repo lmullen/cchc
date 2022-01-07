@@ -1,6 +1,4 @@
-// This program fetches the full metadata for LOC.gov items and writes it to the
-// database. Items have previously been identified by the crawler. These items
-// are then pulled off the message queue and fetched.
+// This program fetches the full metadata for LOC.gov items
 package main
 
 import (
