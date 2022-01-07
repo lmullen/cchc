@@ -4,6 +4,7 @@ services:
   crawler:
     profiles:
       - api
+      - cchc
     build:
       dockerfile: crawler.Dockerfile
     image: ghcr.io/lmullen/cchc-crawler:${CCHC_VERSION:-release}
@@ -21,6 +22,7 @@ services:
   itemmd:
     profiles:
       - api
+      - cchc
     build:
       dockerfile: itemmd.Dockerfile
     image: ghcr.io/lmullen/cchc-itemmd:${CCHC_VERSION:-release}
@@ -37,7 +39,8 @@ services:
 
   language-detector:
     profiles:
-      - language
+      - languages
+      - cchc
     build:
       dockerfile: language-detector.Dockerfile
     image: ghcr.io/lmullen/cchc-language-detector:${CCHC_VERSION:-release}
@@ -57,6 +60,7 @@ services:
   predictor:
     profiles:
       - quotations
+      - cchc
     build:
       dockerfile: predictor.Dockerfile
     image: ghcr.io/lmullen/cchc-predictor:${CCHC_VERSION:-release}
@@ -77,9 +81,7 @@ services:
   ctrl:
     profiles:
       - ctrl
-    deploy:
-      restart_policy:
-        condition: none
+      - cchc
     build:
       dockerfile: cchc-ctrl.Dockerfile
     image: ghcr.io/lmullen/cchc-ctrl:${CCHC_VERSION:-release}

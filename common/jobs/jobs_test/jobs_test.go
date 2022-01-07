@@ -34,6 +34,7 @@ func TestJobsDB(t *testing.T) {
 	p := postgres.Preset(
 		postgres.WithUser(user, pass),
 		postgres.WithDatabase(dbname),
+		postgres.WithVersion("14"),
 	)
 
 	container, err := gnomock.Start(p)
@@ -119,6 +120,7 @@ func TestEnqueingJobs(t *testing.T) {
 	p := postgres.Preset(
 		postgres.WithUser(user, pass),
 		postgres.WithDatabase(dbname),
+		postgres.WithVersion("14"),
 	)
 
 	container, err := gnomock.Start(p)
@@ -191,6 +193,7 @@ func TestNoJobsNeedEnqueuing(t *testing.T) {
 	p := postgres.Preset(
 		postgres.WithUser(user, pass),
 		postgres.WithDatabase(dbname),
+		postgres.WithVersion("14"),
 	)
 
 	container, err := gnomock.Start(p)
@@ -229,6 +232,7 @@ func TestGettingJobsFromQueue(t *testing.T) {
 	p := postgres.Preset(
 		postgres.WithUser(user, pass),
 		postgres.WithDatabase(dbname),
+		postgres.WithVersion("14"),
 	)
 
 	container, err := gnomock.Start(p)

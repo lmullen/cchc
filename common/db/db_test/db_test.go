@@ -27,6 +27,7 @@ func TestDBConnection(t *testing.T) {
 	p := postgres.Preset(
 		postgres.WithUser(user, pass),
 		postgres.WithDatabase(dbname),
+		postgres.WithVersion("14"),
 	)
 
 	container, err := gnomock.Start(p)
@@ -68,6 +69,7 @@ func TestDBMigrations(t *testing.T) {
 	p := postgres.Preset(
 		postgres.WithUser(user, pass),
 		postgres.WithDatabase(dbname),
+		postgres.WithVersion("14"),
 	)
 
 	container, err := gnomock.Start(p)

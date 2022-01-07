@@ -1,22 +1,27 @@
 # APPLICATION
 # --------------------------------------------------
+.PHONY : build, up, down, test
 
 # Rebuild and run all services detached
-.PHONY : build, up, down
 build :
-	docker compose --profile db --profile api --profile language --profile quotations build
+	docker compose --profile cchc build
 
+# Starts just the api profile
 up : 
-	docker compose --profile api --profile language up --build --force-recreate --detach
+	docker compose --profile api --force-recreate --detach
 
 # Stops ALL profiles
 down :
-	docker compose --profile db --profile api --profile language --profile quotations down
+	docker compose --profile db --profile cchc down
+
+test :
+	go test -v ./...
 
 # DATABASE 
 # --------------------------------------------------
 .PHONY : migration,  db-up, db-down
 
+# Create a new migration
 migration :
 	@read -p "What is the slug for the migration? " migration;\
 	migrate create -dir common/db/migrations -ext sql -seq $$migration
@@ -35,7 +40,7 @@ db-down :
 
 deploy : export CCHC_VERSION=release
 deploy : 
-	docker compose --profile ctrl build --parallel
+	docker compose --profile cchc build --parallel
 	docker push ghcr.io/lmullen/cchc-crawler:release
 	docker push ghcr.io/lmullen/cchc-itemmd:release
 	docker push ghcr.io/lmullen/cchc-ctrl:release
