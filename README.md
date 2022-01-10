@@ -38,7 +38,7 @@ This application has a few main sections:
 - A PostgreSQL database, into which the metadata from the Library of Congress API is stored, along with the results of running jobs on the collections.
 - A crawler and item metadata fetcher which get information from the loc.gov API.
 - Services which run jobs (i.e., do useful work) on the collection.
-- Some utilities for managing the application state.
+- Some utilities for managing the application.
 
 All of these parts of the application are containerized, though you are strongly encouraged to use your own, non-containerized database.
 
