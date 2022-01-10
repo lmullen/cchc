@@ -63,7 +63,7 @@ If you are not using Docker Compose to run these containers, you can still use t
 
 Application-wide settings are set with environment variables.
 
-- `CCHC_DBSTR`: This is the URL to the PostgreSQL database. This setting is not optional, and each service will fail without it. It should take the following form: `postgres://user:password@hostname:5432/database?sslmode=disable`
+- `CCHC_DBSTR`: This is the URL to the PostgreSQL database. This setting is not optional, and each service will fail without it. It should take the following form: `postgres://user:password@hostname:portnum/databasename?sslmode=disable`
 - `CCHC_LOGLEVEL`: This is an optional setting to control the verbosity of logging. You can set it to any of the following values: `error`, `warn`, `info`, `debug`. The default level is `info`.
 - `CCHC_VERSION`: This is an optional setting to control which version of the containers you get when pulling them. By default, the value used will be `release`, which will get only known-good releases. Only set or change this if you really know that you should. Setting this to `main` will get containers from the `main` branch.
 
