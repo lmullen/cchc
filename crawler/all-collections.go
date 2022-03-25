@@ -27,8 +27,8 @@ func FetchAllCollections() ([]Collection, error) {
 	apiAllCollectionOptions := url.Values{
 		"at!": []string{strings.Join(removeFromResponse, ",")},
 		"c":   []string{fmt.Sprint(apiItemsPerPage)},
-		"fa":  []string{"subject_topic:american history"}, // TODO: Consider removing subject limit
 		"fo":  []string{"json"},
+		// "fa":  []string{"subject_topic:american history"}, // TODO: Consider removing subject limit
 	}
 	u.RawQuery = apiAllCollectionOptions.Encode()
 	url := u.String()
