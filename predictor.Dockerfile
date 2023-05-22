@@ -23,7 +23,7 @@ FROM rocker/tidyverse:3.5.2
 WORKDIR /predictor
 
 # Install build dependencies for R packages
-RUN apt-get update && apt-get install zlib1g-dev
+RUN apt-get update && apt-get install -y zlib1g-dev
 
 # Install R packages
 RUN install2.r --ncpus=-1 --error --skipinstalled Matrix broom dplyr fs futile.logger optparse parsnip readr recipes sessioninfo data.table text2vec tokenizers stringr
